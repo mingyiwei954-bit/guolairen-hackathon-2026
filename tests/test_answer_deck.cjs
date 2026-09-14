@@ -4,7 +4,8 @@ let time=1000;const handlers={},view={},answers=[{id:10},{id:20},{id:30}],counte
 const pages=answers.map(()=>({setAttribute(){}}));
 const deck={clientHeight:400,isConnected:true,querySelectorAll:()=>pages,scrollTo({top}){this.scrollTop=top;},addEventListener(type,fn){handlers[type]=fn;}};
 const app={querySelector(s){if(s==='.answer-deck')return deck;if(s==='.answer-flow-count')return counter;if(s==='.answer-flow-bottom')return footer;return s.includes('-1')?up:down;}};
-const ctx=vm.createContext({app,clamp:(x,a,b)=>Math.min(b,Math.max(a,x)),performance:{now:()=>time},matchMedia:()=>({matches:true}),saveDetailView(){},answerFlowFooter:()=>'',ResizeObserver:class{observe(){}},answerDeckResize:null});
+let aiLoads=[];
+const ctx=vm.createContext({clearTimeout(){},kanshanPollTimer:0,loadKanshanPage:(id,opts)=>aiLoads.push(opts.start),app,clamp:(x,a,b)=>Math.min(b,Math.max(a,x)),performance:{now:()=>time},matchMedia:()=>({matches:true}),saveDetailView(){},answerFlowFooter:()=>'',ResizeObserver:class{observe(){}},answerDeckResize:null});
 vm.runInContext(source.slice(source.indexOf('function bindAnswerDeck('),source.indexOf('function applyAISnapshot')),ctx);
 ctx.bindAnswerDeck({id:1},view,answers,0);assert.equal(deck.scrollTop,0);
 function wheel(reader=null,delta=40){let blocked=false;handlers.wheel({deltaY:delta,deltaX:0,target:{closest:()=>reader},preventDefault(){blocked=true;}});return blocked;}
@@ -35,6 +36,13 @@ console.log('Answer deck: bidirectional pointer swipes, 20 cycles, desktop drag,
 
 const selection=vm.createContext({});
 vm.runInContext(source.slice(source.indexOf('function detailAnswers('),source.indexOf('function answerActionIcon(')),selection);
-assert.equal(selection.detailAnswers({answers},{answerStage:'working'}),answers,'old saved stage must not hide answers');
+const withAI=selection.detailAnswers({answers},{answerStage:'working'});assert.equal(withAI.length,4);assert.equal(withAI[3].id,'kanshan');assert.equal(selection.detailAnswers({answers:[]}).length,0);
 assert(!source.slice(source.indexOf('function renderDetail('),source.indexOf('function bindAnswerDeck(')).includes('detail-stage-filter'));
 console.log('Detail includes all answers regardless of previous stage selection.');
+
+const full=[...answers,{id:'kanshan',ai_page:true}];
+ctx.bindAnswerDeck({id:1},view,full,2);assert.equal(aiLoads.length,0,'rendering the last human answer never generates');
+swipe(60);assert.equal(view.answerId,'kanshan');assert.equal(aiLoads.length,1);assert.equal(aiLoads[0],true);
+swipe(60);assert.equal(view.answerId,'kanshan');assert.equal(aiLoads.length,1,'cannot swipe to a second AI page');
+swipe(-60);assert.equal(view.answerId,30);ctx.bindAnswerDeck({id:1},view,full,3);assert.equal(aiLoads.at(-1),false,'restoring AI page only reads');
+console.log('Final AI page: explicit entry starts, restoration reads, one-page boundary and return passed.');

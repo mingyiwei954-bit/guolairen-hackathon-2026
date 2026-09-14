@@ -15,6 +15,7 @@ from urllib.parse import urlsplit, parse_qs
 
 from oauth_login import OAuthMixin, SCHEMA as OAUTH_SCHEMA
 from demo_content import initialize_demo_content, rotate_demo_feed
+from kanshan_ai import KanshanService, migrate_kanshan
 
 from content_pipeline.ai_processor import AIInputError, AIProcessor
 from content_pipeline.storage import (
@@ -70,6 +71,7 @@ def initialize():
         CREATE INDEX IF NOT EXISTS questions_recent ON questions(created DESC);
         CREATE INDEX IF NOT EXISTS question_targets_stage ON question_targets(stage,question_id);
         ''')
+        migrate_kanshan(db)
         db.executescript(OAUTH_SCHEMA)
         migrate_content_schema(db)
         recover_interrupted_ai_work(db)
@@ -217,6 +219,17 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
             if path.path == '/api/ai/status':
                 return self.send_json(ai_service().public_status())
             question_ai_parts = [part for part in path.path.split('/') if part]
+            if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'kanshan':
+                try:
+                    question_id = int(question_ai_parts[2])
+                    with connect() as db:
+                        user = self.session(db)
+                        db.commit()
+                    result = KanshanService(DB_PATH, ai_service().client).snapshot(user['id'], question_id)
+                except (ValueError, KeyError):
+                    raise RequestError('问题不存在', 404, 'question_not_found')
+                return self.send_json(result, 202 if result['status'] == 'running' else 200)
+
             if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'ai':
                 try:
                     question_id = int(question_ai_parts[2])
@@ -332,6 +345,17 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
             if self.oauth_post(path, connect):
                 return
             question_ai_parts = [part for part in path.split('/') if part]
+            if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'kanshan':
+                try:
+                    question_id = int(question_ai_parts[2])
+                    with connect() as db:
+                        user = self.session(db)
+                        db.commit()
+                    result = KanshanService(DB_PATH, ai_service().client).start(user['id'], question_id)
+                except (ValueError, KeyError):
+                    raise RequestError('问题不存在', 404, 'question_not_found')
+                return self.send_json(result, 202 if result['status'] == 'running' else 200)
+
             if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'ai':
                 try:
                     question_id = int(question_ai_parts[2])
