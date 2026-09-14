@@ -556,7 +556,7 @@ function answerActionIcon(type) {
 }
 function answerFlowFooter(q,view,answers,index) {
  const a=answers[index], saved=a&&stored('saved-answer:'+a.id,false), unhelpful=a&&stored('unhelpful-answer:'+a.id,false);
- return `<button class="answer-anonymous" data-action="answer"><span>匿名</span><strong>写回答</strong></button>${a?`<button class="answer-icon-button ${a.voted?'voted':''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${answerActionIcon('up')}<span class="answer-action-count">${a.votes}</span></button><button class="answer-icon-button ${unhelpful?'voted':''}" data-action="answer-unhelpful" data-id="${a.id}" aria-pressed="${!!unhelpful}" aria-label="这条回答暂时没帮到我">${answerActionIcon('down')}</button><button class="answer-icon-button ${saved?'voted':''}" data-action="answer-save" data-id="${a.id}" aria-pressed="${!!saved}" aria-label="${saved?'取消收藏':'收藏回答'}">${answerActionIcon('save')}</button><button class="answer-icon-button" data-action="${view.aiOpen?'toggle-ai':'answer-followup'}" data-id="${a.id}" aria-label="${view.aiOpen?'返回回答':'追问这条回答（资料三问）'}">${answerActionIcon('comment')}</button>`:''}<details class="answer-more"><summary aria-label="更多回答操作">${answerActionIcon('more')}</summary><div><button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button></div></details>`;
+ return `<button class="answer-anonymous" data-action="answer"><span>匿名</span><strong>写回答</strong></button>${a?`<button class="answer-icon-button ${a.voted?'voted':''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${answerActionIcon('up')}<span class="answer-action-count">${a.votes}</span></button><button class="answer-icon-button ${unhelpful?'voted':''}" data-action="answer-unhelpful" data-id="${a.id}" aria-pressed="${!!unhelpful}" aria-label="这条回答暂时没帮到我">${answerActionIcon('down')}</button><button class="answer-icon-button ${saved?'voted':''}" data-action="answer-save" data-id="${a.id}" aria-pressed="${!!saved}" aria-label="${saved?'取消收藏':'收藏回答'}">${answerActionIcon('save')}</button><button class="answer-icon-button" data-action="${view.aiOpen?'toggle-ai':'answer-followup'}" data-id="${a.id}" aria-label="${view.aiOpen?'返回回答':'追问这条回答（资料三问）'}">${answerActionIcon('comment')}</button>`:''}<details class="answer-more"><summary aria-label="更多回答操作">${answerActionIcon('more')}</summary><div><button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button>${a?`<small>${answerKind(a)==='示例'?'本条为体验示例':'阶段由回答者自述'}</small>`:''}</div></details>`;
 }
 function renderDetail({focusAnswerId = null} = {}) {
  const q=state.detail;if(!q)return;
@@ -569,14 +569,14 @@ function renderDetail({focusAnswerId = null} = {}) {
  if(answers[index])view.answerId=answers[index].id;
  controls(false);app.classList.add('answer-flow-mode');state.screen='detail';
  const head=`<header class="answer-flow-header"><div class="answer-flow-toolbar"><button data-action="back" aria-label="返回">‹</button><span>过来人 · 同题不同声音</span><div class="answer-flow-pager"><button data-action="answer-page" data-step="-1" aria-label="上一条回答" ${index===0||view.aiOpen?'disabled':''}>↑</button><span class="answer-flow-count">${answers.length?index+1:0} / ${answers.length}</span><button data-action="answer-page" data-step="1" aria-label="下一条回答" ${index>=answers.length-1||view.aiOpen?'disabled':''}>↓</button></div></div><h1>${escape(q.title)}</h1>${q.body?`<p class="answer-flow-background">${escape(q.body)}</p>`:''}<div class="answer-flow-meta">${q.answers.length} 个回答 · 匿名交流</div></header>`;
- const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>匿名回答</strong><span>${escape(stageName(a.stage))} · ${answerKind(a)} · ${a.votes} 人赞同</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><span>关于这条回答</span><button data-action="answer-followup" data-id="${a.id}">带着这段话，继续问资料 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<answers.length-1?'向上滑，听下一位说':'已是最后一条回答，可向下滑回看'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
+ const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>匿名回答</strong><span>${escape(stageName(a.stage))}</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><button data-action="answer-followup" data-id="${a.id}">带着这段话，继续问资料 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<answers.length-1?'向上滑，听下一位说':'已是最后一条回答，可向下滑回看'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
  app.innerHTML=`<div class="answer-flow-shell">${head}${body}<footer class="answer-flow-bottom">${answerFlowFooter(q,view,answers,index)}</footer></div>`;
  app.scrollTop=0;saveDetailView(q.id);
  requestAnimationFrame(()=>{if(state.screen!=='detail'||state.detail?.id!==q.id)return;if(view.aiOpen){const ai=app.querySelector('.answer-ai-view');if(ai)ai.scrollTop=view.aiScroll||0;}else bindAnswerDeck(q,view,answers,index);});
 }
 function bindAnswerDeck(q,view,answers,start) {
  const deck=app.querySelector('.answer-deck');if(!deck||!answers.length)return;
- let index=start,lockedUntil=0,lastWheel=0,wheelConsumed=false,touch=null;
+ let index=start,lockedUntil=0,lastWheel=0,wheelDirection=0,wheelConsumed=false,drag=null,suppressClickUntil=0;
  function go(next,animate=true) {
   index=clamp(next,0,answers.length-1);view.answerId=answers[index].id;saveDetailView(q.id);
   deck.querySelectorAll('.answer-page').forEach((p,i)=>{p.inert=i!==index;p.setAttribute('aria-hidden',String(i!==index));});
@@ -587,13 +587,53 @@ function bindAnswerDeck(q,view,answers,start) {
   app.querySelector('.answer-flow-bottom').innerHTML=answerFlowFooter(q,view,answers,index);
  }
  function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+48||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
- function move(step){if(performance.now()<lockedUntil)return;const next=clamp(index+step,0,answers.length-1);if(next===index)return;lockedUntil=performance.now()+420;go(next);}
- deck.answerMove=move;go(index,false);
+ function move(step,discrete=false){if(!discrete&&performance.now()<lockedUntil)return false;const next=clamp(index+step,0,answers.length-1);if(next===index)return false;lockedUntil=performance.now()+420;go(next);return true;}
+ deck.answerMove=step=>move(step,true);go(index,false);
  answerDeckResize=new ResizeObserver(()=>{if(deck.isConnected)deck.scrollTo({top:index*deck.clientHeight,behavior:'instant'});});answerDeckResize.observe(deck);
- deck.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)<Math.abs(e.deltaX)||Math.abs(e.deltaY)<2)return;const now=performance.now();if(now-lastWheel>180)wheelConsumed=false;lastWheel=now;const dir=e.deltaY>0?1:-1;const reader=e.target.closest('.answer-reader');if(!canFlip(reader,dir))return;e.preventDefault();if(!wheelConsumed){wheelConsumed=true;move(dir);}},{passive:false});
- deck.addEventListener('touchstart',e=>{if(e.touches.length!==1||e.target.closest('button,input,textarea,a')){touch=null;return;}const t=e.touches[0],r=e.target.closest('.answer-reader');touch={x:t.clientX,y:t.clientY,up:canFlip(r,1),down:canFlip(r,-1)};},{passive:true});
- deck.addEventListener('touchmove',e=>{if(!touch||e.touches.length!==1)return;const t=e.touches[0],dy=touch.y-t.clientY;if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(t.clientX-touch.x)&& (dy>0?touch.up:touch.down))e.preventDefault();},{passive:false});
- deck.addEventListener('touchend',e=>{if(!touch)return;const t=e.changedTouches[0],dy=touch.y-t.clientY;if(Math.abs(dy)>20&&Math.abs(dy)>Math.abs(t.clientX-touch.x)&&(dy>0?touch.up:touch.down))move(dy>0?1:-1);touch=null;},{passive:true});
+ deck.addEventListener('wheel',e=>{
+  if(e.ctrlKey||Math.abs(e.deltaY)<Math.abs(e.deltaX)||Math.abs(e.deltaY)<2)return;
+  const now=performance.now(),dir=e.deltaY>0?1:-1;
+  if(now-lastWheel>180||dir!==wheelDirection)wheelConsumed=false;
+  lastWheel=now;wheelDirection=dir;
+  const reader=e.target.closest('.answer-reader');if(!canFlip(reader,dir))return;
+  e.preventDefault();if(!wheelConsumed)wheelConsumed=move(dir);
+ },{passive:false});
+ // Pointer events handle phone swipes and desktop dragging through one path.
+ // Vertical native panning is disabled on this deck, preventing touchcancel from
+ // swallowing the release. Long text is scrolled first, then the edge can flip.
+ deck.addEventListener('pointerdown',e=>{
+  if(e.isPrimary===false||e.button!==0||e.target.closest('input,textarea,select'))return;
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastY:e.clientY,edge:0,moved:false,reader:e.target.closest('.answer-reader')};
+ });
+ deck.addEventListener('pointermove',e=>{
+  if(!drag||drag.id!==e.pointerId)return;
+  const dy=drag.y-e.clientY,dx=drag.x-e.clientX;
+  if(!drag.moved){
+   if(Math.abs(dy)<8)return;
+   if(Math.abs(dx)>Math.abs(dy)){drag=null;return;}
+   drag.moved=true;deck.setPointerCapture?.(e.pointerId);
+  }
+  e.preventDefault();
+  let remaining=drag.lastY-e.clientY;drag.lastY=e.clientY;
+  const r=drag.reader;
+  if(r&&r.scrollHeight>r.clientHeight+48){
+   const before=r.scrollTop;r.scrollTop=clamp(before+remaining,0,r.scrollHeight-r.clientHeight);
+   remaining-=r.scrollTop-before;
+  }
+  if(remaining){
+   if(Math.sign(remaining)!==Math.sign(drag.edge))drag.edge=0;
+   drag.edge+=remaining;
+  }else drag.edge=0;
+ },{passive:false});
+ deck.addEventListener('pointerup',e=>{
+  if(!drag||drag.id!==e.pointerId)return;
+  const ended=drag;drag=null;
+  if(deck.hasPointerCapture?.(e.pointerId))deck.releasePointerCapture(e.pointerId);
+  if(ended.moved){suppressClickUntil=performance.now()+400;if(Math.abs(ended.edge)>=18)move(ended.edge>0?1:-1,true);}
+ });
+ const cancelDrag=()=>{drag=null;};
+ deck.addEventListener('pointercancel',cancelDrag);deck.addEventListener('lostpointercapture',cancelDrag);
+ deck.addEventListener('click',e=>{if(performance.now()<suppressClickUntil){e.preventDefault();e.stopPropagation();}},true);
  deck.addEventListener('keydown',e=>{if(e.target.closest('button,input,textarea,a'))return;if(['ArrowDown','PageDown','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();move(['ArrowDown','PageDown'].includes(e.key)?1:-1);}});
 }
 function applyAISnapshot(id, snapshot, error = '') {

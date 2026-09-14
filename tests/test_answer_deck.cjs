@@ -14,8 +14,24 @@ time+=1000;assert(!wheel({scrollHeight:1000,clientHeight:300,scrollTop:20}));ass
 time+=1000;wheel();assert.equal(view.answerId,30);assert.equal(deck.scrollTop,800);
 time+=1000;wheel();assert.equal(view.answerId,30,'last answer must stay in bounds');
 time+=1000;wheel(null,-40);assert.equal(view.answerId,20);
-time+=1000;const target={closest:()=>null};handlers.touchstart({touches:[{clientX:100,clientY:200}],target});handlers.touchend({changedTouches:[{clientX:101,clientY:120}]});assert.equal(view.answerId,30);
-console.log('Answer deck: wheel snap, inertia lock, long-reader boundary, limits and directional touch passed.');
+function swipe(delta,reader=null,type='touch'){
+ time+=1000;const target={closest:s=>s==='.answer-reader'?reader:null};
+ const e={pointerId:1,pointerType:type,isPrimary:true,button:0,clientX:100,clientY:200,target,preventDefault(){}};
+ handlers.pointerdown(e);handlers.pointermove({...e,clientY:200-delta});handlers.pointerup({...e,clientY:200-delta});
+}
+swipe(60);assert.equal(view.answerId,30,'up swipe advances');
+swipe(-60);assert.equal(view.answerId,20,'down swipe returns');
+swipe(-60,null,'mouse');assert.equal(view.answerId,10,'desktop dragging also returns');
+swipe(-60);assert.equal(view.answerId,10,'first answer stays in bounds');
+for(let i=0;i<20;i++){swipe(40);assert.equal(view.answerId,20);swipe(-40);assert.equal(view.answerId,10);}
+const reader={scrollHeight:1000,clientHeight:300,scrollTop:0};
+swipe(60,reader);assert.equal(reader.scrollTop,60);assert.equal(view.answerId,10,'long text scrolls first');
+reader.scrollTop=695;swipe(60,reader);assert.equal(reader.scrollTop,700);assert.equal(view.answerId,20,'remaining edge swipe advances');
+time+=1000;const pointer={pointerId:2,isPrimary:true,button:0,clientX:100,clientY:200,target:{closest:()=>null},preventDefault(){}};
+handlers.pointerdown(pointer);handlers.pointermove({...pointer,clientY:150});handlers.pointercancel();handlers.pointerup({...pointer,clientY:150});assert.equal(view.answerId,20,'canceled pointer cannot flip');
+handlers.pointerdown(pointer);handlers.pointermove({...pointer,clientX:200,clientY:180});handlers.pointerup({...pointer,clientY:180});assert.equal(view.answerId,20,'horizontal gesture cannot flip');
+swipe(40);let prevented=false;handlers.click({preventDefault(){prevented=true;},stopPropagation(){}});assert(prevented,'swiping over a followup must not activate its click');
+console.log('Answer deck: bidirectional pointer swipes, 20 cycles, desktop drag, long text, cancellation, bounds and click suppression passed.');
 
 const selection=vm.createContext({});
 vm.runInContext(source.slice(source.indexOf('function detailAnswers('),source.indexOf('function answerActionIcon(')),selection);
