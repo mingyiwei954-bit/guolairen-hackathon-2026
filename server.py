@@ -418,7 +418,7 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
             self.send_json({'error': '保存失败，请稍后再试'}, 503)
 
     def static(self, path):
-        files = {'/screen-replicas.js': ('screen-replicas.js', 'text/javascript; charset=utf-8'), '/screen-replicas.css': ('screen-replicas.css', 'text/css; charset=utf-8'), '/': ('index.html', 'text/html; charset=utf-8'), '/index.html': ('index.html', 'text/html; charset=utf-8'),
+        files = {'/mock-library.js': ('mock-library.js', 'text/javascript; charset=utf-8'), '/screen-replicas.js': ('screen-replicas.js', 'text/javascript; charset=utf-8'), '/screen-replicas.css': ('screen-replicas.css', 'text/css; charset=utf-8'), '/': ('index.html', 'text/html; charset=utf-8'), '/index.html': ('index.html', 'text/html; charset=utf-8'),
                  '/style.css': ('style.css', 'text/css; charset=utf-8'), '/splash.css': ('splash.css', 'text/css; charset=utf-8'),
                  '/auth-ui.js': ('auth-ui.js', 'text/javascript; charset=utf-8'),
                  '/demo-channels.css': ('demo-channels.css', 'text/css; charset=utf-8'),

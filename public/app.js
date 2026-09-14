@@ -282,17 +282,17 @@ function demoIcon(type) {
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type] || paths.more}</svg>`;
 }
 function demoAuthorHTML(index, channel) {
- return `<div class="demo-author"><span class="demo-avatar" aria-hidden="true">${DEMO_AUTHORS[index][0]}</span><span>${DEMO_AUTHORS[index]}</span><small>${channel==='story'?'故事创作者':'分享生活中的观察'}</small><span class="demo-author-menu" aria-hidden="true">···</span></div>`;
+ return `<div class="demo-author"><span class="demo-avatar" aria-hidden="true">${DEMO_AUTHORS[index % DEMO_AUTHORS.length][0]}</span><span>${DEMO_AUTHORS[index % DEMO_AUTHORS.length]}</span><small>${channel==='story'?'故事创作者':'分享生活中的观察'}</small><span class="demo-author-menu" aria-hidden="true">···</span></div>`;
 }
 function demoActionsHTML(channel,index) {
- const key = channel+':'+index;
+ const key = channel+':'+(mockItems(channel)[index]?.id||index);
  return `<div class="demo-actions"><button data-action="demo-mark" data-key="vote:${key}" aria-pressed="${demoMarks.has('vote:'+key)}">${demoIcon('vote')}<span>${demoMarks.has('vote:'+key)?'已赞同':'赞同'}</span></button><button data-action="demo-mark" data-key="save:${key}" aria-pressed="${demoMarks.has('save:'+key)}">${demoIcon('save')}<span>${demoMarks.has('save:'+key)?'已收藏':'收藏'}</span></button><button data-action="demo-open" data-channel="${channel}" data-index="${index}">${demoIcon('comment')}<span>评论</span></button><button data-action="demo-open" data-channel="${channel}" data-index="${index}" aria-label="查看更多示例">${demoIcon('more')}</button></div>`;
 }
 function demoRowHTML(item, index, channel) {
  const open=`data-action="demo-open" data-channel="${channel}" data-index="${index}"`;
  if(channel==='hot')return `<article class="demo-row demo-hot-row"><span class="demo-rank ${index<3?'demo-rank-leading':''}">${index+1}</span><div class="demo-row-body"><button class="demo-title demo-title-button" ${open}>${escape(item.title)}</button><p class="demo-excerpt">${escape(item.excerpt)}</p><div class="demo-hot-meta"><span aria-label="示例热度">♨ ${[488,418,306,219,180][index]} 万热度</span><button data-action="demo-share">${demoIcon('share')}分享</button></div></div></article>`;
  const story=channel==='story'; const knowledge=channel==='knowledge';
- return `<article class="demo-row demo-${channel}-row">${demoAuthorHTML(index,channel)}${story?`<div class="demo-genre">${DEMO_STORY_TYPES[index]}<span>短篇 · 完结示例</span></div>`:''}${knowledge?`<div class="demo-knowledge-topic">${DEMO_KNOWLEDGE_TYPES[index]} · 每天读懂一个概念</div>`:''}<button class="demo-title demo-title-button" ${open}>${escape(item.title)}</button><p class="demo-excerpt">${escape(item.excerpt)}</p>${story?`<button class="demo-read-story" ${open}>继续阅读 <span>›</span></button>`:''}${demoActionsHTML(channel,index)}</article>`;
+ return `<article class="demo-row demo-${channel}-row">${demoAuthorHTML(index,channel)}${story?`<div class="demo-genre">${DEMO_STORY_TYPES[index % DEMO_STORY_TYPES.length]}<span>短篇 · 完结示例</span></div>`:''}${knowledge?`<div class="demo-knowledge-topic">${DEMO_KNOWLEDGE_TYPES[index % DEMO_KNOWLEDGE_TYPES.length]} · 每天读懂一个概念</div>`:''}<button class="demo-title demo-title-button" ${open}>${escape(item.title)}</button><p class="demo-excerpt">${escape(item.excerpt)}</p>${story?`<button class="demo-read-story" ${open}>继续阅读 <span>›</span></button>`:''}${demoActionsHTML(channel,index)}</article>`;
 }
 function demoSubnavHTML(id) {
  if(id==='hot')return '<div class="demo-section-label"><strong>全站热榜</strong><span>榜单与热度均为演示</span></div>';
@@ -304,11 +304,11 @@ function renderDemoChannel(id) {
  if (['follow','recommend','hot'].includes(id)) return renderScreenshotChannel(id);
  const channel = DEMO_CHANNELS[id]; if (!channel) return;
  prepareDemoScreen(); state.screen = 'demo'; state.demoChannel = id; state.kanshanSuggestion = null;
- app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML(id)}<section class="demo-feed demo-feed-${id}" aria-label="${escape(channel.label)}频道示例内容" tabindex="0"><p class="demo-caption">频道预览 · 内容、昵称与互动数据均为示例</p>${demoSubnavHTML(id)}${channel.items.map((item,index)=>demoRowHTML(item,index,id)).join('')}</section>${bottomTabBarHTML('home')}</div>`;
+ app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML(id)}<section class="demo-feed demo-feed-${id}" aria-label="${escape(channel.label)}频道示例内容" tabindex="0"><p class="demo-caption">频道预览 · 内容、昵称与互动数据均为示例</p>${demoSubnavHTML(id)}${mockItems(id).map((item,index)=>demoRowHTML(item,index,id)).join('')}</section>${bottomTabBarHTML('home')}</div>`;
  requestAnimationFrame(() => { const viewport = app.querySelector('.demo-feed'); if (viewport && state.demoChannel===id) viewport.scrollTop = state.demoScroll.get(id) || 0; });
 }
 function showDemoArticle(channel,index) {
- const raw=SHOT_DATA[channel]?.[index]; const item=raw?{title:raw.title,excerpt:raw.text||'以下为截图界面示例内容，可带着问题去过来人发起讨论。'}:DEMO_CHANNELS[channel]?.items[index]; if(!item)return;
+ const raw=mockItems(channel)[index]; const item=raw?{...raw,excerpt:raw.text||raw.excerpt||'以下为截图界面示例内容，可带着问题去过来人发起讨论。'}:null; if(!item)return;
  saveDemoScroll(); controls(false); state.screen='demo-detail'; state.demoChannel=channel;
  app.innerHTML=`${bar(channel==='story'?'故事':channel==='knowledge'?'知识':'这一条讨论')}<section class="demo-reader"><p class="demo-caption">示例内容 · 不对应真实知乎帖子</p>${demoAuthorHTML(index,channel)}<h1>${escape(item.title)}</h1><p>${escape(item.excerpt)}</p><div class="demo-reader-note">这一条是频道界面示例。想听真实的经历，可以把这个问题带到过来人。</div><button class="demo-discuss" data-action="demo-discuss" data-channel="${channel}" data-index="${index}">去过来人问问大家 ↗</button><div class="demo-comment-empty"><strong>评论</strong><p>还没有真实评论。留一个问题，让交流从这里开始。</p></div></section>`;
  app.scrollTop=0;
@@ -548,6 +548,30 @@ async function handleBack() {
  if (state.screen === 'detail' && state.detail) { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); }
  return returnToFeed();
 }
+let navTap={channel:null,time:0};
+let channelRefreshBusy=false, lastChannelRefresh=0;
+async function refreshCurrentChannel(channel) {
+ const now=performance.now();
+ if(channelRefreshBusy||now-lastChannelRefresh<700)return;
+ channelRefreshBusy=true;lastChannelRefresh=now;
+ const nav=app.querySelector('.channel-tabs,.shot-tabs');
+ nav?.setAttribute('aria-busy','true');nav?.classList.add('channel-refreshing');
+ try {
+  if(channel==='guolairen') {
+   const ticket=state.request+1;
+   await loadFeed();
+   if(state.screen==='feed'&&state.request===ticket) {captureFeedView();notice('已刷新过来人');}
+  } else {
+   nextMockBatch(channel);
+   saveDemoScroll();
+   const v=app.querySelector('.demo-feed');if(v)v.scrollTop=0;
+   state.demoScroll.set(channel,0);renderDemoChannel(channel);
+   notice('已换一批 · 本地示例内容');
+  }
+  app.querySelector('.channel-tabs button.active,.shot-tabs button.active')?.focus({preventScroll:true});
+ } catch(error) {notice('刷新失败，原内容已保留。'+error.message);}
+ finally {channelRefreshBusy=false;nav?.removeAttribute('aria-busy');nav?.classList.remove('channel-refreshing');}
+}
 phone.addEventListener('click', async event => {
  const b = event.target.closest('button[data-action]');
  if (!b) {
@@ -559,6 +583,17 @@ phone.addEventListener('click', async event => {
  if (b.disabled) return;
  try {
   const action = b.dataset.action;
+  if (b.closest('.channel-tabs, .shot-tabs')) {
+   const channel=action==='home'?'guolairen':b.dataset.channel;
+   const active=state.screen==='feed'?'guolairen':state.screen==='demo'?state.demoChannel:null;
+   if(channel&&channel===active) {
+    const now=performance.now();
+    if(navTap.channel===channel&&now-navTap.time<420){navTap={channel:null,time:0};await refreshCurrentChannel(channel);}
+    else navTap={channel,time:now};
+    return;
+   }
+   navTap={channel:null,time:0};
+  }
   if (action === 'shot-notice') return notice('这是截图界面演示，过来人可进行真实交流');
   if (action === 'shot-shortcut') return b.dataset.label==='知乎日报'?renderDemoChannel('follow'):notice(b.dataset.label+' · 界面示例');
   if (action === 'shot-mark') { const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));return; }
@@ -571,8 +606,8 @@ phone.addEventListener('click', async event => {
    const marked=demoMarks.has(key);b.setAttribute('aria-pressed',String(marked));b.querySelector('span').textContent=key.startsWith('vote:')?(marked?'已赞同':'赞同'):(marked?'已收藏':'收藏');return;
   }
   if (action === 'demo-discuss') {
-   const item=SHOT_DATA[b.dataset.channel]?.[Number(b.dataset.index)]||DEMO_CHANNELS[b.dataset.channel]?.items[Number(b.dataset.index)];if(!item)return;
-   await showCachedFeed();return showAsk(item.title,{type:'demo-item',channel:b.dataset.channel,index:Number(b.dataset.index)});
+   const item=mockItems(b.dataset.channel)[Number(b.dataset.index)];if(!item)return;
+   await showCachedFeed();return showAsk(item.title,{type:'demo-item',channel:b.dataset.channel,index:item.id});
   }
   if (action === 'back' && state.screen==='demo-detail') return renderDemoChannel(state.demoChannel);
   if (action === 'home') return state.screen === 'feed' ? await loadFeed() : (state.screen === 'demo' || state.screen === 'kanshan' ? await showCachedFeed() : await returnToFeed());

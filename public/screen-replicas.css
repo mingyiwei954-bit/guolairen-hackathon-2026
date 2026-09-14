@@ -39,3 +39,6 @@
 .shot-shell .bottom-tab-bar .tab-create-icon{width:10.8cqi;height:8.2cqi;flex:0 0 8.2cqi}
 .shot-shell .bottom-tab-bar .tab-icon{width:5.8cqi;height:5.8cqi;flex:0 0 5.8cqi}
 .shot-actions button svg{width:5.2cqi;height:5.2cqi}
+.channel-tabs,.shot-tabs{touch-action:manipulation}
+.channel-refreshing .active{opacity:.45}
+@media(prefers-reduced-motion:no-preference){.channel-refreshing .active{transition:opacity .15s}}
