@@ -28,9 +28,24 @@ function shotSvg(name) {
  const paths={micro:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M9 22h6"/>',wifi:'<path d="M2 8c6-5 14-5 20 0M6 12c4-3 8-3 12 0M10 16c1.4-1 2.6-1 4 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/>',person:'<circle cx="12" cy="7" r="4" fill="currentColor" stroke="none"/><path d="M4 22v-3a8 8 0 0 1 16 0v3" fill="currentColor" stroke="none"/>',calendar:'<rect x="4" y="5" width="16" height="17" rx="2"/><path d="M8 2v6M16 2v6"/><text x="12" y="18" text-anchor="middle" font-size="11" fill="#29b5de" stroke="none">14</text>',like:'<path d="M8 21H4V10h4m0 11h11l2-12h-7l1-5c0-3-3-3-3-1L8 10Z"/>',flame:'<path d="M12 2c-1 6-8 7-8 13a8 8 0 0 0 16 0c0-4-2-6-4-8 0 3-2 4-2 4 1-4 0-7-2-9Z"/>',ban:'<circle cx="12" cy="12" r="9"/><path d="m6 6 12 12" stroke="#f58967"/>',friends:'<circle cx="10" cy="8" r="4" fill="white" stroke="none"/><circle cx="17" cy="8" r="3" fill="#b1ebff" stroke="none"/><path d="M2 22v-4a7 7 0 0 1 14 0v4M16 14c5 0 7 2 7 8h-5" fill="white" stroke="none"/>',dog:'<path d="M5 20 4 9l3-5 3 5h4l3-5 3 6-1 10Z" fill="white" stroke="white"/><circle cx="10" cy="12" r="1" fill="#222" stroke="none"/><ellipse cx="17" cy="14" rx="4" ry="3" fill="#444" stroke="none"/>'};
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.dog}</svg>`;
 }
+let sharedNavScroll=0;
+function shotStatusHTML() {return `<div class="shot-status" aria-label="手机展示状态栏"><span>22:30 ${shotSvg('person')}</span><div><i class="shot-signal"><b></b><b></b><b></b><b></b></i>${shotSvg('wifi')}<strong class="shot-battery">100</strong></div></div>`;}
+function syncSharedHeader() {
+ const nav=document.querySelector('#app .shot-tabs');if(!nav)return;
+ nav.scrollLeft=sharedNavScroll;
+ const active=nav.querySelector('.active');
+ if(active){const n=nav.getBoundingClientRect(),a=active.getBoundingClientRect();if(a.right>n.right-14)nav.scrollLeft+=a.right-n.right+14;else if(a.left<n.left+14)nav.scrollLeft-=n.left+14-a.left;}
+ sharedNavScroll=nav.scrollLeft;
+}
+function installSharedShell() {
+ const host=document.getElementById('phone-content');
+ if(!document.getElementById('shared-status'))host.insertAdjacentHTML('afterbegin',`<div id="shared-status">${shotStatusHTML()}</div>`);
+}
 function shotHeader(id) {
+ const previous=document.querySelector('#app .shot-tabs');if(previous)sharedNavScroll=previous.scrollLeft;
+ requestAnimationFrame(syncSharedHeader);
  const labels=[['follow','关注'],['recommend','推荐'],['hot','热榜'],['story','故事'],['knowledge','知识'],['guolairen','过来人']];
- return `<header class="shot-header"><div class="shot-status" aria-label="手机展示状态栏"><span>22:30 ${shotSvg('person')}</span><div><i class="shot-signal"><b></b><b></b><b></b><b></b></i>${shotSvg('wifi')}<strong class="shot-battery">100</strong></div></div><div class="shot-search"><span>${id==='follow'?'有政治天赋的人的特点':'你会嫌弃父母穷吗'}</span><button data-action="shot-notice" aria-label="语音搜索">${shotSvg('micro')}</button><button class="shot-search-button" data-action="search">搜索</button></div><nav class="shot-tabs" aria-label="内容频道">${labels.map(([key,label])=>`<button data-action="${key==='guolairen'?'home':'channel'}" data-channel="${key}" class="${id===key?'active':''}">${label}</button>`).join('')}<button data-action="shot-notice">圈子</button><button data-action="shot-notice">专栏</button></nav></header>`;
+ return `<header class="shot-header"><div class="shot-search"><span>搜索你感兴趣的问题</span><button data-action="shot-notice" aria-label="语音搜索">${shotSvg('micro')}</button><button class="shot-search-button" data-action="search">搜索</button></div><nav class="shot-tabs" aria-label="内容频道">${labels.map(([key,label])=>`<button data-action="${key==='guolairen'?'home':'channel'}" data-channel="${key}" class="${id===key?'active':''}" ${id===key?'aria-current="page"':''}>${label}</button>`).join('')}<button data-action="shot-notice">圈子</button><button data-action="shot-notice">专栏</button></nav></header>`;
 }
 function shotAvatar(index,large=false) {return `<span class="shot-avatar ${large?'large':''} shot-avatar-${index%4}" aria-hidden="true">${shotSvg(index%2?'friends':'dog')}</span>`;}
 function shotActions(item,channel,index) {

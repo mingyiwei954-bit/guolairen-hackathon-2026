@@ -42,3 +42,14 @@
 .channel-tabs,.shot-tabs{touch-action:manipulation}
 .channel-refreshing .active{opacity:.45}
 @media(prefers-reduced-motion:no-preference){.channel-refreshing .active{transition:opacity .15s}}
+
+/* One persistent app frame for every channel, editor, detail and profile. */
+#phone-content{display:grid;grid-template-rows:auto minmax(0,1fr);container-type:inline-size;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:#fff}
+#shared-status{position:relative;z-index:60;background:#fff;min-width:0}
+#app{min-height:0;min-width:0;font-family:inherit}
+#app .shot-shell{font-family:inherit}
+.guolairen-shell .direction-layer{padding-top:2px}
+.composer-channel-context{font-size:12px;line-height:1.5;color:#9ba1aa;margin:2px 0 15px;font-weight:400}
+.composer-channel-context span{color:#1772f6}
+#app .composer-bar{padding-top:10px;padding-bottom:10px;min-height:55px}
+#app .composer-screen{padding-top:14px}
