@@ -35,5 +35,7 @@ for i,s in enumerate(scenes):
 concat+=['file '+str(frame)]
 manifest=out/'frames.txt';manifest.write_text('\n'.join(concat)+'\n')
 ffmpeg=imageio_ffmpeg.get_ffmpeg_exe()
-subprocess.run([ffmpeg,'-y','-v','warning','-f','concat','-safe','0','-i',str(manifest),'-r','24','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-movflags','+faststart',str(a.output)],check=True)
-print(json.dumps({'video':str(a.output),'duration_seconds':sum(s['seconds'] for s in scenes),'scenes':len(scenes),'bytes':a.output.stat().st_size},ensure_ascii=False))
+subprocess.run([ffmpeg,'-y','-v','warning','-f','concat','-safe','0','-i',str(manifest),'-vf','fps=24,tpad=stop_mode=clone:stop_duration=20','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-movflags','+faststart','-t',str(sum(s['seconds'] for s in scenes)),str(a.output)],check=True)
+probe=imageio_ffmpeg.read_frames(str(a.output)); metadata=next(probe); probe.close()
+if abs(metadata['duration']-sum(s['seconds'] for s in scenes))>0.1: raise SystemExit('Encoded duration mismatch')
+print(json.dumps({'encoded_duration_seconds':metadata['duration'],'video':str(a.output),'duration_seconds':sum(s['seconds'] for s in scenes),'scenes':len(scenes),'bytes':a.output.stat().st_size},ensure_ascii=False))
