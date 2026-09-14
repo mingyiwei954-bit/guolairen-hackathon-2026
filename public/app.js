@@ -396,7 +396,11 @@ function itemRouteHTML(q) {
  const compact = `${q.stage ? itemStageName(q.stage) : '未填'} → ${targets.length ? itemStageName(targets[0]) : '不限'}${targets.length > 1 ? ` +${targets.length - 1}` : ''}`;
  return `<span class="stage-tag item-route" title="${escape(full)}" aria-label="${escape(full)}">${escape(compact)}</span>`;
 }
-function feedAnswerHTML(a, qid) { return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签"><span class="stage-tag" title="${escape(a.stage ? stageName(a.stage) : '阶段未填')} · ${answerKind(a)}">${a.stage ? escape(itemStageName(a.stage)) + ' · ' : ''}${answerKind(a)}</span></div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p><button class="item-vote ${a.voted ? 'voted' : ''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button></div></div>`; }
+function feedAnswerHTML(a, qid) {
+ const label = a.stage ? `<span class="stage-tag" title="${escape(stageName(a.stage))} · ${answerKind(a)}">${escape(itemStageName(a.stage))}</span>` : '';
+ const vote = `<button class="item-vote ${a.voted ? 'voted' : ''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>`;
+ return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签 · ${answerKind(a)}">${label}${vote}</div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p></div></div>`;
+}
 function cardHTML(q) {
  return `<article class="qa-card qa-feed-card" data-question-id="${q.id}" role="link" tabindex="0" aria-label="查看问题：${escape(q.title)}"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${itemRouteHTML(q)}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">暂时没有这个阶段的回答，等你来说。</p></div></div>`}</article>`;
 }
