@@ -51,6 +51,11 @@ def initialize():
         CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, stage TEXT NOT NULL, created INTEGER NOT NULL);
         CREATE TABLE IF NOT EXISTS questions(id INTEGER PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL,
           stage TEXT NOT NULL, target TEXT NOT NULL, owner TEXT, sample INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS question_targets(
+          question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+          stage TEXT NOT NULL CHECK(stage IN ('primary','middle','secondary','college','working','retired')),
+          position INTEGER NOT NULL CHECK(position BETWEEN 0 AND 5),
+          PRIMARY KEY(question_id,stage), UNIQUE(question_id,position));
         CREATE TABLE IF NOT EXISTS answers(id INTEGER PRIMARY KEY, question_id INTEGER NOT NULL REFERENCES questions(id),
           body TEXT NOT NULL, stage TEXT NOT NULL, owner TEXT, sample INTEGER NOT NULL DEFAULT 0,
           base_votes INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
@@ -60,6 +65,7 @@ def initialize():
         CREATE INDEX IF NOT EXISTS answers_question ON answers(question_id);
         CREATE INDEX IF NOT EXISTS votes_answer ON votes(answer_id);
         CREATE INDEX IF NOT EXISTS questions_recent ON questions(created DESC);
+        CREATE INDEX IF NOT EXISTS question_targets_stage ON question_targets(stage,question_id);
         ''')
         migrate_content_schema(db)
         recover_interrupted_ai_work(db)
@@ -91,6 +97,11 @@ def initialize():
                     db.execute('INSERT INTO answers(question_id,body,stage,sample,base_votes,created) VALUES(?,?,?,1,?,?)',
                                (qid, text, astage, count, 1700000000-i))
             db.execute("INSERT INTO metadata(key,value) VALUES('seed_v1','1')")
+        db.execute(
+            """INSERT OR IGNORE INTO question_targets(question_id,stage,position)
+               SELECT id,target,0 FROM questions
+               WHERE target IN ('primary','middle','secondary','college','working','retired')"""
+        )
 
 class RequestError(Exception):
     def __init__(self, message, status=400, code=None):
@@ -151,6 +162,30 @@ class Handler(BaseHTTPRequestHandler):
         if value not in STAGE_IDS:
             raise RequestError('请选择一个人生阶段')
         return value
+
+    def question_targets(self, data):
+        if 'targets' not in data:
+            return [self.stage(data.get('target'))]
+        values = data.get('targets')
+        if not isinstance(values, list) or not 1 <= len(values) <= len(STAGE_IDS):
+            raise RequestError('请选择 1 至 6 个人生阶段')
+        if any(not isinstance(value, str) or value not in STAGE_IDS for value in values):
+            raise RequestError('目标阶段格式不正确')
+        selected = set(values)
+        normalized = [stage_id for stage_id in STAGE_IDS if stage_id in selected]
+        if not normalized:
+            raise RequestError('请选择至少一个人生阶段')
+        return normalized
+
+    def target_rows(self, db, qid, fallback):
+        selected = {
+            row[0]
+            for row in db.execute('SELECT stage FROM question_targets WHERE question_id=?', (qid,))
+            if row[0] in STAGE_IDS
+        }
+        if not selected and fallback in STAGE_IDS:
+            selected.add(fallback)
+        return [stage_id for stage_id in STAGE_IDS if stage_id in selected]
 
     def answer_rows(self, db, qid, sid, stages=None):
         args = [sid, qid]
@@ -240,12 +275,13 @@ class Handler(BaseHTTPRequestHandler):
                     chosen = params.get('stage', ['all'])[0]
                     if chosen != 'all' and chosen not in allowed:
                         raise RequestError('这个阶段不在当前浏览方向内')
-                    targets = [chosen] if chosen != 'all' else allowed
+                    answer_stages = [chosen] if chosen != 'all' else allowed
                     items = []
                     for row in db.execute('SELECT id,title,body,stage,target,sample,created FROM questions ORDER BY created DESC,id DESC LIMIT 200'):
                         q = dict(row)
-                        eligible = self.answer_rows(db, q['id'], sid, targets) if targets else []
-                        if not eligible and q['target'] not in targets:
+                        q['targets'] = self.target_rows(db, q['id'], q['target'])
+                        eligible = self.answer_rows(db, q['id'], sid, answer_stages) if answer_stages else []
+                        if not eligible and not set(q['targets']).intersection(answer_stages):
                             continue
                         q['answer'] = eligible[0] if eligible else None
                         q['answer_count'] = len(eligible)
@@ -260,6 +296,7 @@ class Handler(BaseHTTPRequestHandler):
                     if not row:
                         raise RequestError('问题不存在', 404)
                     result = dict(row)
+                    result['targets'] = self.target_rows(db, qid, result['target'])
                     result['answers'] = self.answer_rows(db, qid, sid)
                 else:
                     raise RequestError('页面不存在', 404)
@@ -322,12 +359,17 @@ class Handler(BaseHTTPRequestHandler):
                 elif path == '/api/questions':
                     title = self.field(data, 'title', 100)
                     body = self.field(data, 'body', 1000, False)
-                    target = self.stage(data.get('target'))
+                    targets = self.question_targets(data)
+                    target = targets[0]
                     recent = db.execute('SELECT COUNT(*) FROM questions WHERE owner=? AND created>?', (sid, int(time.time())-60)).fetchone()[0]
                     if recent >= 5:
                         raise RequestError('已经收到你的问题，稍等一下再发吧', 429)
                     qid = db.execute('INSERT INTO questions(title,body,stage,target,owner,created) VALUES(?,?,?,?,?,?)',
                                      (title, body, user['stage'], target, sid, int(time.time()))).lastrowid
+                    db.executemany(
+                        'INSERT INTO question_targets(question_id,stage,position) VALUES(?,?,?)',
+                        [(qid, stage_id, position) for position, stage_id in enumerate(targets)],
+                    )
                     result = {'id': qid}
                 elif path == '/api/answers':
                     body = self.field(data, 'body', 1200)

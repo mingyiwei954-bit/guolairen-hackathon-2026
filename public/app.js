@@ -44,6 +44,63 @@ async function api(path, data) {
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 function stored(key, fallback = null) { try { const raw = sessionStorage.getItem(STORAGE_PREFIX + key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
 function store(key, value) { try { sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value)); } catch (_) { /* Storage is optional. */ } }
+function removeStored(key) { try { sessionStorage.removeItem(STORAGE_PREFIX + key); } catch (_) { /* Storage is optional. */ } }
+function questionTargets(question) {
+ const raw = Array.isArray(question?.targets) ? question.targets : (question?.target ? [question.target] : []);
+ const available = new Set((state.user?.stages || []).map(stage => stage.id));
+ return [...new Set(raw.map(String))].filter(id => available.has(id)).slice(0, 6);
+}
+function composerKey(origin) { return origin?.type === 'ai-turn' && origin.questionId ? `composer:ai:${origin.questionId}` : 'composer:feed'; }
+function composerSeed(prefill, origin) { return origin?.type === 'ai-turn' ? `ai:${origin.questionId}:${origin.turnIndex}:${prefill}` : 'feed'; }
+function normalizeTargets(values) {
+ const available = new Set((state.user?.stages || []).map(stage => stage.id));
+ return [...new Set((Array.isArray(values) ? values : [values]).filter(Boolean).map(String))].filter(id => available.has(id)).slice(0, 6);
+}
+function inheritedComposerTargets(origin) {
+ if (origin?.type === 'ai-turn') {
+  const inherited = questionTargets(state.detail);
+  if (inherited.length) return inherited;
+ }
+ return normalizeTargets([state.stage !== 'all' ? state.stage : state.allowed[0] || 'working']);
+}
+function composerTargetInputs(form = app.querySelector('#ask-form')) { return form ? [...form.querySelectorAll('input[name="targets"]')] : []; }
+function selectedComposerTargets(form = app.querySelector('#ask-form')) { return composerTargetInputs(form).filter(input => input.checked).map(input => input.value); }
+function saveCurrentComposerDraft() {
+ const form = app.querySelector('#ask-form');
+ if (!form) return;
+ const draft = {
+  title: form.elements.title?.value || '', body: form.elements.body?.value || '',
+  targets: selectedComposerTargets(form), sourceSeed: form.dataset.sourceSeed || 'feed'
+ };
+ store(form.dataset.draftKey || 'composer:feed', draft);
+}
+function composerTargetSummaryHTML(targets) {
+ return targets.map(id => `<button type="button" class="composer-target-chip" data-action="remove-target" data-value="${escape(id)}" aria-label="移除${escape(stageName(id))}"># ${escape(stageName(id))}<span aria-hidden="true">×</span></button>`).join('');
+}
+function syncComposerUI({save = true} = {}) {
+ const form = app.querySelector('#ask-form');
+ if (!form) return;
+ const titleLength = form.elements.title?.value.length || 0;
+ const bodyLength = form.elements.body?.value.length || 0;
+ const targets = selectedComposerTargets(form);
+ const titleStatus = app.querySelector('#question-title-status');
+ const bodyStatus = app.querySelector('#question-body-status');
+ const targetStatus = app.querySelector('#question-target-status');
+ const summary = app.querySelector('.composer-selected-targets');
+ if (titleStatus) {
+  titleStatus.classList.toggle('is-error', titleLength > 100);
+  titleStatus.textContent = titleLength > 100 ? `当前 ${titleLength} 字，请编辑到 100 字以内后发布。` : `${titleLength}/100`;
+ }
+ if (bodyStatus) bodyStatus.textContent = `${bodyLength}/1000`;
+ if (targetStatus) {
+  targetStatus.classList.toggle('is-error', targets.length < 1 || targets.length > 6);
+  targetStatus.textContent = targets.length ? `已选 ${targets.length}/6` : '至少选择一个阶段';
+ }
+ if (summary) summary.innerHTML = composerTargetSummaryHTML(targets);
+ const publish = app.querySelector('.composer-publish[form="ask-form"]');
+ if (publish) publish.disabled = form.dataset.submitting === 'true' || !form.elements.title?.value.trim() || titleLength > 100 || targets.length < 1 || targets.length > 6;
+ if (save) saveCurrentComposerDraft();
+}
 function detailView(id) {
  if (!state.detailViews.has(id)) {
   const saved = stored('detail:' + id, {});
@@ -186,11 +243,15 @@ function bindFilterControls() {
 }
 function controls(show) { app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
 function bottomTabBarHTML() { return `<nav class="bottom-tab-bar" aria-label="主导航"><button data-action="home" class="current" aria-current="page" aria-label="首页"><svg class="tab-icon tab-icon-home" viewBox="2 3 20 19" aria-hidden="true" focusable="false"><path d="M3.2 10.1 11 4.25a1.65 1.65 0 0 1 2 0l7.8 5.85v9.05a1.75 1.75 0 0 1-1.75 1.75H4.95a1.75 1.75 0 0 1-1.75-1.75Z" fill="currentColor"/><path d="M12 14.5v4" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="1.8"/></svg><span>首页</span></button><button data-action="unavailable" data-label="看山" aria-label="看山"><svg class="tab-icon tab-icon-mountain" viewBox="2.5 4.5 19 18.5" aria-hidden="true" focusable="false"><path d="M5.2 20.15c-1.3-1.12-1.6-3.15-1.27-5.25l1.16-7.72c.22-1.48 1.93-2.08 3-1.04l1.96 1.92A9.4 9.4 0 0 1 12 7.85c.67 0 1.32.07 1.95.21l1.96-1.92c1.07-1.04 2.78-.44 3 1.04l1.16 7.72c.33 2.1.03 4.13-1.27 5.25-1.32 1.14-3.65 1.35-6.8 1.35s-5.48-.21-6.8-1.35Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><circle cx="9.25" cy="14.25" r="1.05" fill="currentColor"/><circle cx="14.75" cy="14.25" r="1.05" fill="currentColor"/></svg><span>看山</span></button><button class="ask-entry" data-action="ask" aria-label="提出一个问题"><svg class="tab-create-icon" viewBox="0 0 42 32" aria-hidden="true" focusable="false"><rect width="42" height="32" rx="16" fill="currentColor"/><path d="M21 10v12M15 16h12" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2"/></svg></button><button data-action="unavailable" data-label="消息" aria-label="消息"><svg class="tab-icon tab-icon-message" viewBox="1.5 3 21 18" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="1.15" fill="currentColor"/><circle cx="15" cy="12" r="1.15" fill="currentColor"/></svg><span>消息</span></button><button data-action="profile" aria-label="未登录，设置我的阶段"><svg class="tab-icon tab-icon-profile" viewBox="2 2 20 20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 14.35c.78.82 1.78 1.23 3 1.23s2.22-.41 3-1.23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg><span>未登录</span></button></nav>`; }
-function bar(title) { return `<div class="screen-bar"><button data-action="back">← 返回</button><span>${escape(title)}</span><span></span></div>`; }
+function bar(title, trailing = '') { return `<div class="screen-bar"><button data-action="back">← 返回</button><span>${escape(title)}</span><span class="screen-bar-trailing">${trailing}</span></div>`; }
 function answerFooterHTML(a, qid, detail = false) { return `<footer class="answer-footer"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted ? 'voted' : ''}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>${detail ? '<span>来自这一程的声音</span>' : `<button data-action="detail" data-id="${qid}">听听其他回答 ↗</button>`}</footer>`; }
 function answerHTML(a, qid, detail = false) { return `<article class="qa-card detail-answer-card" data-answer-id="${a.id}"><div class="answer-meta"><span class="answer-line"></span><span>${escape(stageName(a.stage))} · ${answerKind(a)}</span></div><p class="answer-text">${escape(a.body)}</p>${answerFooterHTML(a, qid, detail)}</article>`; }
 function feedAnswerHTML(a, qid) { return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签">${a.stage ? `<span class="stage-tag">${escape(stageName(a.stage))} · ${answerKind(a)}</span>` : ''}</div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p></div></div>${answerFooterHTML(a, qid)}`; }
-function cardHTML(q) { return `<article class="qa-card qa-feed-card" data-question-id="${q.id}" role="link" tabindex="0" aria-label="查看问题：${escape(q.title)}"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${q.stage ? `<span class="stage-tag">${escape(stageName(q.stage))}</span>` : ''}${q.target ? `<span class="target-stage-tag">想听${escape(stageName(q.target))}</span>` : ''}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">这一程的声音，还在路上。<br>暂时没有所选阶段的回答。</p></div></div><footer class="answer-footer"><span>等待一个新视角</span><button data-action="detail" data-id="${q.id}">去回答 ↗</button></footer>`}</article>`; }
+function cardHTML(q) {
+ const targets = questionTargets(q);
+ const targetTags = targets.length ? `<span class="target-stage-tag">想听${escape(stageName(targets[0]))}</span>${targets.length > 1 ? `<span class="target-stage-count">另${targets.length - 1}个阶段</span>` : ''}` : '';
+ return `<article class="qa-card qa-feed-card" data-question-id="${q.id}" role="link" tabindex="0" aria-label="查看问题：${escape(q.title)}"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${q.stage ? `<span class="stage-tag">${escape(stageName(q.stage))}</span>` : ''}${targetTags}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">这一程的声音，还在路上。<br>暂时没有所选阶段的回答。</p></div></div><footer class="answer-footer"><span>等待一个新视角</span><button data-action="detail" data-id="${q.id}">去回答 ↗</button></footer>`}</article>`;
+}
 function captureFeedView(focusedQuestionId = null) {
  const viewport = app.querySelector('.feed-viewport');
  if (!viewport) return state.feedReturn;
@@ -234,7 +295,7 @@ function renderFeed(restore = null) {
  cleanupAIPoll(); state.aiRequest++;
  if (!restore) filterVisibilityProgress = 1;
  state.screen = 'feed'; controls(true);
- app.innerHTML = `<div class="app-shell"><header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div><nav class="channel-tabs" aria-label="内容频道"><button data-action="unavailable" data-label="推荐">推荐</button><button data-action="unavailable" data-label="热榜">热榜</button><button data-action="unavailable" data-label="故事">故事</button><button data-action="unavailable" data-label="知识">知识</button><button data-action="home" class="active" aria-current="page">过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav></header><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="feed-heading"><span>所选阶段 · 高赞优先</span><small>独立体验版</small></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section>${bottomTabBarHTML()}</div>`;
+ app.innerHTML = `<div class="app-shell"><header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div><nav class="channel-tabs" aria-label="内容频道"><button data-action="unavailable" data-label="推荐">推荐</button><button data-action="unavailable" data-label="热榜">热榜</button><button data-action="unavailable" data-label="故事">故事</button><button data-action="unavailable" data-label="知识">知识</button><button data-action="home" class="active" aria-current="page">过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav></header><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0">${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section>${bottomTabBarHTML()}</div>`;
  restoreFeedViewport(restore || {scrollTop:0, filterProgress:1});
 }
 async function loadFeed({restore = null} = {}) {
@@ -248,11 +309,26 @@ async function returnToFeed() { const restore = state.feedReturn || stored('feed
 function options(selected) { return state.user.stages.map(s => `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${escape(s.label)}</option>`).join(''); }
 function showProfile() { ++state.request; state.screen = 'profile'; controls(false); app.innerHTML = `${bar('我的阶段')}<section class="form-screen"><h2>你正走到哪一程？</h2><p class="helper">用阶段认识彼此，不用头衔定义彼此。<br>阶段由你自己选择，会随问题和回答一起显示。</p><form id="profile-form"><label for="profile-stage">我目前的阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><p class="helper">体验版按求学、工作、退休的顺序组织浏览方向，不代表经验或能力的高低。默认阶段为大学，可随时修改。</p><button class="primary-button" type="submit">保存我的阶段</button></form><p class="helper">当前使用本浏览器的访客身份保存操作，尚未接入知乎账号。</p></section>`; app.scrollTop = 0; }
 function showAsk(prefill = '', origin = null) {
- ++state.request; cleanupAIPoll(); state.screen = 'ask'; state.composerOrigin = origin; controls(false);
- const fromAI = origin?.type === 'ai-turn';
- const selectedTarget = fromAI && state.detail?.target ? state.detail.target : (state.stage !== 'all' ? state.stage : state.allowed[0] || 'working');
- app.innerHTML = `${bar('留下一个问题')}<section class="form-screen"><h2>向另一程，问个好。</h2><p class="helper">此刻的你是「${escape(stageName(state.user.stage))}」。一个小问题，也可以打开一个新视角。</p>${fromAI ? '<p class="prefill-note">已带入你刚才的追问，可以继续修改；只有确认发布后才会进入问答流。</p>' : ''}<form id="ask-form"><label for="question-title">你想问什么？</label><textarea id="question-title" name="title" required maxlength="100" aria-describedby="question-title-status" placeholder="比如：你最近最快乐的一件事，是什么？">${escape(prefill)}</textarea><p id="question-title-status" class="field-status ${prefill.length > 100 ? 'is-error' : ''}" aria-live="polite">${prefill.length > 100 ? `当前 ${prefill.length} 字，请编辑到 100 字以内后发布。` : `${prefill.length}/100`}</p><label for="question-target">最想听哪个阶段的人回答？</label><select id="question-target" name="target">${options(selectedTarget)}</select><label for="question-body">再说一点背景（选填）</label><textarea id="question-body" name="body" maxlength="1000" placeholder="帮助对方理解，你为什么想问这个问题。"></textarea><button class="primary-button" type="submit">把问题送出去 ↗</button></form></section>`;
- app.scrollTop = 0; requestAnimationFrame(() => app.querySelector('#question-title')?.focus({preventScroll:true}));
+ ++state.request; cleanupAIPoll(); state.screen = 'ask'; controls(false);
+ origin = origin || {type:'feed'}; state.composerOrigin = origin;
+ const fromAI = origin.type === 'ai-turn';
+ const draftKey = composerKey(origin); const sourceSeed = composerSeed(prefill, origin);
+ const saved = stored(draftKey, null);
+ const useSaved = !!saved && (!fromAI || saved.sourceSeed === sourceSeed);
+ const initialTargets = normalizeTargets(useSaved ? saved.targets : inheritedComposerTargets(origin));
+ const draft = {
+  title: useSaved ? String(saved.title || '') : String(prefill || ''),
+  body: useSaved ? String(saved.body || '') : '',
+  targets: useSaved ? initialTargets : (initialTargets.length ? initialTargets : normalizeTargets(['working'])),
+  sourceSeed
+ };
+ store(draftKey, draft); store('composer:active', {origin, prefill:String(prefill || '')});
+ const targetChoices = state.user.stages.map(stage => `<label class="composer-target-option"><input type="checkbox" name="targets" value="${escape(stage.id)}" ${draft.targets.includes(stage.id) ? 'checked' : ''}><span># ${escape(stage.label)}</span></label>`).join('');
+ const publish = '<button class="composer-publish" type="submit" form="ask-form">发布</button>';
+ app.innerHTML = `${bar('向过来人提问', publish)}<section class="composer-screen">${fromAI ? '<p class="composer-context-note">已带入刚才的追问，可继续修改后发布。</p>' : ''}<form id="ask-form" class="composer-form" data-draft-key="${escape(draftKey)}" data-source-seed="${escape(sourceSeed)}"><div class="composer-field composer-question-field"><label for="question-title">问题</label><textarea id="question-title" name="title" required maxlength="100" aria-describedby="question-title-status" placeholder="写下你真正想问的问题">${escape(draft.title)}</textarea><p id="question-title-status" class="field-status" aria-live="polite"></p></div><div class="composer-field composer-background-field"><label for="question-body">补充背景 <span>选填</span></label><textarea id="question-body" name="body" maxlength="1000" aria-describedby="question-body-status" placeholder="补充经历或困惑，让回答更贴近你"></textarea><p id="question-body-status" class="field-status" aria-live="polite"></p></div><section class="composer-target-section" aria-labelledby="composer-target-heading"><div class="composer-target-heading"><div><strong id="composer-target-heading">想听谁说</strong><small>只是表达期待，不限制其他阶段回答</small></div><span id="question-target-status" class="field-status" aria-live="polite"></span></div><div class="composer-target-summary"><div class="composer-selected-targets" aria-label="已选择阶段"></div><button type="button" class="composer-target-add" data-action="toggle-targets" aria-expanded="false" aria-controls="composer-target-picker"># 想听谁说</button></div><div id="composer-target-picker" class="composer-target-picker" hidden><fieldset><legend class="sr-only">选择希望回答的阶段，至少一个，最多六个</legend><div class="composer-target-options">${targetChoices}</div></fieldset><div class="composer-target-picker-footer"><span>可多选，最多 6 个阶段</span><button type="button" data-action="finish-targets">完成</button></div></div></section></form></section>`;
+ app.querySelector('#question-body').value = draft.body;
+ app.scrollTop = 0; syncComposerUI({save:false});
+ requestAnimationFrame(() => app.querySelector('#question-title')?.focus({preventScroll:true}));
 }
 function availableAnswerStages(q) { const present = new Set(q.answers.map(answer => answer.stage)); return state.user.stages.map(stage => stage.id).filter(id => present.has(id)); }
 function contentScopeLabel(scope) { return ({summary:'摘要', excerpt:'节选', full:'全文'})[scope] || '资料'; }
@@ -290,12 +366,13 @@ function aiPanelHTML(q, view) {
 function renderDetail({focusAnswerId = null, restoreScroll = true} = {}) {
  const q = state.detail; if (!q) return;
  const view = detailView(q.id);
+ const requestedStages = questionTargets(q);
  const stages = availableAnswerStages(q);
  if (view.answerStage !== 'all' && !stages.includes(view.answerStage)) view.answerStage = 'all';
  const answers = view.answerStage === 'all' ? q.answers : q.answers.filter(answer => answer.stage === view.answerStage);
  const stageLabel = view.answerStage === 'all' ? '全部阶段' : stageName(view.answerStage);
  controls(false); state.screen = 'detail';
- app.innerHTML = `${bar('这一问，听大家说')}<section class="detail-screen"><article class="qa-card detail-question-card"><div class="question-meta"><span class="stage-tag">${escape(stageName(q.stage))}</span><span>想听 · ${escape(stageName(q.target))}</span></div><h2>${escape(q.title)}</h2>${q.body ? `<p class="question-body">${escape(q.body)}</p>` : ''}</article><div class="detail-actions"><button class="primary-button" data-action="answer">说说我的看法</button></div><section class="detail-answers" aria-labelledby="answer-section-title"><div class="detail-section-heading"><div><strong id="answer-section-title">听不同阶段的人说</strong><span>${q.answers.length} 条 · 按赞同数排列</span></div><div class="detail-stage-filter chips" role="group" aria-label="同题回答阶段筛选"><button data-action="detail-stage" data-value="all" class="${view.answerStage === 'all' ? 'active' : ''}" aria-pressed="${view.answerStage === 'all'}">全部</button>${stages.map(id => `<button data-action="detail-stage" data-value="${id}" class="${view.answerStage === id ? 'active' : ''}" aria-pressed="${view.answerStage === id}">${escape(stageName(id))}</button>`).join('')}</div></div><div class="section-caption">${escape(stageLabel)}的回答 · ${answers.length} 条</div>${answers.length ? answers.map(answer => answerHTML(answer, q.id, true)).join('') : '<div class="empty-state">这一阶段还没有回答。你的经历，也许能带来第一个新视角。</div>'}</section><section class="detail-ai-section"><button class="detail-ai-toggle" type="button" data-action="toggle-ai" aria-expanded="${view.aiOpen}" aria-controls="detail-ai-panel"><span><strong>带着资料继续问</strong><small>AI 依据资料整理 · 最多三问 · 来源可查</small></span><span aria-hidden="true">${view.aiOpen ? '收起' : '展开'}</span></button><div id="detail-ai-panel" class="detail-ai-panel" ${view.aiOpen ? '' : 'hidden'} aria-live="polite">${view.aiOpen ? aiPanelHTML(q, view) : ''}</div></section></section>`;
+ app.innerHTML = `${bar('这一问，听大家说')}<section class="detail-screen"><article class="qa-card detail-question-card"><div class="question-meta"><span class="stage-tag">${escape(stageName(q.stage))}</span>${requestedStages.length ? `<span>想听 · ${requestedStages.map(id => escape(stageName(id))).join('、')}</span>` : ''}</div><h2>${escape(q.title)}</h2>${q.body ? `<p class="question-body">${escape(q.body)}</p>` : ''}</article><div class="detail-actions"><button class="primary-button" data-action="answer">说说我的看法</button></div><section class="detail-answers" aria-labelledby="answer-section-title"><div class="detail-section-heading"><div><strong id="answer-section-title">听不同阶段的人说</strong><span>${q.answers.length} 条 · 按赞同数排列</span></div><div class="detail-stage-filter chips" role="group" aria-label="同题回答阶段筛选"><button data-action="detail-stage" data-value="all" class="${view.answerStage === 'all' ? 'active' : ''}" aria-pressed="${view.answerStage === 'all'}">全部</button>${stages.map(id => `<button data-action="detail-stage" data-value="${id}" class="${view.answerStage === id ? 'active' : ''}" aria-pressed="${view.answerStage === id}">${escape(stageName(id))}</button>`).join('')}</div></div><div class="section-caption">${escape(stageLabel)}的回答 · ${answers.length} 条</div>${answers.length ? answers.map(answer => answerHTML(answer, q.id, true)).join('') : '<div class="empty-state">这一阶段还没有回答。你的经历，也许能带来第一个新视角。</div>'}</section><section class="detail-ai-section"><button class="detail-ai-toggle" type="button" data-action="toggle-ai" aria-expanded="${view.aiOpen}" aria-controls="detail-ai-panel"><span><strong>带着资料继续问</strong><small>AI 依据资料整理 · 最多三问 · 来源可查</small></span><span aria-hidden="true">${view.aiOpen ? '收起' : '展开'}</span></button><div id="detail-ai-panel" class="detail-ai-panel" ${view.aiOpen ? '' : 'hidden'} aria-live="polite">${view.aiOpen ? aiPanelHTML(q, view) : ''}</div></section></section>`;
  if (focusAnswerId) {
   requestAnimationFrame(() => { const answer = app.querySelector(`[data-answer-id="${focusAnswerId}"]`); if (answer) { answer.tabIndex = -1; answer.scrollIntoView({block:'center'}); answer.focus({preventScroll:true}); view.scrollTop = app.scrollTop; saveDetailView(q.id); } });
  } else if (restoreScroll) app.scrollTop = clamp(view.scrollTop || 0, 0, Math.max(0, app.scrollHeight - app.clientHeight));
@@ -368,7 +445,11 @@ function updateVoteState(answerId, result) {
 }
 async function handleBack() {
  if (state.screen === 'answer') return showDetail(state.detail.id, {captureFeed:false});
- if (state.screen === 'ask' && state.composerOrigin?.type === 'ai-turn') return showDetail(state.composerOrigin.questionId, {captureFeed:false});
+ if (state.screen === 'ask') {
+  saveCurrentComposerDraft(); removeStored('composer:active');
+  if (state.composerOrigin?.type === 'ai-turn') return showDetail(state.composerOrigin.questionId, {captureFeed:false});
+  return returnToFeed();
+ }
  if (state.screen === 'detail' && state.detail) { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); }
  return returnToFeed();
 }
@@ -410,6 +491,25 @@ phone.addEventListener('click', async event => {
    const view = detailView(state.detail.id); const turnIndex = Number(b.dataset.turnIndex); const turn = view.aiSnapshot?.turns?.[turnIndex]; if (!turn?.question) return;
    view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); return showAsk(turn.question, {type:'ai-turn', questionId:state.detail.id, turnIndex});
   }
+  if (action === 'toggle-targets') {
+   const picker = app.querySelector('#composer-target-picker'); if (!picker) return;
+   picker.hidden = false; b.setAttribute('aria-expanded', 'true');
+   requestAnimationFrame(() => picker.querySelector('input')?.focus({preventScroll:true}));
+   return;
+  }
+  if (action === 'finish-targets') {
+   const targets = selectedComposerTargets();
+   if (!targets.length) { notice('请至少选择一个希望回答的阶段'); return app.querySelector('#composer-target-picker input')?.focus(); }
+   const picker = app.querySelector('#composer-target-picker'); const trigger = app.querySelector('[data-action="toggle-targets"]');
+   if (picker) picker.hidden = true; if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus(); }
+   return;
+  }
+  if (action === 'remove-target') {
+   const form = app.querySelector('#ask-form'); const selected = selectedComposerTargets(form);
+   if (selected.length <= 1) return notice('至少保留一个希望回答的阶段');
+   const input = composerTargetInputs(form).find(candidate => candidate.value === b.dataset.value);
+   if (input) input.checked = false; syncComposerUI(); return;
+  }
   if (action === 'retry') return await boot();
   if (action === 'vote') { const answerId = Number(b.dataset.id); b.disabled = true; const result = await api('/vote', {answer_id:answerId, active:b.dataset.voted !== 'true'}); updateVoteState(answerId, result); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = `${result.voted ? '♥' : '♡'} <span>${result.votes}</span>`; }
  } catch (e) { notice(e.message); } finally { b.disabled = false; }
@@ -424,23 +524,30 @@ app.addEventListener('input', event => {
   const view = detailView(state.detail.id); view.aiDraft = event.target.value; saveDetailView(state.detail.id);
   const count = app.querySelector('#ai-draft-count'); if (count) count.textContent = String(event.target.value.length);
  }
- if (event.target.id === 'question-title') {
-  const status = app.querySelector('#question-title-status'); if (!status) return;
-  const length = event.target.value.length; status.classList.toggle('is-error', length > 100);
-  status.textContent = length > 100 ? `当前 ${length} 字，请编辑到 100 字以内后发布。` : `${length}/100`;
- }
+ if (event.target.id === 'question-title' || event.target.id === 'question-body') syncComposerUI();
+});
+app.addEventListener('change', event => {
+ if (!event.target.matches?.('#ask-form input[name="targets"]')) return;
+ const selected = selectedComposerTargets();
+ if (selected.length > 6) { event.target.checked = false; notice('最多选择 6 个阶段'); }
+ syncComposerUI();
 });
 app.addEventListener('submit', async event => {
  event.preventDefault(); const form = event.target;
  if (form.id === 'ai-question-form') return submitAIQuestion(form);
- const submit = form.querySelector('[type=submit]'); if (submit.disabled) return; submit.disabled = true; let writeSucceeded = false;
+ const submit = form.querySelector('[type=submit]') || app.querySelector(`[type="submit"][form="${form.id}"]`); if (!submit || submit.disabled) return;
+ submit.disabled = true; if (form.id === 'ask-form') form.dataset.submitting = 'true'; let writeSucceeded = false;
  const data = Object.fromEntries(new FormData(form));
  try {
   if (form.id === 'profile-form') { const user = await api('/profile', data); state.user.stage = user.stage; state.stage = 'all'; await loadFeed(); notice('阶段已更新'); }
   if (form.id === 'ask-form') {
    data.title = String(data.title || '').trim();
    if (data.title.length > 100) { app.querySelector('#question-title-status')?.classList.add('is-error'); app.querySelector('#question-title')?.focus(); throw new Error('请把问题编辑到 100 字以内后发布'); }
+   data.targets = selectedComposerTargets(form);
+   if (!data.targets.length || data.targets.length > 6) { app.querySelector('[data-action="toggle-targets"]')?.focus(); throw new Error('请选择 1 至 6 个希望回答的阶段'); }
+   data.target = data.targets[0];
    const q = await api('/questions', data); writeSucceeded = true; state.composerOrigin = null;
+   removeStored(form.dataset.draftKey || 'composer:feed'); removeStored('composer:active');
    try { await showDetail(q.id, {captureFeed:false}); notice('问题已保存，等一个新视角'); }
    catch (_) { showSavedRecovery(q.id, 'question'); notice('问题已保存，请勿重复发布'); }
   }
@@ -450,12 +557,19 @@ app.addEventListener('submit', async event => {
    try { await showDetail(questionId, {captureFeed:false, focusAnswerId:result.id}); notice('回答已保存'); }
    catch (_) { showSavedRecovery(questionId, 'answer'); notice('回答已保存，请勿重复发布'); }
   }
- } catch (e) { notice(e.message); } finally { if (!writeSucceeded && submit.isConnected) submit.disabled = false; }
+ } catch (e) {
+  notice(form.id === 'ask-form' && e instanceof TypeError ? '网络连接失败，草稿已保留，请稍后重试' : e.message);
+ } finally {
+  if (!writeSucceeded && form.id === 'ask-form' && form.isConnected) { form.dataset.submitting = 'false'; syncComposerUI(); }
+  else if (!writeSucceeded && submit.isConnected) submit.disabled = false;
+ }
 });
 async function boot() {
  try {
   state.user = await api('/me'); const restore = stored('feed', null); state.feedReturn = restore;
   try { await loadFeed({restore}); } catch (error) { if (!restore) throw error; state.mode = 'older'; state.stage = 'all'; state.feedReturn = null; await loadFeed(); }
+  const activeComposer = stored('composer:active', null);
+  if (activeComposer?.origin && typeof activeComposer.prefill === 'string') showAsk(activeComposer.prefill, activeComposer.origin);
  } catch (e) { controls(false); app.innerHTML = `<div class="empty-state"><p>${escape(e.message)}</p><button class="secondary-button" data-action="retry">重新连接</button></div>`; }
 }
 const modelContext = document.modelContext;
