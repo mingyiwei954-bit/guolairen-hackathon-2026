@@ -794,3 +794,21 @@ a { color: inherit; }
 @media(max-height:650px){.answer-reader{padding:15px 16px 8px}.answer-person{margin-bottom:12px}.answer-full-text{font-size:16px;line-height:1.65;margin-bottom:12px}.answer-person-followup{padding-top:12px}.answer-person-followup>small{display:none}.answer-swipe-hint{padding-top:8px}.answer-flow-bottom{min-height:55px}}
 
 .answer-more>div small{display:block;padding:8px 10px;font-size:10px;line-height:1.5;color:#999}
+
+/* Compact composer: content sets field height instead of empty fixed blocks. */
+.composer-screen{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.composer-channel-context{margin:8px 0;color:#929ba7;font-size:11px}
+.composer-field{padding:8px 0 5px}.composer-field>label{margin-bottom:4px;font-size:12px}
+.composer-question-field textarea{height:38px;font-size:18px;line-height:1.5}
+.composer-background-field textarea{height:32px;font-size:14px;line-height:1.55}
+.composer-field .field-status{margin:1px 0 0;font-size:10px;line-height:1.3}
+.composer-personal,.composer-direction{padding:6px 0 8px}
+.composer-personal legend,.composer-direction legend{font-size:13px}
+.composer-personal-options{gap:0 14px}
+.composer-text-option,.composer-target-option{min-height:32px;font-size:12px}
+.composer-target-section{padding:6px 0 2px}.composer-target-heading>div{gap:2px}
+.composer-target-heading strong{font-size:13px}.composer-target-heading small{font-size:10px}
+.composer-target-summary{margin-top:4px;gap:0 14px}
+.composer-target-chip,.composer-target-add{min-height:32px;padding:4px 0;font-size:12px}
+.composer-target-picker{margin-top:5px;padding-top:3px}.composer-target-options{gap:0 18px}
+.composer-target-picker-footer{margin-top:10px;padding-bottom:4px}.composer-target-picker-footer button{min-height:32px}

@@ -127,9 +127,19 @@ function saveCurrentComposerDraft() {
 function composerTargetSummaryHTML(targets) {
  return targets.map(id => `<button type="button" class="composer-target-chip" data-action="remove-target" data-value="${escape(id)}" aria-label="移除${escape(stageName(id))}"># ${escape(stageName(id))}<span aria-hidden="true">×</span></button>`).join('');
 }
+function fitComposerTextareas() {
+ for(const field of app.querySelectorAll('.composer-field textarea')) {
+  const minimum=field.name==='title'?38:32, maximum=field.name==='title'?160:240;
+  field.style.height='0px';
+  const contentHeight=field.scrollHeight;
+  field.style.height=`${Math.max(minimum,Math.min(maximum,contentHeight))}px`;
+  field.style.overflowY=contentHeight>maximum?'auto':'hidden';
+ }
+}
 function syncComposerUI({save = true} = {}) {
  const form = app.querySelector('#ask-form');
  if (!form) return;
+ fitComposerTextareas();
  const titleLength = form.elements.title?.value.length || 0;
  const bodyLength = form.elements.body?.value.length || 0;
  const targets = selectedComposerTargets(form);
@@ -300,8 +310,9 @@ function bindFilterControls() {
   Object.entries(listeners).forEach(([type,fn]) => viewport.removeEventListener(type,fn));
  };
 }
+let composerResize=null;
 let answerDeckResize=null;
-function controls(show) { answerDeckResize?.disconnect();answerDeckResize=null;app.classList.remove('answer-flow-mode'); app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
+function controls(show) { composerResize?.disconnect();composerResize=null;answerDeckResize?.disconnect();answerDeckResize=null;app.classList.remove('answer-flow-mode'); app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
 const CHANNEL_TABS = [['recommend','推荐'], ['hot','热榜'], ['story','故事'], ['knowledge','知识']];
 function channelTabsHTML(active = 'guolairen') {
  const demoTabs = CHANNEL_TABS.map(([id, label]) => `<button data-action="channel" data-channel="${id}" class="${active === id ? 'active' : ''}" ${active === id ? 'aria-current="page"' : ''}>${label}</button>`).join('');
@@ -514,6 +525,9 @@ function showAsk(prefill = '', origin = null) {
  app.innerHTML = `${composerBar}<section class="composer-screen"><p class="composer-channel-context"><span>过来人</span> · 向另一程的人提问</p>${fromAI ? '<p class="composer-context-note">已带入刚才的追问，可继续修改后发布。</p>' : ''}<form id="ask-form" class="composer-form" data-draft-key="${escape(draftKey)}" data-source-seed="${escape(sourceSeed)}"><div class="composer-field composer-question-field"><label for="question-title">问题</label><textarea id="question-title" name="title" required maxlength="100" aria-describedby="question-title-status" placeholder="写下你真正想问的问题">${escape(draft.title)}</textarea><p id="question-title-status" class="field-status" aria-live="polite"></p></div><div class="composer-field composer-background-field"><label for="question-body">补充背景 <span>选填</span></label><textarea id="question-body" name="body" maxlength="1000" aria-describedby="question-body-status" placeholder="补充经历或困惑，让回答更贴近你"></textarea><p id="question-body-status" class="field-status" aria-live="polite"></p></div><fieldset class="composer-personal"><legend>我的阶段 <small>选填，仅用于这条问题</small></legend><div class="composer-personal-options">${stageChoices}</div></fieldset><fieldset class="composer-direction"><legend>提问方向</legend><div class="composer-personal-options">${directions}</div></fieldset><section class="composer-target-section" aria-labelledby="composer-target-heading"><div class="composer-target-heading"><div><strong id="composer-target-heading">想听谁说</strong><small>只是表达期待，不限制其他阶段回答</small></div><span id="question-target-status" class="field-status" aria-live="polite"></span></div><div class="composer-target-summary"><div class="composer-selected-targets" aria-label="已选择阶段"></div><button type="button" class="composer-target-add" data-action="toggle-targets" aria-expanded="false" aria-controls="composer-target-picker"># 想听谁说</button></div><div id="composer-target-picker" class="composer-target-picker" hidden><fieldset><legend class="sr-only">选择希望回答的阶段，可不选，最多六个</legend><div class="composer-target-options">${targetChoices}</div><p id="composer-target-empty" class="helper" hidden>这个方向没有可选阶段，可以切换提问方向。</p></fieldset><div class="composer-target-picker-footer"><span>可不选，也可以多选</span><button type="button" data-action="finish-targets">完成</button></div></div></section></form></section>`;
  app.querySelector('#question-body').value = draft.body;
  app.scrollTop = 0; updateComposerChoices();
+ let lastComposerWidth=0;
+ composerResize=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==lastComposerWidth){lastComposerWidth=width;fitComposerTextareas();}});
+ composerResize.observe(app.querySelector('.composer-screen'));
  requestAnimationFrame(() => app.querySelector('#question-title')?.focus({preventScroll:true}));
 }
 function availableAnswerStages(q) { const present = new Set(q.answers.map(answer => answer.stage)); return state.user.stages.map(stage => stage.id).filter(id => present.has(id)); }
