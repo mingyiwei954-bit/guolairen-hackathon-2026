@@ -1,34 +1,73 @@
 'use strict';
 const app = document.getElementById('app');
 const phone = document.querySelector('.phone');
-const state = { user: null, mode: 'older', stage: 'all', feed: [], allowed: [], detail: null, screen: 'feed', request: 0 };
+const state = {
+ user: null, mode: 'older', stage: 'all', feed: [], allowed: [], detail: null,
+ screen: 'feed', request: 0, feedReturn: null, composerOrigin: null,
+ detailViews: new Map(), aiRequest: 0
+};
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stageName = id => state.user?.stages.find(s => s.id === id)?.label || id;
+const answerKind = answer => (answer?.is_demo ?? answer?.sample) ? '示例' : '自述';
 let noticeTimer;
 const FILTER_FADE_DISTANCE = 70;
 const FILTER_SCROLL_JITTER = 1.75;
 const FILTER_DIRECTION_CONFIRM = 5;
+const FILTER_SETTLE_DELAY = 160;
+const FILTER_SETTLE_DURATION = 150;
+const STORAGE_PREFIX = 'past-voices-v1:';
 let filterVisibilityProgress = 1;
 let filterViewport = null;
 let filterStack = null;
 let filterScrollCleanup = null;
 let filterFrame = 0;
 let filterAdjustFrame = 0;
+let filterSettleFrame = 0;
+let filterSettleTimer = 0;
 let filterLayoutAdjusting = false;
 let filterLastScrollTop = 0;
 let filterActiveDirection = 0;
 let filterCandidateDirection = 0;
 let filterCandidateDistance = 0;
 let filterCollapsedHeight = 0;
+let aiPollTimer = 0;
+let aiPollStartedAt = 0;
 function notice(message) { const n = document.getElementById('notice'); n.textContent = message; n.classList.add('visible'); clearTimeout(noticeTimer); noticeTimer = setTimeout(() => n.classList.remove('visible'), 3200); }
-async function api(path, data) { const response = await fetch('/api' + path, { method: data === undefined ? 'GET' : 'POST', headers: data === undefined ? {} : {'Content-Type':'application/json'}, body: data === undefined ? undefined : JSON.stringify(data) }); const result = await response.json(); if (!response.ok) throw new Error(result.error || '暂时无法连接，请重试'); return result; }
+class APIError extends Error { constructor(message, status, payload) { super(message); this.status = status; this.payload = payload; } }
+async function api(path, data) {
+ const response = await fetch('/api' + path, { method: data === undefined ? 'GET' : 'POST', headers: data === undefined ? {} : {'Content-Type':'application/json'}, body: data === undefined ? undefined : JSON.stringify(data) });
+ let result = {};
+ try { result = await response.json(); } catch (_) { /* The status still carries a useful failure. */ }
+ if (!response.ok) throw new APIError(result.error || '暂时无法连接，请重试', response.status, result);
+ return result;
+}
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+function stored(key, fallback = null) { try { const raw = sessionStorage.getItem(STORAGE_PREFIX + key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
+function store(key, value) { try { sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value)); } catch (_) { /* Storage is optional. */ } }
+function detailView(id) {
+ if (!state.detailViews.has(id)) {
+  const saved = stored('detail:' + id, {});
+  state.detailViews.set(id, {
+   answerStage: saved.answerStage || 'all', scrollTop: Number(saved.scrollTop) || 0,
+   aiOpen: !!saved.aiOpen, aiDraft: typeof saved.aiDraft === 'string' ? saved.aiDraft : '',
+   aiSnapshot: null, aiLoading: false, aiSubmitting: false, aiUncertain: false, aiError: ''
+  });
+ }
+ return state.detailViews.get(id);
+}
+function saveDetailView(id) {
+ const view = detailView(id);
+ store('detail:' + id, {answerStage:view.answerStage, scrollTop:view.scrollTop, aiOpen:view.aiOpen, aiDraft:view.aiDraft});
+}
+function cleanupAIPoll() { clearTimeout(aiPollTimer); aiPollTimer = 0; aiPollStartedAt = 0; }
 function cleanupFilterControls() {
  if (filterScrollCleanup) filterScrollCleanup();
  if (filterFrame) cancelAnimationFrame(filterFrame);
  if (filterAdjustFrame) cancelAnimationFrame(filterAdjustFrame);
+ if (filterSettleFrame) cancelAnimationFrame(filterSettleFrame);
+ clearTimeout(filterSettleTimer);
  filterViewport = null; filterStack = null; filterScrollCleanup = null;
- filterFrame = 0; filterAdjustFrame = 0; filterLayoutAdjusting = false;
+ filterFrame = 0; filterAdjustFrame = 0; filterSettleFrame = 0; filterSettleTimer = 0; filterLayoutAdjusting = false;
 }
 function compensateFilterLayout(delta, minimumScrollTop = 0, baseScrollTop = filterViewport?.scrollTop || 0) {
  if (!filterViewport || !delta) return;
@@ -53,6 +92,7 @@ function applyFilterVisibility() {
   const scrollTopBeforeRestore = filterViewport.scrollTop;
   filterStack.classList.remove('is-collapsed');
   filterStack.removeAttribute('aria-hidden');
+  filterStack.inert = false;
   filterStack.style.setProperty('--filter-progress', '0');
   filterStack.style.setProperty('--filter-offset', '-7px');
   void filterStack.offsetHeight;
@@ -65,11 +105,34 @@ function applyFilterVisibility() {
   const scrollTopBeforeCollapse = filterViewport.scrollTop;
   filterStack.classList.add('is-collapsed');
   filterStack.setAttribute('aria-hidden', 'true');
+  filterStack.inert = true;
   compensateFilterLayout(-filterCollapsedHeight, FILTER_DIRECTION_CONFIRM + FILTER_SCROLL_JITTER, scrollTopBeforeCollapse);
  }
 }
 function queueFilterVisibility() {
  if (!filterFrame) filterFrame = requestAnimationFrame(applyFilterVisibility);
+}
+function settleFilterVisibility() {
+ filterSettleTimer = 0;
+ const target = filterVisibilityProgress >= .5 ? 1 : 0;
+ const start = filterVisibilityProgress;
+ if (start === target) { queueFilterVisibility(); return; }
+ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if (reduceMotion) { filterVisibilityProgress = target; queueFilterVisibility(); return; }
+ const started = performance.now();
+ const step = now => {
+  const elapsed = clamp((now - started) / FILTER_SETTLE_DURATION, 0, 1);
+  const eased = 1 - Math.pow(1 - elapsed, 3);
+  filterVisibilityProgress = start + (target - start) * eased;
+  if (elapsed === 1) filterVisibilityProgress = target;
+  applyFilterVisibility();
+  filterSettleFrame = elapsed < 1 ? requestAnimationFrame(step) : 0;
+ };
+ filterSettleFrame = requestAnimationFrame(step);
+}
+function scheduleFilterSettle() {
+ clearTimeout(filterSettleTimer);
+ filterSettleTimer = setTimeout(settleFilterVisibility, FILTER_SETTLE_DELAY);
 }
 function bindFilterControls() {
  cleanupFilterControls();
@@ -78,12 +141,14 @@ function bindFilterControls() {
  if (!filterViewport || !filterStack) return;
  filterLastScrollTop = clamp(filterViewport.scrollTop, 0, Math.max(0, filterViewport.scrollHeight - filterViewport.clientHeight));
  filterActiveDirection = 0; filterCandidateDirection = 0; filterCandidateDistance = 0;
- filterCollapsedHeight = filterStack.getBoundingClientRect().height;
+ const measuredFilterHeight = filterStack.getBoundingClientRect().height;
+ if (measuredFilterHeight > 0) filterCollapsedHeight = measuredFilterHeight;
  filterStack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
  filterStack.style.setProperty('--filter-offset', `${(-7 * (1 - filterVisibilityProgress)).toFixed(2)}px`);
  if (filterVisibilityProgress === 0) {
   filterStack.classList.add('is-collapsed');
   filterStack.setAttribute('aria-hidden', 'true');
+  filterStack.inert = true;
  }
  const onScroll = () => {
   if (!filterViewport) return;
@@ -94,6 +159,7 @@ function bindFilterControls() {
   const delta = currentScrollTop - filterLastScrollTop;
   filterLastScrollTop = currentScrollTop;
   if (filterLayoutAdjusting || Math.abs(delta) < FILTER_SCROLL_JITTER) return;
+  if (filterSettleFrame) { cancelAnimationFrame(filterSettleFrame); filterSettleFrame = 0; }
   if (Math.abs(delta) > Math.max(240, filterViewport.clientHeight * .75)) {
    filterActiveDirection = 0; filterCandidateDirection = 0; filterCandidateDistance = 0;
    return;
@@ -112,6 +178,7 @@ function bindFilterControls() {
   }
   filterVisibilityProgress = clamp(filterVisibilityProgress + direction * distance / FILTER_FADE_DISTANCE, 0, 1);
   queueFilterVisibility();
+  scheduleFilterSettle();
  };
  const boundViewport = filterViewport;
  boundViewport.addEventListener('scroll', onScroll, {passive:true});
@@ -121,50 +188,276 @@ function controls(show) { app.classList.toggle('feed-mode', show); if (!show) cl
 function bottomTabBarHTML() { return `<nav class="bottom-tab-bar" aria-label="主导航"><button data-action="home" class="current" aria-current="page" aria-label="首页"><svg class="tab-icon tab-icon-home" viewBox="2 3 20 19" aria-hidden="true" focusable="false"><path d="M3.2 10.1 11 4.25a1.65 1.65 0 0 1 2 0l7.8 5.85v9.05a1.75 1.75 0 0 1-1.75 1.75H4.95a1.75 1.75 0 0 1-1.75-1.75Z" fill="currentColor"/><path d="M12 14.5v4" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="1.8"/></svg><span>首页</span></button><button data-action="unavailable" data-label="看山" aria-label="看山"><svg class="tab-icon tab-icon-mountain" viewBox="2.5 4.5 19 18.5" aria-hidden="true" focusable="false"><path d="M5.2 20.15c-1.3-1.12-1.6-3.15-1.27-5.25l1.16-7.72c.22-1.48 1.93-2.08 3-1.04l1.96 1.92A9.4 9.4 0 0 1 12 7.85c.67 0 1.32.07 1.95.21l1.96-1.92c1.07-1.04 2.78-.44 3 1.04l1.16 7.72c.33 2.1.03 4.13-1.27 5.25-1.32 1.14-3.65 1.35-6.8 1.35s-5.48-.21-6.8-1.35Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><circle cx="9.25" cy="14.25" r="1.05" fill="currentColor"/><circle cx="14.75" cy="14.25" r="1.05" fill="currentColor"/></svg><span>看山</span></button><button class="ask-entry" data-action="ask" aria-label="提出一个问题"><svg class="tab-create-icon" viewBox="0 0 42 32" aria-hidden="true" focusable="false"><rect width="42" height="32" rx="16" fill="currentColor"/><path d="M21 10v12M15 16h12" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2"/></svg></button><button data-action="unavailable" data-label="消息" aria-label="消息"><svg class="tab-icon tab-icon-message" viewBox="1.5 3 21 18" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="1.15" fill="currentColor"/><circle cx="15" cy="12" r="1.15" fill="currentColor"/></svg><span>消息</span></button><button data-action="profile" aria-label="未登录，设置我的阶段"><svg class="tab-icon tab-icon-profile" viewBox="2 2 20 20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 14.35c.78.82 1.78 1.23 3 1.23s2.22-.41 3-1.23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg><span>未登录</span></button></nav>`; }
 function bar(title) { return `<div class="screen-bar"><button data-action="back">← 返回</button><span>${escape(title)}</span><span></span></div>`; }
 function answerFooterHTML(a, qid, detail = false) { return `<footer class="answer-footer"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted ? 'voted' : ''}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>${detail ? '<span>来自这一程的声音</span>' : `<button data-action="detail" data-id="${qid}">听听其他回答 ↗</button>`}</footer>`; }
-function answerHTML(a, qid, detail = false) { return `<div class="answer-meta"><span class="answer-line"></span><span>${escape(stageName(a.stage))} · 自述</span></div><p class="answer-text">${escape(a.body)}</p>${answerFooterHTML(a, qid, detail)}`; }
-function feedAnswerHTML(a, qid) { return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签">${a.stage ? `<span class="stage-tag">${escape(stageName(a.stage))} · 自述</span>` : ''}</div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p></div></div>${answerFooterHTML(a, qid)}`; }
-function cardHTML(q) { return `<article class="qa-card qa-feed-card"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${q.stage ? `<span class="stage-tag">${escape(stageName(q.stage))}</span>` : ''}${q.target ? `<span class="target-stage-tag">想听${escape(stageName(q.target))}</span>` : ''}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">这一程的声音，还在路上。<br>暂时没有所选阶段的回答。</p></div></div><footer class="answer-footer"><span>等待一个新视角</span><button data-action="detail" data-id="${q.id}">去回答 ↗</button></footer>`}</article>`; }
-function renderFeed() {
+function answerHTML(a, qid, detail = false) { return `<article class="qa-card detail-answer-card" data-answer-id="${a.id}"><div class="answer-meta"><span class="answer-line"></span><span>${escape(stageName(a.stage))} · ${answerKind(a)}</span></div><p class="answer-text">${escape(a.body)}</p>${answerFooterHTML(a, qid, detail)}</article>`; }
+function feedAnswerHTML(a, qid) { return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签">${a.stage ? `<span class="stage-tag">${escape(stageName(a.stage))} · ${answerKind(a)}</span>` : ''}</div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p></div></div>${answerFooterHTML(a, qid)}`; }
+function cardHTML(q) { return `<article class="qa-card qa-feed-card" data-question-id="${q.id}" role="link" tabindex="0" aria-label="查看问题：${escape(q.title)}"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${q.stage ? `<span class="stage-tag">${escape(stageName(q.stage))}</span>` : ''}${q.target ? `<span class="target-stage-tag">想听${escape(stageName(q.target))}</span>` : ''}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">这一程的声音，还在路上。<br>暂时没有所选阶段的回答。</p></div></div><footer class="answer-footer"><span>等待一个新视角</span><button data-action="detail" data-id="${q.id}">去回答 ↗</button></footer>`}</article>`; }
+function captureFeedView(focusedQuestionId = null) {
+ const viewport = app.querySelector('.feed-viewport');
+ if (!viewport) return state.feedReturn;
+ const viewportRect = viewport.getBoundingClientRect();
+ const cards = [...viewport.querySelectorAll('.qa-feed-card[data-question-id]')];
+ const anchor = cards.find(card => card.getBoundingClientRect().bottom > viewportRect.top + 1) || cards[0] || null;
+ const focusedCard = document.activeElement?.closest?.('.qa-feed-card[data-question-id]');
+ const view = {
+  mode: state.mode, stage: state.stage, scrollTop: viewport.scrollTop,
+  anchorId: anchor ? Number(anchor.dataset.questionId) : null,
+  anchorOffset: anchor ? anchor.getBoundingClientRect().top - viewportRect.top : 0,
+  filterProgress: filterVisibilityProgress,
+  focusedQuestionId: focusedQuestionId || (focusedCard ? Number(focusedCard.dataset.questionId) : null)
+ };
+ state.feedReturn = view; store('feed', view); return view;
+}
+function restoreFeedViewport(view) {
+ const viewport = app.querySelector('.feed-viewport');
+ const stack = app.querySelector('.filter-controls-stack');
+ if (!viewport || !stack) return;
+ filterVisibilityProgress = clamp(Number(view?.filterProgress ?? 1), 0, 1);
+ const naturalHeight = stack.getBoundingClientRect().height;
+ if (naturalHeight > 0) filterCollapsedHeight = naturalHeight;
+ stack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
+ stack.style.setProperty('--filter-offset', `${(-7 * (1 - filterVisibilityProgress)).toFixed(2)}px`);
+ if (filterVisibilityProgress === 0) {
+  stack.classList.add('is-collapsed'); stack.setAttribute('aria-hidden', 'true'); stack.inert = true;
+ }
+ viewport.scrollTop = clamp(Number(view?.scrollTop) || 0, 0, Math.max(0, viewport.scrollHeight - viewport.clientHeight));
+ if (view?.anchorId) {
+  const anchor = viewport.querySelector(`[data-question-id="${view.anchorId}"]`);
+  if (anchor) viewport.scrollTop = clamp(viewport.scrollTop + anchor.getBoundingClientRect().top - viewport.getBoundingClientRect().top - (Number(view.anchorOffset) || 0), 0, Math.max(0, viewport.scrollHeight - viewport.clientHeight));
+ }
+ requestAnimationFrame(() => {
+  bindFilterControls();
+  if (view?.focusedQuestionId) app.querySelector(`[data-question-id="${view.focusedQuestionId}"]`)?.focus({preventScroll:true});
+ });
+}
+function renderFeed(restore = null) {
  cleanupFilterControls();
- filterVisibilityProgress = 1;
+ cleanupAIPoll(); state.aiRequest++;
+ if (!restore) filterVisibilityProgress = 1;
  state.screen = 'feed'; controls(true);
  app.innerHTML = `<div class="app-shell"><header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div><nav class="channel-tabs" aria-label="内容频道"><button data-action="unavailable" data-label="推荐">推荐</button><button data-action="unavailable" data-label="热榜">热榜</button><button data-action="unavailable" data-label="故事">故事</button><button data-action="unavailable" data-label="知识">知识</button><button data-action="home" class="active" aria-current="page">过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav></header><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="feed-heading"><span>所选阶段 · 高赞优先</span><small>独立体验版</small></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section>${bottomTabBarHTML()}</div>`;
- bindFilterControls();
+ restoreFeedViewport(restore || {scrollTop:0, filterProgress:1});
 }
-async function loadFeed() { const ticket = ++state.request; const data = await api(`/feed?mode=${state.mode}&stage=${state.stage}`); if (ticket !== state.request) return; state.feed = data.items; state.allowed = data.allowed_stages; renderFeed(); app.scrollTop = 0; }
+async function loadFeed({restore = null} = {}) {
+ if (restore) { state.mode = restore.mode || state.mode; state.stage = restore.stage || 'all'; }
+ const ticket = ++state.request;
+ const data = await api(`/feed?mode=${state.mode}&stage=${state.stage}`);
+ if (ticket !== state.request) return;
+ state.feed = data.items; state.allowed = data.allowed_stages; renderFeed(restore);
+}
+async function returnToFeed() { const restore = state.feedReturn || stored('feed', null); state.composerOrigin = null; return loadFeed({restore}); }
 function options(selected) { return state.user.stages.map(s => `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${escape(s.label)}</option>`).join(''); }
 function showProfile() { ++state.request; state.screen = 'profile'; controls(false); app.innerHTML = `${bar('我的阶段')}<section class="form-screen"><h2>你正走到哪一程？</h2><p class="helper">用阶段认识彼此，不用头衔定义彼此。<br>阶段由你自己选择，会随问题和回答一起显示。</p><form id="profile-form"><label for="profile-stage">我目前的阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><p class="helper">体验版按求学、工作、退休的顺序组织浏览方向，不代表经验或能力的高低。默认阶段为大学，可随时修改。</p><button class="primary-button" type="submit">保存我的阶段</button></form><p class="helper">当前使用本浏览器的访客身份保存操作，尚未接入知乎账号。</p></section>`; app.scrollTop = 0; }
-function showAsk() { ++state.request; state.screen = 'ask'; controls(false); app.innerHTML = `${bar('留下一个问题')}<section class="form-screen"><h2>向另一程，问个好。</h2><p class="helper">此刻的你是「${escape(stageName(state.user.stage))}」。一个小问题，也可以打开一个新视角。</p><form id="ask-form"><label for="question-title">你想问什么？</label><textarea id="question-title" name="title" required maxlength="100" placeholder="比如：你最近最快乐的一件事，是什么？"></textarea><label for="question-target">最想听哪个阶段的人回答？</label><select id="question-target" name="target">${options(state.stage !== 'all' ? state.stage : state.allowed[0] || 'working')}</select><label for="question-body">再说一点背景（选填）</label><textarea id="question-body" name="body" maxlength="1000" placeholder="帮助对方理解，你为什么想问这个问题。"></textarea><button class="primary-button" type="submit">把问题送出去 ↗</button></form></section>`; app.scrollTop = 0; }
-async function showDetail(id) { const ticket = ++state.request; const q = await api('/questions/' + id); if (ticket !== state.request) return; state.detail = q; state.screen = 'detail'; controls(false); app.innerHTML = `${bar('这一问，听大家说')}<article class="qa-card"><div class="question-meta"><span class="stage-tag">${escape(stageName(q.stage))}</span><span>想听 · ${escape(stageName(q.target))}</span></div><h2>${escape(q.title)}</h2>${q.body ? `<p class="question-body">${escape(q.body)}</p>` : ''}</article><div class="detail-actions"><button class="primary-button" data-action="answer">说说我的看法</button></div><div class="section-caption">全部阶段的回答 · 按赞同数排列 · ${q.answers.length} 条</div>${q.answers.length ? q.answers.map(a => `<article class="qa-card">${answerHTML(a, q.id, true)}</article>`).join('') : '<div class="empty-state">还没有人回答。你的经历，也许能带来第一个新视角。</div>'}`; app.scrollTop = 0; }
-function showAnswer() { ++state.request; const q = state.detail; state.screen = 'answer'; controls(false); app.innerHTML = `${bar('说说我的看法')}<section class="form-screen"><h2>${escape(q.title)}</h2><p class="helper">你的回答将带上「${escape(stageName(state.user.stage))} · 自述」标签。分享亲身感受就好。</p><form id="answer-form"><label for="answer-body">从你所在的这一程看呢？</label><textarea id="answer-body" name="body" required maxlength="1200" placeholder="不用标准答案，说说你自己的经历。"></textarea><button class="primary-button" type="submit">留下我的回答</button></form></section>`; app.scrollTop = 0; }
+function showAsk(prefill = '', origin = null) {
+ ++state.request; cleanupAIPoll(); state.screen = 'ask'; state.composerOrigin = origin; controls(false);
+ const fromAI = origin?.type === 'ai-turn';
+ const selectedTarget = fromAI && state.detail?.target ? state.detail.target : (state.stage !== 'all' ? state.stage : state.allowed[0] || 'working');
+ app.innerHTML = `${bar('留下一个问题')}<section class="form-screen"><h2>向另一程，问个好。</h2><p class="helper">此刻的你是「${escape(stageName(state.user.stage))}」。一个小问题，也可以打开一个新视角。</p>${fromAI ? '<p class="prefill-note">已带入你刚才的追问，可以继续修改；只有确认发布后才会进入问答流。</p>' : ''}<form id="ask-form"><label for="question-title">你想问什么？</label><textarea id="question-title" name="title" required maxlength="100" aria-describedby="question-title-status" placeholder="比如：你最近最快乐的一件事，是什么？">${escape(prefill)}</textarea><p id="question-title-status" class="field-status ${prefill.length > 100 ? 'is-error' : ''}" aria-live="polite">${prefill.length > 100 ? `当前 ${prefill.length} 字，请编辑到 100 字以内后发布。` : `${prefill.length}/100`}</p><label for="question-target">最想听哪个阶段的人回答？</label><select id="question-target" name="target">${options(selectedTarget)}</select><label for="question-body">再说一点背景（选填）</label><textarea id="question-body" name="body" maxlength="1000" placeholder="帮助对方理解，你为什么想问这个问题。"></textarea><button class="primary-button" type="submit">把问题送出去 ↗</button></form></section>`;
+ app.scrollTop = 0; requestAnimationFrame(() => app.querySelector('#question-title')?.focus({preventScroll:true}));
+}
+function availableAnswerStages(q) { const present = new Set(q.answers.map(answer => answer.stage)); return state.user.stages.map(stage => stage.id).filter(id => present.has(id)); }
+function contentScopeLabel(scope) { return ({summary:'摘要', excerpt:'节选', full:'全文'})[scope] || '资料'; }
+function canInviteCommunity(snapshot) {
+ if (!snapshot) return false;
+ return snapshot.turns_used >= 3 || (snapshot.status === 'insufficient_evidence' && snapshot.turns_used === 1);
+}
+function aiTurnHTML(turn, index, invite) {
+ const citations = Array.isArray(turn.citations) ? turn.citations : [];
+ const followups = Array.isArray(turn.followups) ? turn.followups : [];
+ let result = '';
+ if (turn.status === 'running') result = '<p class="ai-turn-state">正在从已核验资料里寻找线索…</p>';
+ if (turn.status === 'answered') result = `<p class="ai-answer">${escape(turn.answer)}</p>${citations.length ? `<div class="ai-citations"><span>依据资料 ${citations.length} 条</span>${citations.map(citation => `<a href="${escape(citation.source_url)}" target="_blank" rel="noreferrer"><strong>${escape(citation.title || '来源资料')}</strong><small>${escape(contentScopeLabel(citation.content_scope))} · ${escape(citation.quote)}</small></a>`).join('')}</div>` : ''}${followups.length ? `<div class="ai-followups" aria-label="可继续追问">${followups.map((text, followupIndex) => `<button type="button" data-action="use-followup" data-turn-index="${index}" data-followup-index="${followupIndex}">${escape(text)}</button>`).join('')}</div>` : ''}`;
+ if (turn.status === 'insufficient_evidence') result = '<p class="ai-turn-state">现有资料还不足以可靠回答。你可以把这句话交给不同阶段的人。</p>';
+ if (turn.status === 'failed') result = `<p class="error-inline">${escape(turn.error || '这次没有整理成功，可以重新提问。')}</p>`;
+ return `<article class="ai-turn"><div class="ai-question-label">你的追问</div><p class="ai-question">${escape(turn.question)}</p>${result}${invite && (turn.status === 'answered' || turn.status === 'insufficient_evidence') ? `<button class="ask-community-link" type="button" data-action="ask-from-ai" data-turn-index="${index}">用这句问大家 ↗</button>` : ''}</article>`;
+}
+function aiPanelHTML(q, view) {
+ const snapshot = view.aiSnapshot;
+ const turns = Array.isArray(snapshot?.turns) ? snapshot.turns : [];
+ const invite = canInviteCommunity(snapshot);
+ let status = '';
+ if (view.aiLoading && !snapshot) status = '<div class="ai-status" role="status">正在恢复这道问题的资料记录…</div>';
+ else if (view.aiError) status = `<div class="ai-status error-inline" role="alert">${escape(view.aiError)} <button type="button" data-action="refresh-ai">检查结果</button></div>`;
+ else if (snapshot?.status === 'source_unavailable') status = '<div class="ai-status">原资料已不可用，当前记录不再展示引用，也无法继续追问。</div>';
+ else if (snapshot?.status === 'running') status = '<div class="ai-status" role="status">资料整理仍在进行。离开页面也不会自动重发。</div>';
+ else if (snapshot?.status === 'limit_reached') status = '<div class="ai-status">本题的三次资料追问已经完成。</div>';
+ else if (snapshot?.status === 'insufficient_evidence') status = '<div class="ai-status">首问没有足够资料，本轮已停止继续追问。</div>';
+ const canAsk = !!snapshot?.can_ask && snapshot.status !== 'running' && !view.aiUncertain;
+ const form = snapshot && canAsk ? `<form id="ai-question-form" class="ai-question-form"><label for="ai-question">继续问资料</label><textarea id="ai-question" name="question" required maxlength="1000" rows="3" placeholder="问一个和当前问题有关的具体问题">${escape(view.aiDraft)}</textarea><div class="ai-compose-row"><span><span id="ai-draft-count">${view.aiDraft.length}</span>/1000 · 还可问 ${snapshot.turns_remaining} 次</span><button type="submit" ${view.aiSubmitting ? 'disabled' : ''}>${view.aiSubmitting ? '正在发送…' : '发送'}</button></div></form>` : '';
+ const empty = snapshot && !turns.length && snapshot.status === 'ready' ? '<p class="ai-empty">资料回答会标明出处，不会替代真人自述。</p>' : '';
+ const check = snapshot?.status === 'running' ? '<button class="ai-check-button" type="button" data-action="refresh-ai">检查结果</button>' : '';
+ return `${turns.map((turn, index) => aiTurnHTML(turn, index, invite)).join('')}${empty}${status}${check}${form}`;
+}
+function renderDetail({focusAnswerId = null, restoreScroll = true} = {}) {
+ const q = state.detail; if (!q) return;
+ const view = detailView(q.id);
+ const stages = availableAnswerStages(q);
+ if (view.answerStage !== 'all' && !stages.includes(view.answerStage)) view.answerStage = 'all';
+ const answers = view.answerStage === 'all' ? q.answers : q.answers.filter(answer => answer.stage === view.answerStage);
+ const stageLabel = view.answerStage === 'all' ? '全部阶段' : stageName(view.answerStage);
+ controls(false); state.screen = 'detail';
+ app.innerHTML = `${bar('这一问，听大家说')}<section class="detail-screen"><article class="qa-card detail-question-card"><div class="question-meta"><span class="stage-tag">${escape(stageName(q.stage))}</span><span>想听 · ${escape(stageName(q.target))}</span></div><h2>${escape(q.title)}</h2>${q.body ? `<p class="question-body">${escape(q.body)}</p>` : ''}</article><div class="detail-actions"><button class="primary-button" data-action="answer">说说我的看法</button></div><section class="detail-answers" aria-labelledby="answer-section-title"><div class="detail-section-heading"><div><strong id="answer-section-title">听不同阶段的人说</strong><span>${q.answers.length} 条 · 按赞同数排列</span></div><div class="detail-stage-filter chips" role="group" aria-label="同题回答阶段筛选"><button data-action="detail-stage" data-value="all" class="${view.answerStage === 'all' ? 'active' : ''}" aria-pressed="${view.answerStage === 'all'}">全部</button>${stages.map(id => `<button data-action="detail-stage" data-value="${id}" class="${view.answerStage === id ? 'active' : ''}" aria-pressed="${view.answerStage === id}">${escape(stageName(id))}</button>`).join('')}</div></div><div class="section-caption">${escape(stageLabel)}的回答 · ${answers.length} 条</div>${answers.length ? answers.map(answer => answerHTML(answer, q.id, true)).join('') : '<div class="empty-state">这一阶段还没有回答。你的经历，也许能带来第一个新视角。</div>'}</section><section class="detail-ai-section"><button class="detail-ai-toggle" type="button" data-action="toggle-ai" aria-expanded="${view.aiOpen}" aria-controls="detail-ai-panel"><span><strong>带着资料继续问</strong><small>AI 依据资料整理 · 最多三问 · 来源可查</small></span><span aria-hidden="true">${view.aiOpen ? '收起' : '展开'}</span></button><div id="detail-ai-panel" class="detail-ai-panel" ${view.aiOpen ? '' : 'hidden'} aria-live="polite">${view.aiOpen ? aiPanelHTML(q, view) : ''}</div></section></section>`;
+ if (focusAnswerId) {
+  requestAnimationFrame(() => { const answer = app.querySelector(`[data-answer-id="${focusAnswerId}"]`); if (answer) { answer.tabIndex = -1; answer.scrollIntoView({block:'center'}); answer.focus({preventScroll:true}); view.scrollTop = app.scrollTop; saveDetailView(q.id); } });
+ } else if (restoreScroll) app.scrollTop = clamp(view.scrollTop || 0, 0, Math.max(0, app.scrollHeight - app.clientHeight));
+ saveDetailView(q.id);
+}
+function applyAISnapshot(id, snapshot, error = '') {
+ const view = detailView(id); view.aiSnapshot = snapshot; view.aiLoading = false; view.aiSubmitting = false; view.aiUncertain = false; view.aiError = error;
+ if (snapshot?.status === 'running') scheduleAIPoll(id); else cleanupAIPoll();
+ if (state.screen === 'detail' && state.detail?.id === id) { view.scrollTop = app.scrollTop; renderDetail(); }
+}
+function isAISnapshot(value) { return value && Number.isInteger(value.question_id) && Array.isArray(value.turns); }
+async function loadAIState(id, {poll = false} = {}) {
+ const view = detailView(id); const ticket = ++state.aiRequest;
+ if (!poll && !view.aiSnapshot) { view.aiLoading = true; view.aiError = ''; if (state.screen === 'detail' && state.detail?.id === id) renderDetail(); }
+ try {
+  const snapshot = await api(`/questions/${id}/ai`);
+  if (ticket !== state.aiRequest || state.screen !== 'detail' || state.detail?.id !== id) return;
+  applyAISnapshot(id, snapshot);
+ } catch (error) {
+  if (ticket !== state.aiRequest || state.screen !== 'detail' || state.detail?.id !== id) return;
+  if (isAISnapshot(error.payload)) applyAISnapshot(id, error.payload, error.message); else { view.aiLoading = false; view.aiSubmitting = false; view.aiError = error.message; renderDetail(); }
+ }
+}
+function scheduleAIPoll(id) {
+ if (!aiPollStartedAt) aiPollStartedAt = Date.now();
+ clearTimeout(aiPollTimer);
+ if (Date.now() - aiPollStartedAt >= 150000) { const view = detailView(id); view.aiError = '整理时间较长，可以稍后手动检查结果。'; if (state.screen === 'detail' && state.detail?.id === id) renderDetail(); return; }
+ aiPollTimer = setTimeout(() => { if (state.screen === 'detail' && state.detail?.id === id) loadAIState(id, {poll:true}); }, 2000);
+}
+function newClientTurnId() { return globalThis.crypto?.randomUUID ? crypto.randomUUID() : `turn-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
+async function submitAIQuestion(form) {
+ const q = state.detail; if (!q) return;
+ const view = detailView(q.id); const question = String(new FormData(form).get('question') || '').trim();
+ if (!question || question.length > 1000 || view.aiSubmitting) return;
+ const clientTurnId = newClientTurnId(); const ticket = ++state.aiRequest;
+ view.aiDraft = question; view.aiSubmitting = true; view.aiError = ''; saveDetailView(q.id); view.scrollTop = app.scrollTop; renderDetail();
+ try {
+  const snapshot = await api(`/questions/${q.id}/ai`, {question, client_turn_id:clientTurnId});
+  if (ticket !== state.aiRequest || state.screen !== 'detail' || state.detail?.id !== q.id) return;
+  const recorded = snapshot.turns?.find(turn => turn.client_turn_id === clientTurnId);
+  if (recorded && (recorded.status === 'answered' || recorded.status === 'insufficient_evidence')) view.aiDraft = '';
+  applyAISnapshot(q.id, snapshot);
+ } catch (error) {
+  if (ticket !== state.aiRequest || state.screen !== 'detail' || state.detail?.id !== q.id) return;
+  if (isAISnapshot(error.payload)) {
+   const recorded = error.payload.turns.find(turn => turn.client_turn_id === clientTurnId);
+   if (recorded && (recorded.status === 'answered' || recorded.status === 'insufficient_evidence')) view.aiDraft = '';
+   applyAISnapshot(q.id, error.payload, error.payload.status === 'running' ? '' : error.message);
+  } else { view.aiSubmitting = false; view.aiUncertain = true; view.aiError = '发送结果尚未确认，请先检查结果，避免重复提问。'; renderDetail(); }
+ } finally { saveDetailView(q.id); }
+}
+async function showDetail(id, {captureFeed = true, focusAnswerId = null} = {}) {
+ if (captureFeed && state.screen === 'feed') captureFeedView(id);
+ if (state.screen === 'detail' && state.detail) { const current = detailView(state.detail.id); current.scrollTop = app.scrollTop; saveDetailView(state.detail.id); }
+ cleanupAIPoll(); state.aiRequest++;
+ const ticket = ++state.request; const q = await api('/questions/' + id); if (ticket !== state.request) return;
+ state.detail = q; state.screen = 'detail'; renderDetail({focusAnswerId});
+ const view = detailView(id); if (view.aiOpen) loadAIState(id);
+}
+function showAnswer() { ++state.request; cleanupAIPoll(); const q = state.detail; state.screen = 'answer'; controls(false); app.innerHTML = `${bar('说说我的看法')}<section class="form-screen"><h2>${escape(q.title)}</h2><p class="helper">你的回答将带上「${escape(stageName(state.user.stage))} · 自述」标签。分享亲身感受就好。</p><form id="answer-form"><label for="answer-body">从你所在的这一程看呢？</label><textarea id="answer-body" name="body" required maxlength="1200" placeholder="不用标准答案，说说你自己的经历。"></textarea><button class="primary-button" type="submit">留下我的回答</button></form></section>`; app.scrollTop = 0; }
+function showSavedRecovery(questionId, kind) {
+ state.screen = 'saved'; controls(false);
+ app.innerHTML = `${bar('已经保存')}<section class="saved-state"><strong>${kind === 'answer' ? '回答已经留下' : '问题已经送出'}</strong><p>内容已经成功保存，只是详情暂时没有刷新出来。请不要重复发布。</p><button class="primary-button" data-action="reopen-detail" data-id="${questionId}">重新查看详情</button></section>`;
+ app.scrollTop = 0;
+}
+function updateVoteState(answerId, result) {
+ const apply = answer => { if (answer?.id === answerId) { answer.votes = result.votes; answer.voted = result.voted; } };
+ state.feed.forEach(question => apply(question.answer));
+ state.detail?.answers?.forEach(apply);
+}
+async function handleBack() {
+ if (state.screen === 'answer') return showDetail(state.detail.id, {captureFeed:false});
+ if (state.screen === 'ask' && state.composerOrigin?.type === 'ai-turn') return showDetail(state.composerOrigin.questionId, {captureFeed:false});
+ if (state.screen === 'detail' && state.detail) { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); }
+ return returnToFeed();
+}
 phone.addEventListener('click', async event => {
- const b = event.target.closest('button[data-action]'); if (!b || b.disabled) return;
+ const b = event.target.closest('button[data-action]');
+ if (!b) {
+  const card = event.target.closest('.qa-feed-card[data-question-id]');
+  if (!card || window.getSelection()?.toString()) return;
+  try { await showDetail(Number(card.dataset.questionId)); } catch (error) { notice(error.message); }
+  return;
+ }
+ if (b.disabled) return;
  try {
   const action = b.dataset.action;
-  if (action === 'home') return await loadFeed();
+  if (action === 'home') return state.screen === 'feed' ? await loadFeed() : await returnToFeed();
   if (action === 'search') return notice('搜索尚未接入体验版，先从过来人问答逛起吧');
   if (action === 'unavailable') return notice(`${b.dataset.label || '这个入口'}尚未接入体验版`);
-  if (action === 'profile') return showProfile();
-  if (action === 'ask') return showAsk();
-  if (action === 'answer') return showAnswer();
-  if (action === 'back') return await (state.screen === 'answer' ? showDetail(state.detail.id) : loadFeed());
+  if (action === 'profile') { if (state.screen === 'feed') captureFeedView(); return showProfile(); }
+  if (action === 'ask') { if (state.screen === 'feed') captureFeedView(); return showAsk('', {type:'feed'}); }
+  if (action === 'answer') { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); return showAnswer(); }
+  if (action === 'back') return await handleBack();
   if (action === 'mode') { state.mode = b.dataset.value; state.stage = 'all'; return await loadFeed(); }
   if (action === 'filter') { state.stage = b.dataset.value; return await loadFeed(); }
+  if (action === 'detail-stage') { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; view.answerStage = b.dataset.value; saveDetailView(state.detail.id); return renderDetail(); }
   if (action === 'detail') return await showDetail(Number(b.dataset.id));
+  if (action === 'reopen-detail') return await showDetail(Number(b.dataset.id), {captureFeed:false});
+  if (action === 'toggle-ai') {
+   const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; view.aiOpen = !view.aiOpen; saveDetailView(state.detail.id); renderDetail();
+   if (view.aiOpen) loadAIState(state.detail.id);
+   return;
+  }
+  if (action === 'refresh-ai') return loadAIState(state.detail.id);
+  if (action === 'use-followup') {
+   const view = detailView(state.detail.id); const turn = view.aiSnapshot?.turns?.[Number(b.dataset.turnIndex)]; const text = turn?.followups?.[Number(b.dataset.followupIndex)];
+   const input = app.querySelector('#ai-question'); if (!input || !text) return;
+   input.value = text; view.aiDraft = text; saveDetailView(state.detail.id); app.querySelector('#ai-draft-count').textContent = String(text.length); input.focus(); input.scrollIntoView({block:'center'}); return;
+  }
+  if (action === 'ask-from-ai') {
+   const view = detailView(state.detail.id); const turnIndex = Number(b.dataset.turnIndex); const turn = view.aiSnapshot?.turns?.[turnIndex]; if (!turn?.question) return;
+   view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); return showAsk(turn.question, {type:'ai-turn', questionId:state.detail.id, turnIndex});
+  }
   if (action === 'retry') return await boot();
-  if (action === 'vote') { b.disabled = true; const result = await api('/vote', {answer_id:Number(b.dataset.id), active:b.dataset.voted !== 'true'}); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = `${result.voted ? '♥' : '♡'} <span>${result.votes}</span>`; }
+  if (action === 'vote') { const answerId = Number(b.dataset.id); b.disabled = true; const result = await api('/vote', {answer_id:answerId, active:b.dataset.voted !== 'true'}); updateVoteState(answerId, result); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = `${result.voted ? '♥' : '♡'} <span>${result.votes}</span>`; }
  } catch (e) { notice(e.message); } finally { b.disabled = false; }
 });
+phone.addEventListener('keydown', event => {
+ const card = event.target.closest?.('.qa-feed-card[data-question-id]');
+ if (!card || event.target !== card || (event.key !== 'Enter' && event.key !== ' ')) return;
+ event.preventDefault(); showDetail(Number(card.dataset.questionId)).catch(error => notice(error.message));
+});
+app.addEventListener('input', event => {
+ if (event.target.id === 'ai-question' && state.detail) {
+  const view = detailView(state.detail.id); view.aiDraft = event.target.value; saveDetailView(state.detail.id);
+  const count = app.querySelector('#ai-draft-count'); if (count) count.textContent = String(event.target.value.length);
+ }
+ if (event.target.id === 'question-title') {
+  const status = app.querySelector('#question-title-status'); if (!status) return;
+  const length = event.target.value.length; status.classList.toggle('is-error', length > 100);
+  status.textContent = length > 100 ? `当前 ${length} 字，请编辑到 100 字以内后发布。` : `${length}/100`;
+ }
+});
 app.addEventListener('submit', async event => {
- event.preventDefault(); const form = event.target; const submit = form.querySelector('[type=submit]'); if (submit.disabled) return; submit.disabled = true;
+ event.preventDefault(); const form = event.target;
+ if (form.id === 'ai-question-form') return submitAIQuestion(form);
+ const submit = form.querySelector('[type=submit]'); if (submit.disabled) return; submit.disabled = true; let writeSucceeded = false;
  const data = Object.fromEntries(new FormData(form));
  try {
   if (form.id === 'profile-form') { const user = await api('/profile', data); state.user.stage = user.stage; state.stage = 'all'; await loadFeed(); notice('阶段已更新'); }
-  if (form.id === 'ask-form') { const q = await api('/questions', data); await showDetail(q.id); notice('问题已保存，等一个新视角'); }
-  if (form.id === 'answer-form') { await api('/answers', {body:data.body, question_id:state.detail.id}); await showDetail(state.detail.id); notice('回答已保存'); }
- } catch (e) { notice(e.message); } finally { submit.disabled = false; }
+  if (form.id === 'ask-form') {
+   data.title = String(data.title || '').trim();
+   if (data.title.length > 100) { app.querySelector('#question-title-status')?.classList.add('is-error'); app.querySelector('#question-title')?.focus(); throw new Error('请把问题编辑到 100 字以内后发布'); }
+   const q = await api('/questions', data); writeSucceeded = true; state.composerOrigin = null;
+   try { await showDetail(q.id, {captureFeed:false}); notice('问题已保存，等一个新视角'); }
+   catch (_) { showSavedRecovery(q.id, 'question'); notice('问题已保存，请勿重复发布'); }
+  }
+  if (form.id === 'answer-form') {
+   const questionId = state.detail.id; const result = await api('/answers', {body:data.body, question_id:questionId}); writeSucceeded = true;
+   detailView(questionId).answerStage = state.user.stage;
+   try { await showDetail(questionId, {captureFeed:false, focusAnswerId:result.id}); notice('回答已保存'); }
+   catch (_) { showSavedRecovery(questionId, 'answer'); notice('回答已保存，请勿重复发布'); }
+  }
+ } catch (e) { notice(e.message); } finally { if (!writeSucceeded && submit.isConnected) submit.disabled = false; }
 });
-async function boot() { try { state.user = await api('/me'); await loadFeed(); } catch (e) { controls(false); app.innerHTML = `<div class="empty-state"><p>${escape(e.message)}</p><button class="secondary-button" data-action="retry">重新连接</button></div>`; } }
+async function boot() {
+ try {
+  state.user = await api('/me'); const restore = stored('feed', null); state.feedReturn = restore;
+  try { await loadFeed({restore}); } catch (error) { if (!restore) throw error; state.mode = 'older'; state.stage = 'all'; state.feedReturn = null; await loadFeed(); }
+ } catch (e) { controls(false); app.innerHTML = `<div class="empty-state"><p>${escape(e.message)}</p><button class="secondary-button" data-action="retry">重新连接</button></div>`; }
+}
 const modelContext = document.modelContext;
 if (modelContext?.registerTool) {
  const lifecycle = new AbortController();
