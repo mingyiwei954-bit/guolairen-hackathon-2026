@@ -109,9 +109,17 @@ main:not(.feed-mode) {
 }
 .app-shell {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+}
+.feed-layer {
+  --filter-controls-height: 87px;
+  position: relative;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
   background: #fff;
@@ -212,18 +220,18 @@ main::-webkit-scrollbar, .feed-viewport::-webkit-scrollbar, .channel-tabs::-webk
 .filter-controls-stack {
   --filter-progress: 1;
   --filter-offset: 0px;
-  position: relative;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
   z-index: var(--z-direction);
-  min-height: 0;
   overflow: hidden;
   background: #fff;
   opacity: var(--filter-progress);
   transform: translateY(var(--filter-offset));
   will-change: opacity, transform;
 }
-.filter-controls-stack.is-collapsed {
-  height: 0;
-  min-height: 0;
+.filter-controls-stack.is-hidden {
   visibility: hidden;
   pointer-events: none;
   opacity: 0;
@@ -260,6 +268,8 @@ main::-webkit-scrollbar, .feed-viewport::-webkit-scrollbar, .channel-tabs::-webk
 }
 .stage-filter { display: flex; align-items: center; min-width: 0; padding: 2px 14px 8px; }
 .feed-viewport {
+  width: 100%;
+  height: 100%;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -268,6 +278,11 @@ main::-webkit-scrollbar, .feed-viewport::-webkit-scrollbar, .channel-tabs::-webk
   overscroll-behavior: contain;
   scroll-padding-bottom: 14px;
   -webkit-overflow-scrolling: touch;
+}
+.filter-controls-spacer {
+  width: 100%;
+  height: var(--filter-controls-height);
+  pointer-events: none;
 }
 .feed-viewport:focus { outline: none; }
 .chips {

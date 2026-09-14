@@ -13,6 +13,8 @@ from socketserver import ThreadingMixIn
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 
+from oauth_login import OAuthMixin, SCHEMA as OAUTH_SCHEMA
+
 from content_pipeline.ai_processor import AIInputError, AIProcessor
 from content_pipeline.storage import (
     get_library_item,
@@ -67,6 +69,7 @@ def initialize():
         CREATE INDEX IF NOT EXISTS questions_recent ON questions(created DESC);
         CREATE INDEX IF NOT EXISTS question_targets_stage ON question_targets(stage,question_id);
         ''')
+        db.executescript(OAUTH_SCHEMA)
         migrate_content_schema(db)
         recover_interrupted_ai_work(db)
         if not db.execute("SELECT 1 FROM metadata WHERE key='seed_v1'").fetchone():
@@ -107,7 +110,7 @@ class RequestError(Exception):
     def __init__(self, message, status=400, code=None):
         self.message, self.status, self.code = message, status, code
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(OAuthMixin, BaseHTTPRequestHandler):
     def send_json(self, payload, status=200):
         raw = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -200,6 +203,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.new_session = None
         path = urlsplit(self.path)
+        try:
+            if self.oauth_get(path, connect):
+                return
+        except (sqlite3.Error, OSError, ValueError):
+            return self.send_json({'error':'登录服务暂时不可用'}, 503)
         if not path.path.startswith('/api/'):
             return self.static(path.path)
         try:
@@ -317,6 +325,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise RequestError('请求来源不匹配', 403)
             data = self.payload()
             path = urlsplit(self.path).path
+            if self.oauth_post(path, connect):
+                return
             question_ai_parts = [part for part in path.split('/') if part]
             if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'ai':
                 try:
@@ -410,6 +420,8 @@ class Handler(BaseHTTPRequestHandler):
     def static(self, path):
         files = {'/': ('index.html', 'text/html; charset=utf-8'), '/index.html': ('index.html', 'text/html; charset=utf-8'),
                  '/style.css': ('style.css', 'text/css; charset=utf-8'), '/splash.css': ('splash.css', 'text/css; charset=utf-8'),
+                 '/auth-ui.js': ('auth-ui.js', 'text/javascript; charset=utf-8'),
+                 '/auth-ui.css': ('auth-ui.css', 'text/css; charset=utf-8'),
                  '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/splash.js': ('splash.js', 'text/javascript; charset=utf-8'),
                  '/assets/welcome-page.jpg': ('assets/welcome-page.jpg', 'image/jpeg')}
         if path not in files:
@@ -422,7 +434,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(raw)))
         self.send_header('Cache-Control', 'no-cache')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.zhimg.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'")
         self.end_headers()
         self.wfile.write(raw)
 

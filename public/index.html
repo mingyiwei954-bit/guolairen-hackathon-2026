@@ -27,12 +27,14 @@
               <div class="search-bar"><span class="search-placeholder">搜索你感兴趣的问题</span><button>搜索</button></div>
               <nav class="channel-tabs"><button>推荐</button><button>热榜</button><button>故事</button><button>知识</button><button class="active">过来人</button><button>关注</button></nav>
             </header>
-            <div class="filter-controls-stack" role="group" aria-label="内容筛选">
-              <section class="direction-layer"><div class="direction-switch"><button class="selected">听过来人说</button><button>听没过来人说</button></div></section>
-              <section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button class="active">全部</button><button>已经工作</button><button>退休生活</button></div></div></section>
-            </div>
-            <section class="feed-viewport" aria-label="问答内容流">
-              <article class="qa-card qa-feed-card">
+            <div class="feed-layer">
+              <div class="filter-controls-stack" role="group" aria-label="内容筛选">
+                <section class="direction-layer"><div class="direction-switch"><button class="selected">听过来人说</button><button>听没过来人说</button></div></section>
+                <section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button class="active">全部</button><button>已经工作</button><button>退休生活</button></div></div></section>
+              </div>
+              <section class="feed-viewport" aria-label="问答内容流">
+                <div class="filter-controls-spacer" aria-hidden="true"></div>
+                <article class="qa-card qa-feed-card">
                 <div class="question-section">
                   <div class="question-content"><h2>我最近不太快乐，怎么办？</h2></div>
                   <div class="question-tags" aria-label="问题标签"><span class="stage-tag">大学阶段</span><span class="target-stage-tag">想听小学阶段</span></div>
@@ -42,8 +44,9 @@
                   <div class="answer-content"><p class="answer-text">吃个雪糕吧。<br>选你最喜欢的味道，今天可以先开心这一小会儿。</p></div>
                 </div>
                 <footer class="answer-footer"><span>♡ 24</span><span>听听其他回答 ↗</span></footer>
-              </article>
-            </section>
+                </article>
+              </section>
+            </div>
             <nav class="bottom-tab-bar" aria-label="主导航"></nav>
           </div>
         </main>
@@ -52,6 +55,8 @@
     </div>
     <p class="desktop-footer">不同的阶段，也能坐下来聊一会儿。</p>
     <script src="/app.js" defer></script>
+    <link rel="stylesheet" href="/auth-ui.css">
+    <script src="/auth-ui.js" defer></script>
   </div>
 </body>
 </html>

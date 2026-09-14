@@ -10,26 +10,19 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp
 const stageName = id => state.user?.stages.find(s => s.id === id)?.label || id;
 const answerKind = answer => (answer?.is_demo ?? answer?.sample) ? '示例' : '自述';
 let noticeTimer;
-const FILTER_FADE_DISTANCE = 70;
+const FILTER_FADE_DISTANCE = 210;
 const FILTER_SCROLL_JITTER = 1.75;
 const FILTER_DIRECTION_CONFIRM = 5;
-const FILTER_SETTLE_DELAY = 160;
-const FILTER_SETTLE_DURATION = 150;
 const STORAGE_PREFIX = 'past-voices-v1:';
 let filterVisibilityProgress = 1;
 let filterViewport = null;
 let filterStack = null;
 let filterScrollCleanup = null;
 let filterFrame = 0;
-let filterAdjustFrame = 0;
-let filterSettleFrame = 0;
-let filterSettleTimer = 0;
-let filterLayoutAdjusting = false;
 let filterLastScrollTop = 0;
 let filterActiveDirection = 0;
 let filterCandidateDirection = 0;
 let filterCandidateDistance = 0;
-let filterCollapsedHeight = 0;
 let aiPollTimer = 0;
 let aiPollStartedAt = 0;
 function notice(message) { const n = document.getElementById('notice'); n.textContent = message; n.classList.add('visible'); clearTimeout(noticeTimer); noticeTimer = setTimeout(() => n.classList.remove('visible'), 3200); }
@@ -135,76 +128,34 @@ function cleanupAIPoll() { clearTimeout(aiPollTimer); aiPollTimer = 0; aiPollSta
 function cleanupFilterControls() {
  if (filterScrollCleanup) filterScrollCleanup();
  if (filterFrame) cancelAnimationFrame(filterFrame);
- if (filterAdjustFrame) cancelAnimationFrame(filterAdjustFrame);
- if (filterSettleFrame) cancelAnimationFrame(filterSettleFrame);
- clearTimeout(filterSettleTimer);
  filterViewport = null; filterStack = null; filterScrollCleanup = null;
- filterFrame = 0; filterAdjustFrame = 0; filterSettleFrame = 0; filterSettleTimer = 0; filterLayoutAdjusting = false;
+ filterFrame = 0;
 }
-function compensateFilterLayout(delta, minimumScrollTop = 0, baseScrollTop = filterViewport?.scrollTop || 0) {
- if (!filterViewport || !delta) return;
- const maxScroll = Math.max(0, filterViewport.scrollHeight - filterViewport.clientHeight);
- const lowerBound = Math.min(maxScroll, minimumScrollTop);
- const nextScrollTop = clamp(baseScrollTop + delta, lowerBound, maxScroll);
- filterLayoutAdjusting = true;
- filterViewport.scrollTop = nextScrollTop;
- filterLastScrollTop = nextScrollTop;
- if (filterAdjustFrame) cancelAnimationFrame(filterAdjustFrame);
- filterAdjustFrame = requestAnimationFrame(() => {
-  filterAdjustFrame = 0; filterLayoutAdjusting = false;
-  if (filterViewport) filterLastScrollTop = clamp(filterViewport.scrollTop, 0, Math.max(0, filterViewport.scrollHeight - filterViewport.clientHeight));
- });
+function syncFilterSpacerHeight() {
+ const layer = filterStack?.closest('.feed-layer');
+ if (!layer || filterStack.classList.contains('is-hidden')) return;
+ const height = filterStack.getBoundingClientRect().height;
+ if (height > 0) layer.style.setProperty('--filter-controls-height', `${height}px`);
 }
 function applyFilterVisibility() {
  filterFrame = 0;
  if (!filterStack || !filterViewport) return;
  const progress = clamp(filterVisibilityProgress, 0, 1);
- if (progress > 0 && filterStack.classList.contains('is-collapsed')) {
-  const restoreHeight = filterCollapsedHeight;
-  const scrollTopBeforeRestore = filterViewport.scrollTop;
-  filterStack.classList.remove('is-collapsed');
+ if (progress > 0 && filterStack.classList.contains('is-hidden')) {
+  filterStack.classList.remove('is-hidden');
   filterStack.removeAttribute('aria-hidden');
   filterStack.inert = false;
-  filterStack.style.setProperty('--filter-progress', '0');
-  filterStack.style.setProperty('--filter-offset', '-7px');
-  void filterStack.offsetHeight;
-  compensateFilterLayout(restoreHeight, 0, scrollTopBeforeRestore);
  }
  filterStack.style.setProperty('--filter-progress', progress.toFixed(4));
  filterStack.style.setProperty('--filter-offset', `${(-7 * (1 - progress)).toFixed(2)}px`);
- if (progress === 0 && !filterStack.classList.contains('is-collapsed')) {
-  filterCollapsedHeight = filterStack.getBoundingClientRect().height;
-  const scrollTopBeforeCollapse = filterViewport.scrollTop;
-  filterStack.classList.add('is-collapsed');
+ if (progress === 0 && !filterStack.classList.contains('is-hidden')) {
+  filterStack.classList.add('is-hidden');
   filterStack.setAttribute('aria-hidden', 'true');
   filterStack.inert = true;
-  compensateFilterLayout(-filterCollapsedHeight, FILTER_DIRECTION_CONFIRM + FILTER_SCROLL_JITTER, scrollTopBeforeCollapse);
  }
 }
 function queueFilterVisibility() {
  if (!filterFrame) filterFrame = requestAnimationFrame(applyFilterVisibility);
-}
-function settleFilterVisibility() {
- filterSettleTimer = 0;
- const target = filterVisibilityProgress >= .5 ? 1 : 0;
- const start = filterVisibilityProgress;
- if (start === target) { queueFilterVisibility(); return; }
- const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
- if (reduceMotion) { filterVisibilityProgress = target; queueFilterVisibility(); return; }
- const started = performance.now();
- const step = now => {
-  const elapsed = clamp((now - started) / FILTER_SETTLE_DURATION, 0, 1);
-  const eased = 1 - Math.pow(1 - elapsed, 3);
-  filterVisibilityProgress = start + (target - start) * eased;
-  if (elapsed === 1) filterVisibilityProgress = target;
-  applyFilterVisibility();
-  filterSettleFrame = elapsed < 1 ? requestAnimationFrame(step) : 0;
- };
- filterSettleFrame = requestAnimationFrame(step);
-}
-function scheduleFilterSettle() {
- clearTimeout(filterSettleTimer);
- filterSettleTimer = setTimeout(settleFilterVisibility, FILTER_SETTLE_DELAY);
 }
 function bindFilterControls() {
  cleanupFilterControls();
@@ -213,12 +164,11 @@ function bindFilterControls() {
  if (!filterViewport || !filterStack) return;
  filterLastScrollTop = clamp(filterViewport.scrollTop, 0, Math.max(0, filterViewport.scrollHeight - filterViewport.clientHeight));
  filterActiveDirection = 0; filterCandidateDirection = 0; filterCandidateDistance = 0;
- const measuredFilterHeight = filterStack.getBoundingClientRect().height;
- if (measuredFilterHeight > 0) filterCollapsedHeight = measuredFilterHeight;
+ syncFilterSpacerHeight();
  filterStack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
  filterStack.style.setProperty('--filter-offset', `${(-7 * (1 - filterVisibilityProgress)).toFixed(2)}px`);
  if (filterVisibilityProgress === 0) {
-  filterStack.classList.add('is-collapsed');
+  filterStack.classList.add('is-hidden');
   filterStack.setAttribute('aria-hidden', 'true');
   filterStack.inert = true;
  }
@@ -230,8 +180,7 @@ function bindFilterControls() {
   const currentScrollTop = clamp(rawScrollTop, 0, maxScroll);
   const delta = currentScrollTop - filterLastScrollTop;
   filterLastScrollTop = currentScrollTop;
-  if (filterLayoutAdjusting || Math.abs(delta) < FILTER_SCROLL_JITTER) return;
-  if (filterSettleFrame) { cancelAnimationFrame(filterSettleFrame); filterSettleFrame = 0; }
+  if (Math.abs(delta) < FILTER_SCROLL_JITTER) return;
   if (Math.abs(delta) > Math.max(240, filterViewport.clientHeight * .75)) {
    filterActiveDirection = 0; filterCandidateDirection = 0; filterCandidateDistance = 0;
    return;
@@ -250,7 +199,6 @@ function bindFilterControls() {
   }
   filterVisibilityProgress = clamp(filterVisibilityProgress + direction * distance / FILTER_FADE_DISTANCE, 0, 1);
   queueFilterVisibility();
-  scheduleFilterSettle();
  };
  const boundViewport = filterViewport;
  boundViewport.addEventListener('scroll', onScroll, {passive:true});
@@ -289,11 +237,13 @@ function restoreFeedViewport(view) {
  if (!viewport || !stack) return;
  filterVisibilityProgress = clamp(Number(view?.filterProgress ?? 1), 0, 1);
  const naturalHeight = stack.getBoundingClientRect().height;
- if (naturalHeight > 0) filterCollapsedHeight = naturalHeight;
+ if (naturalHeight > 0) stack.closest('.feed-layer')?.style.setProperty('--filter-controls-height', `${naturalHeight}px`);
  stack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
  stack.style.setProperty('--filter-offset', `${(-7 * (1 - filterVisibilityProgress)).toFixed(2)}px`);
  if (filterVisibilityProgress === 0) {
-  stack.classList.add('is-collapsed'); stack.setAttribute('aria-hidden', 'true'); stack.inert = true;
+  stack.classList.add('is-hidden'); stack.setAttribute('aria-hidden', 'true'); stack.inert = true;
+ } else {
+  stack.classList.remove('is-hidden'); stack.removeAttribute('aria-hidden'); stack.inert = false;
  }
  viewport.scrollTop = clamp(Number(view?.scrollTop) || 0, 0, Math.max(0, viewport.scrollHeight - viewport.clientHeight));
  if (view?.anchorId) {
@@ -310,7 +260,7 @@ function renderFeed(restore = null) {
  cleanupAIPoll(); state.aiRequest++;
  if (!restore) filterVisibilityProgress = 1;
  state.screen = 'feed'; controls(true);
- app.innerHTML = `<div class="app-shell"><header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div><nav class="channel-tabs" aria-label="内容频道"><button data-action="unavailable" data-label="推荐">推荐</button><button data-action="unavailable" data-label="热榜">热榜</button><button data-action="unavailable" data-label="故事">故事</button><button data-action="unavailable" data-label="知识">知识</button><button data-action="home" class="active" aria-current="page">过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav></header><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0">${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section>${bottomTabBarHTML()}</div>`;
+ app.innerHTML = `<div class="app-shell"><header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div><nav class="channel-tabs" aria-label="内容频道"><button data-action="unavailable" data-label="推荐">推荐</button><button data-action="unavailable" data-label="热榜">热榜</button><button data-action="unavailable" data-label="故事">故事</button><button data-action="unavailable" data-label="知识">知识</button><button data-action="home" class="active" aria-current="page">过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav></header><div class="feed-layer"><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="filter-controls-spacer" aria-hidden="true"></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section></div>${bottomTabBarHTML()}</div>`;
  restoreFeedViewport(restore || {scrollTop:0, filterProgress:1});
 }
 async function loadFeed({restore = null} = {}) {

@@ -14,6 +14,7 @@ p.add_argument('--host',default='root@47.93.237.1')
 p.add_argument('--key',type=Path,default=Path.home()/'.ssh/id_ed25519')
 p.add_argument('--model-env',type=Path,required=True)
 p.add_argument('--source-records',type=Path,required=True)
+p.add_argument('--oauth-env',type=Path)
 a=p.parse_args()
 m=json.loads(a.manifest.read_text()); archive=Path(m['archive'])
 if not re.fullmatch(r'\d{8}T\d{6}Z-[a-f0-9]{8}',m['release']): raise SystemExit('Invalid release ID')
@@ -24,7 +25,11 @@ scp=['scp','-q','-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-i',str(a
 def remote(script): subprocess.run(ssh+['sh -s'],input=script,text=True,check=True)
 stage='/srv/zhihu-hackathon/incoming/'+m['release']
 remote('set -eu\numask 077\nmkdir -p '+shlex.quote(stage)+'\nchmod 700 '+shlex.quote(stage)+'\n')
-for src,name in [(archive,'release.tar.gz'),(a.model_env,'deepseek.env'),(a.source_records,'sources.json')]:
+uploads=[(archive,'release.tar.gz'),(a.model_env,'deepseek.env'),(a.source_records,'sources.json')]
+if a.oauth_env:
+    if not a.oauth_env.is_file(): raise SystemExit('OAuth configuration not found')
+    uploads.append((a.oauth_env,'oauth.env'))
+for src,name in uploads:
     subprocess.run(scp+[str(src),a.host+':'+stage+'/'+name],check=True)
 script=r'''set -eu
 stage=__STAGE__
@@ -48,6 +53,8 @@ cp /etc/nginx/conf.d/zhihu.yunzhicompany.com.conf "$backup/nginx.conf"
 mkdir -p /etc/systemd/system/zhihu-demo.service.d /etc/zhihu-hackathon
 test ! -f /etc/systemd/system/zhihu-demo.service.d/runtime.conf || cp /etc/systemd/system/zhihu-demo.service.d/runtime.conf "$backup/runtime.conf"
 test ! -f /etc/zhihu-hackathon/deepseek.env || cp /etc/zhihu-hackathon/deepseek.env "$backup/deepseek.env"
+test ! -f /etc/systemd/system/zhihu-demo.service.d/oauth.conf || cp /etc/systemd/system/zhihu-demo.service.d/oauth.conf "$backup/oauth.conf"
+test ! -f /etc/zhihu-hackathon/oauth.env || cp /etc/zhihu-hackathon/oauth.env "$backup/oauth.env"
 "$python" - "$backup/app.sqlite3" <<'PY'
 import sqlite3,sys
 src=sqlite3.connect('/srv/zhihu-hackathon/shared/app.sqlite3'); dst=sqlite3.connect(sys.argv[1]); src.backup(dst); dst.close(); src.close()
@@ -58,6 +65,8 @@ rollback() {
   cp "$backup/nginx.conf" /etc/nginx/conf.d/zhihu.yunzhicompany.com.conf
   if test -f "$backup/runtime.conf"; then cp "$backup/runtime.conf" /etc/systemd/system/zhihu-demo.service.d/runtime.conf; else rm -f /etc/systemd/system/zhihu-demo.service.d/runtime.conf; fi
   if test -f "$backup/deepseek.env"; then cp "$backup/deepseek.env" /etc/zhihu-hackathon/deepseek.env; fi
+  if test -f "$backup/oauth.conf"; then cp "$backup/oauth.conf" /etc/systemd/system/zhihu-demo.service.d/oauth.conf; else rm -f /etc/systemd/system/zhihu-demo.service.d/oauth.conf; fi
+  if test -f "$backup/oauth.env"; then cp "$backup/oauth.env" /etc/zhihu-hackathon/oauth.env; else rm -f /etc/zhihu-hackathon/oauth.env; fi
   systemctl daemon-reload
   nginx -t && systemctl reload nginx
   systemctl restart zhihu-demo.service
@@ -66,6 +75,11 @@ rollback() {
 trap 'rollback' EXIT
 install -m 600 -o root -g root "$stage/deepseek.env" /etc/zhihu-hackathon/deepseek.env
 rm "$stage/deepseek.env"
+if test -f "$stage/oauth.env"; then
+    install -m 600 -o root -g root "$stage/oauth.env" /etc/zhihu-hackathon/oauth.env
+    rm "$stage/oauth.env"
+    printf '[Service]\nEnvironmentFile=/etc/zhihu-hackathon/oauth.env\n' > /etc/systemd/system/zhihu-demo.service.d/oauth.conf
+fi
 cat > /etc/systemd/system/zhihu-demo.service.d/runtime.conf <<'UNIT'
 [Service]
 ExecStart=
@@ -81,6 +95,10 @@ if 'location ^~ /submission/' not in t:
     needle='    location / {\n        proxy_pass'
     if needle not in t: raise SystemExit('Unknown nginx shape')
     t=t.replace(needle,'    location ^~ /submission/ {\n        alias /srv/zhihu-hackathon/product/current/public/submission/;\n        index index.html;\n        add_header Cache-Control "no-cache";\n    }\n'+needle)
+# Callback query contains a single-use credential; log app paths, never query strings.
+if 'log_format guolairen_paths' not in t:
+    t='log_format guolairen_paths \'$remote_addr $request_method $uri $status\';\n'+t
+    t=t.replace('    server_name zhihu.yunzhicompany.com;', '    server_name zhihu.yunzhicompany.com;\n    access_log /var/log/nginx/guolairen-access.log guolairen_paths;')
 p.write_text(t)
 PY
 nginx -t

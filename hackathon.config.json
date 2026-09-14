@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "projectName": "过来人",
+  "projectSlug": "guolairen",
+  "runtime": "existing-python-sqlite",
+  "host": "127.0.0.1",
+  "port": 5174,
+  "oauth": {
+    "enabled": true,
+    "appId": "576",
+    "redirectUri": "https://zhihu.yunzhicompany.com/",
+    "credentialService": "zhihu-hackathon:guolairen:3c99f1438a",
+    "credentialAccount": "oauth-app-key"
+  }
+}
