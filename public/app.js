@@ -21,9 +21,6 @@ let filterStack = null;
 let filterScrollCleanup = null;
 let filterFrame = 0;
 let filterLastScrollTop = 0;
-let filterActiveDirection = 0;
-let filterCandidateDirection = 0;
-let filterCandidateDistance = 0;
 let aiPollTimer = 0;
 let aiPollStartedAt = 0;
 const DEMO_CHANNELS = {
@@ -206,52 +203,109 @@ function applyFilterVisibility() {
 function queueFilterVisibility() {
  if (!filterFrame) filterFrame = requestAnimationFrame(applyFilterVisibility);
 }
+// Count deliberate input gestures, not scroll events or momentum frames.
+function createFilterRevealGate() {
+ let streak = 0, direction = 0, distance = 0, counted = false;
+ return {
+  begin() { direction = 0; distance = 0; counted = false; },
+  input(delta) {
+   if (!Number.isFinite(delta) || Math.abs(delta) < FILTER_SCROLL_JITTER) return null;
+   const next = delta > 0 ? -1 : 1;
+   if (next !== direction) { direction = next; distance = 0; counted = false; }
+   distance += Math.abs(delta);
+   if (distance < (direction === 1 ? 12 : FILTER_DIRECTION_CONFIRM)) return null;
+   if (direction === -1) { streak = 0; return 'hide'; }
+   if (!counted) { streak = Math.min(2, streak + 1); counted = true; }
+   return streak >= 2 ? 'show' : 'hold';
+  }
+ };
+}
 function bindFilterControls() {
  cleanupFilterControls();
  filterViewport = app.querySelector('.feed-viewport');
  filterStack = app.querySelector('.filter-controls-stack');
  if (!filterViewport || !filterStack) return;
- filterLastScrollTop = clamp(filterViewport.scrollTop, 0, Math.max(0, filterViewport.scrollHeight - filterViewport.clientHeight));
- filterActiveDirection = 0; filterCandidateDirection = 0; filterCandidateDistance = 0;
- syncFilterSpacerHeight();
- filterStack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
- filterStack.style.setProperty('--filter-offset', `${(-7 * (1 - filterVisibilityProgress)).toFixed(2)}px`);
- if (filterVisibilityProgress === 0) {
-  filterStack.classList.add('is-hidden');
-  filterStack.setAttribute('aria-hidden', 'true');
-  filterStack.inert = true;
- }
- const onScroll = () => {
-  if (!filterViewport) return;
-  const rawScrollTop = filterViewport.scrollTop;
-  const maxScroll = Math.max(0, filterViewport.scrollHeight - filterViewport.clientHeight);
-  if (rawScrollTop < 0 || rawScrollTop > maxScroll + 2) return;
-  const currentScrollTop = clamp(rawScrollTop, 0, maxScroll);
-  const delta = currentScrollTop - filterLastScrollTop;
-  filterLastScrollTop = currentScrollTop;
-  if (Math.abs(delta) < FILTER_SCROLL_JITTER) return;
-  if (Math.abs(delta) > Math.max(240, filterViewport.clientHeight * .75)) {
-   filterActiveDirection = 0; filterCandidateDirection = 0; filterCandidateDistance = 0;
-   return;
-  }
-  const direction = delta > 0 ? -1 : 1;
-  let distance = Math.abs(delta);
-  if (direction !== filterActiveDirection) {
-   if (direction !== filterCandidateDirection) { filterCandidateDirection = direction; filterCandidateDistance = 0; }
-   filterCandidateDistance += distance;
-   if (filterCandidateDistance < FILTER_DIRECTION_CONFIRM) return;
-   filterActiveDirection = direction;
-   distance = filterCandidateDistance;
-   filterCandidateDirection = 0; filterCandidateDistance = 0;
-  } else {
-   filterCandidateDirection = 0; filterCandidateDistance = 0;
-  }
-  filterVisibilityProgress = clamp(filterVisibilityProgress + direction * distance / FILTER_FADE_DISTANCE, 0, 1);
-  queueFilterVisibility();
- };
  const boundViewport = filterViewport;
- boundViewport.addEventListener('scroll', onScroll, {passive:true});
- filterScrollCleanup = () => boundViewport.removeEventListener('scroll', onScroll);
+ filterLastScrollTop = clamp(boundViewport.scrollTop, 0, Math.max(0, boundViewport.scrollHeight - boundViewport.clientHeight));
+ syncFilterSpacerHeight();
+ applyFilterVisibility();
+ const gate = createFilterRevealGate();
+ let action = null, lastWheel = -Infinity, touchY = null, touchX = null;
+ let settleTimer = 0, settleFrame = 0, disposed = false;
+ const cancelSettle = () => {
+  clearTimeout(settleTimer); cancelAnimationFrame(settleFrame);
+  settleTimer = 0; settleFrame = 0;
+ };
+ const settle = () => {
+  if (disposed || !action || (action === 'hold' && filterVisibilityProgress === 1)) return;
+  const from = filterVisibilityProgress, to = action === 'show' ? 1 : 0;
+  const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150;
+  const start = performance.now();
+  const tick = now => {
+   if (disposed) return;
+   const t = duration ? Math.min(1, (now - start) / duration) : 1;
+   filterVisibilityProgress = from + (to - from) * (1 - Math.pow(1 - t, 3));
+   applyFilterVisibility();
+   if (t < 1) settleFrame = requestAnimationFrame(tick);
+  };
+  settleFrame = requestAnimationFrame(tick);
+ };
+ const scheduleSettle = () => { clearTimeout(settleTimer); settleTimer = setTimeout(settle, 180); };
+ const input = delta => {
+  const next = gate.input(delta);
+  if (!next) return;
+  cancelSettle(); action = next;
+  // Holding the first return gesture must never increase visibility.
+  scheduleSettle();
+ };
+ const onWheel = event => {
+  if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+  const now = performance.now();
+  if (now - lastWheel > 240) { gate.begin(); action = null; }
+  lastWheel = now;
+  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? boundViewport.clientHeight : 1;
+  input(event.deltaY * scale);
+ };
+ const onTouchStart = event => {
+  cancelSettle(); action = null; gate.begin();
+  touchY = event.touches.length === 1 ? event.touches[0].clientY : null;
+  touchX = event.touches.length === 1 ? event.touches[0].clientX : null;
+ };
+ const onTouchMove = event => {
+  if (touchY === null || event.touches.length !== 1) return;
+  const touch = event.touches[0], dy = touchY - touch.clientY, dx = touchX - touch.clientX;
+  touchY = touch.clientY; touchX = touch.clientX;
+  if (Math.abs(dy) > Math.abs(dx)) input(dy);
+ };
+ const onTouchEnd = () => { touchY = null; touchX = null; scheduleSettle(); };
+ const onKey = event => {
+  if (event.target.closest?.('input,textarea,select,button,[contenteditable="true"]')) return;
+  const up = ['ArrowUp','PageUp','Home'].includes(event.key) || (event.key === ' ' && event.shiftKey);
+  const down = ['ArrowDown','PageDown','End'].includes(event.key) || (event.key === ' ' && !event.shiftKey);
+  if (!up && !down) return;
+  if (!event.repeat) { gate.begin(); action = null; }
+  input(up ? -40 : 40);
+ };
+ const onScroll = () => {
+  const maxScroll = Math.max(0, boundViewport.scrollHeight - boundViewport.clientHeight);
+  const raw = boundViewport.scrollTop;
+  if (raw < 0 || raw > maxScroll + 2) return;
+  const current = clamp(raw, 0, maxScroll), delta = current - filterLastScrollTop;
+  filterLastScrollTop = current;
+  // Scroll restoration and layout changes cannot manufacture a gesture.
+  if (Math.abs(delta) < FILTER_SCROLL_JITTER || Math.abs(delta) > Math.max(240, boundViewport.clientHeight * .75)) return;
+  if ((action === 'hide' && delta > 0) || (action === 'show' && delta < 0)) {
+   cancelSettle();
+   filterVisibilityProgress = clamp(filterVisibilityProgress + (action === 'show' ? 1 : -1) * Math.abs(delta) / FILTER_FADE_DISTANCE, 0, 1);
+   queueFilterVisibility(); scheduleSettle();
+  }
+ };
+ const listeners = {scroll:onScroll,wheel:onWheel,touchstart:onTouchStart,touchmove:onTouchMove,touchend:onTouchEnd,touchcancel:onTouchEnd,keydown:onKey};
+ Object.entries(listeners).forEach(([type,fn]) => boundViewport.addEventListener(type,fn,{passive:true}));
+ filterScrollCleanup = () => {
+  disposed = true; cancelSettle();
+  Object.entries(listeners).forEach(([type,fn]) => boundViewport.removeEventListener(type,fn));
+ };
 }
 let answerDeckResize=null;
 function controls(show) { answerDeckResize?.disconnect();answerDeckResize=null;app.classList.remove('answer-flow-mode'); app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
