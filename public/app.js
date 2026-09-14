@@ -183,10 +183,30 @@ function syncFilterSpacerHeight() {
  const height = filterStack.getBoundingClientRect().height;
  if (height > 0) layer.style.setProperty('--filter-controls-height', `${height}px`);
 }
+function syncFilterSpacer(viewport, stack, visible, preservePosition = true) {
+ const spacer = viewport.querySelector('.filter-controls-spacer');
+ if (!spacer) return;
+ const before = spacer.getBoundingClientRect().height;
+ const height = visible ? stack.getBoundingClientRect().height : 0;
+ if (Math.abs(before - height) < .1) return;
+ const scroll = viewport.scrollTop;
+ spacer.style.height = `${height}px`;
+ // Counter the layout change once; do not mistake it for a user scroll.
+ if (preservePosition && scroll > 0) viewport.scrollTop = Math.max(0, scroll + height - before);
+ filterLastScrollTop = viewport.scrollTop;
+}
+function feedEntryView(view) { return view ? {...view, filterProgress:1} : null; }
+function revealFeedFilters() {
+ if (!app.querySelector('.filter-controls-stack')) return;
+ cleanupFilterControls();
+ filterViewport = app.querySelector('.feed-viewport'); filterStack = app.querySelector('.filter-controls-stack');
+ filterVisibilityProgress = 1; applyFilterVisibility(); bindFilterControls();
+}
 function applyFilterVisibility() {
  filterFrame = 0;
  if (!filterStack || !filterViewport) return;
  const progress = clamp(filterVisibilityProgress, 0, 1);
+ syncFilterSpacer(filterViewport, filterStack, progress > 0);
  if (progress > 0 && filterStack.classList.contains('is-hidden')) {
   filterStack.classList.remove('is-hidden');
   filterStack.removeAttribute('aria-hidden');
@@ -209,12 +229,12 @@ function createFilterRevealGate() {
  return {
   begin() { direction = 0; distance = 0; counted = false; },
   input(delta) {
-   if (!Number.isFinite(delta) || Math.abs(delta) < FILTER_SCROLL_JITTER) return null;
+   if (!Number.isFinite(delta) || Math.abs(delta) < .1) return null;
    const next = delta > 0 ? -1 : 1;
-   if (next !== direction) { direction = next; distance = 0; counted = false; }
+   if (next !== direction) { direction = next; distance = 0; }
    distance += Math.abs(delta);
    if (distance < (direction === 1 ? 12 : FILTER_DIRECTION_CONFIRM)) return null;
-   if (direction === -1) { streak = 0; return 'hide'; }
+   if (direction === -1) { streak = 0; counted = false; return 'hide'; }
    if (!counted) { streak = Math.min(2, streak + 1); counted = true; }
    return streak >= 2 ? 'show' : 'hold';
   }
@@ -261,13 +281,13 @@ function bindFilterControls() {
  const onWheel = event => {
   if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
   const now = performance.now();
-  if (now - lastWheel > 240) { gate.begin(); action = null; }
+  if (now - lastWheel > 240) gate.begin();
   lastWheel = now;
   const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? boundViewport.clientHeight : 1;
   input(event.deltaY * scale);
  };
  const onTouchStart = event => {
-  cancelSettle(); action = null; gate.begin();
+  cancelSettle(); gate.begin();
   touchY = event.touches.length === 1 ? event.touches[0].clientY : null;
   touchX = event.touches.length === 1 ? event.touches[0].clientX : null;
  };
@@ -283,7 +303,7 @@ function bindFilterControls() {
   const up = ['ArrowUp','PageUp','Home'].includes(event.key) || (event.key === ' ' && event.shiftKey);
   const down = ['ArrowDown','PageDown','End'].includes(event.key) || (event.key === ' ' && !event.shiftKey);
   if (!up && !down) return;
-  if (!event.repeat) { gate.begin(); action = null; }
+  if (!event.repeat) gate.begin();
   input(up ? -40 : 40);
  };
  const onScroll = () => {
@@ -378,9 +398,9 @@ function renderKanshan({prepare = true} = {}) {
  app.innerHTML = `<div class="app-shell demo-shell shot-shell">${topNavigationHTML('kanshan')}<section class="demo-feed demo-kanshan" aria-label="看山示例页"><div class="demo-kanshan-heading"><span>Hi，我是刘看山，你的 AI 朋友</span><strong>畅所欲问</strong><small>本页为本地交互示例，未接入实时 AI 或搜索服务。</small></div><div class="demo-kanshan-suggestions" aria-label="示例问题">${KANSHAN_SUGGESTIONS.map((item, index) => `<button type="button" data-action="kanshan-suggestion" data-index="${index}">${escape(item.question)}${item.home ? ' ↗' : ''}</button>`).join('')}</div>${kanshanSuggestionHTML()}<div class="demo-kanshan-input"><input type="text" value="体验版暂不支持自由对话" aria-label="体验版暂不支持自由对话" disabled><button type="button" data-action="ask">去提问</button></div></section>${bottomTabBarHTML('kanshan')}</div>`;
 }
 function showCachedFeed() {
- const restore = state.feedReturn || stored('feed', null);
+ const restore = feedEntryView(state.feedReturn || stored('feed', null));
  state.composerOrigin = null;
- if (!state.feed.length) return returnToFeed();
+ if (!state.feed.length) return loadFeed({restore});
  if (restore) { state.mode = restore.mode || state.mode; state.stage = restore.stage || 'all'; }
  renderFeed(restore); return Promise.resolve();
 }
@@ -424,7 +444,7 @@ function restoreFeedViewport(view) {
  const viewport = app.querySelector('.feed-viewport');
  const stack = app.querySelector('.filter-controls-stack');
  if (!viewport || !stack) return;
- filterVisibilityProgress = clamp(Number(view?.filterProgress ?? 1), 0, 1);
+ filterVisibilityProgress = view?.filterProgress === 0 ? 0 : 1;
  const naturalHeight = stack.getBoundingClientRect().height;
  if (naturalHeight > 0) stack.closest('.feed-layer')?.style.setProperty('--filter-controls-height', `${naturalHeight}px`);
  stack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
@@ -434,12 +454,14 @@ function restoreFeedViewport(view) {
  } else {
   stack.classList.remove('is-hidden'); stack.removeAttribute('aria-hidden'); stack.inert = false;
  }
+ syncFilterSpacer(viewport, stack, filterVisibilityProgress > 0, false);
  viewport.scrollTop = clamp(Number(view?.scrollTop) || 0, 0, Math.max(0, viewport.scrollHeight - viewport.clientHeight));
  if (view?.anchorId) {
   const anchor = viewport.querySelector(`[data-question-id="${view.anchorId}"]`);
   if (anchor) viewport.scrollTop = clamp(viewport.scrollTop + anchor.getBoundingClientRect().top - viewport.getBoundingClientRect().top - (Number(view.anchorOffset) || 0), 0, Math.max(0, viewport.scrollHeight - viewport.clientHeight));
  }
  requestAnimationFrame(() => {
+  if (!viewport.isConnected || app.querySelector('.feed-viewport') !== viewport) return;
   bindFilterControls();
   if (view?.focusedQuestionId) app.querySelector(`[data-question-id="${view.focusedQuestionId}"]`)?.focus({preventScroll:true});
  });
@@ -758,7 +780,7 @@ phone.addEventListener('click', async event => {
    if(channel&&channel===active) {
     const now=performance.now();
     if(navTap.channel===channel&&now-navTap.time<420){navTap={channel:null,time:0};await refreshCurrentChannel(channel);}
-    else navTap={channel,time:now};
+    else {navTap={channel,time:now};if(channel==='guolairen')revealFeedFilters();}
     return;
    }
    navTap={channel:null,time:0};
@@ -896,7 +918,7 @@ app.addEventListener('submit', async event => {
 });
 async function boot() {
  try {
-  state.user = await api('/me'); const restore = stored('feed', null); state.feedReturn = restore;
+  state.user = await api('/me'); const restore = feedEntryView(stored('feed', null)); state.feedReturn = restore;
   try { await loadFeed({restore}); } catch (error) { if (!restore) throw error; state.mode = 'older'; state.stage = 'all'; state.feedReturn = null; await loadFeed(); }
   const activeComposer = stored('composer:active', null);
   if (activeComposer?.origin && typeof activeComposer.prefill === 'string') showAsk(activeComposer.prefill, activeComposer.origin);

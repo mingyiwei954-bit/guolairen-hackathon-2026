@@ -4,7 +4,8 @@ const block=source.slice(source.indexOf('function cleanupFilterControls()'),sour
 function fixture(initial=0){
  let now=1000,serial=0;const handlers={},timers=new Map(),frames=new Map(),classes=new Set();
  const stack={classList:{contains:k=>classes.has(k),add:k=>classes.add(k),remove:k=>classes.delete(k)},style:{setProperty(){}},setAttribute(){},removeAttribute(){},getBoundingClientRect:()=>({height:49}),closest:()=>({style:{setProperty(){}}})};
- const viewport={scrollTop:500,scrollHeight:1600,clientHeight:400,addEventListener:(t,f)=>handlers[t]=f,removeEventListener:t=>delete handlers[t]};
+ const spacer={style:{height:'49px'},getBoundingClientRect(){return {height:parseFloat(this.style.height)}}};
+ const viewport={querySelector:()=>spacer,scrollTop:500,scrollHeight:1600,clientHeight:400,addEventListener:(t,f)=>handlers[t]=f,removeEventListener:t=>delete handlers[t]};
  const ctx=vm.createContext({app:{querySelector:s=>s==='.feed-viewport'?viewport:stack},FILTER_SCROLL_JITTER:1.75,FILTER_DIRECTION_CONFIRM:5,FILTER_FADE_DISTANCE:210,
  filterVisibilityProgress:initial,filterViewport:null,filterStack:null,filterScrollCleanup:null,filterFrame:0,filterLastScrollTop:0,
  clamp:(x,a,b)=>Math.min(b,Math.max(a,x)),performance:{now:()=>now},matchMedia:()=>({matches:true}),
@@ -12,7 +13,7 @@ function fixture(initial=0){
  requestAnimationFrame:fn=>{const id=++serial;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id)});
  vm.runInContext(block,ctx);ctx.bindFilterControls();
  const drain=map=>{for(const [id,fn] of [...map]){map.delete(id);fn(now);}};
- return {ctx,viewport,handlers,stack,classes,
+ return {ctx,viewport,handlers,stack,classes,spacer,
   settle(){drain(timers);drain(frames);drain(frames);},
   wheel(delta,gap=20){now+=gap;handlers.wheel({deltaY:delta,deltaX:0,deltaMode:0,ctrlKey:false});},
   scroll(delta){viewport.scrollTop+=delta;handlers.scroll();drain(frames);},
@@ -38,3 +39,18 @@ f=fixture();const key=(repeat=false)=>f.handlers.keydown({key:'ArrowUp',repeat,t
 key();key(true);key(true);f.settle();assert.equal(f.ctx.filterVisibilityProgress,0,'key repeat stays one gesture');key();f.settle();assert.equal(f.ctx.filterVisibilityProgress,1);
 f=fixture();f.wheel(-30,300);f.wheel(-30,300);f.ctx.cleanupFilterControls();f.settle();assert.equal(f.ctx.filterVisibilityProgress,0,'leaving screen cancels pending reveal');assert.equal(Object.keys(f.handlers).length,0);
 console.log('Filter gestures: separate strokes, inertia grouping, reversal reset, jitter, keyboard, top boundary, restoration and cleanup passed.');
+
+f=fixture();f.wheel(-20,300);f.wheel(2);f.wheel(-20);f.settle();assert.equal(f.ctx.filterVisibilityProgress,0,'unconfirmed reverse jitter cannot count one gesture twice');
+f=fixture();f.touchStart();for(let y=201;y<=218;y++)f.touchMove(y);f.touchEnd();f.settle();assert.equal(f.ctx.filterVisibilityProgress,0);
+f.touchStart();for(let y=201;y<=218;y++)f.touchMove(y);f.touchEnd();f.settle();assert.equal(f.ctx.filterVisibilityProgress,1,'slow touch movements accumulate');
+f=fixture(1);for(let cycle=0;cycle<20;cycle++){
+ const before=f.viewport.scrollTop;
+ f.wheel(40,300);f.settle();assert.equal(f.spacer.style.height,'0px');assert.equal(f.viewport.scrollTop,before-49);
+ f.wheel(-30,300);f.settle();assert.equal(f.ctx.filterVisibilityProgress,0);
+ f.wheel(-30,300);f.settle();assert.equal(f.ctx.filterVisibilityProgress,1);assert.equal(f.spacer.style.height,'49px');assert.equal(f.viewport.scrollTop,before,'repeated reveal/hide must not drift');
+}
+f=fixture(.4);f.touchStart();f.touchEnd(); // A tap must not invent a reveal gesture.
+assert.equal(f.ctx.createFilterRevealGate().input(-2),null);
+const saved={filterProgress:0,scrollTop:300,mode:'younger',stage:'middle'};
+assert.equal(f.ctx.feedEntryView(saved).filterProgress,1);assert.equal(f.ctx.feedEntryView(saved).scrollTop,300);assert.equal(saved.filterProgress,0);
+console.log('Stability: 20 cycles, no spacer drift, slow touch, jitter and fresh entry visibility passed.');
