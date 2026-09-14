@@ -67,6 +67,53 @@ curl -X POST http://127.0.0.1:5174/api/ai/answer \
 
 模型只能引用本次提供的资料 ID 和原文子串。程序验证通过后才从 SQLite 回填标题、原始链接和 `content_scope`，模型无权生成来源链接。如果在线请求已占用单并发槽，API 立即返回 HTTP 503 和 `status: busy`，不阻塞 feed。
 
+## 问题详情三问
+
+详情页使用服务端持久化的三问接口。旧 `POST /api/ai/answer` 和 CLI 保持不变。
+
+```text
+GET /api/questions/{question_id}/ai
+POST /api/questions/{question_id}/ai
+```
+
+GET 只读取当前访客 cookie 在该问题下的状态，不调用模型。尚未提问时也不会创建三问记录：
+
+```json
+{
+  "question_id": 2,
+  "status": "ready",
+  "turns_used": 0,
+  "turns_remaining": 3,
+  "can_ask": true,
+  "active_client_turn_id": null,
+  "turns": [],
+  "error_code": null,
+  "error": null
+}
+```
+
+POST 请求示例：
+
+```json
+{
+  "question": "如果预算有限，应该先看什么？",
+  "client_turn_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+- `question` 为 1–1000 字符；`client_turn_id` 为 1–80 个字母、数字、短横线或下划线。客户端每次主动重试生成新 ID。
+- 同一访客 cookie 与问题只有一组三问记录。相同 `client_turn_id` 永远返回已记录结果，不会再次请求模型。
+- 首问检索当时所有 `ready` 资料并冻结证据快照，后两问只复用该快照。社区原问题与此前用户问题仅作为语境，不是引用证据。
+- `answered` 和 `insufficient_evidence` 消耗一次；模型忙、超时、网络或输出校验失败记录为 `failed`，但不消耗次数。第三次完成后为 `limit_reached`。
+- 首问证据不足时返回 `insufficient_evidence`，`turns_used=1`、`turns_remaining=2`，但 `can_ask=false`，不会用无来源回答补位。
+- 模型调用前后与每次 GET 都复核冻结来源。来源或正文被撤回时状态为 `source_unavailable`，停止继续提问；受影响的历史 AI 正文、追问和引用不会再通过 API 展示。
+- 同一问题已有运行请求时，其他标签页得到 HTTP 503 和同一份 `running` snapshot；达到上限或会话关闭时得到 HTTP 409。输入错误为 400，问题不存在为 404。
+- 服务启动会把遗留的 `running` 轮次标为 `failed/interrupted`，恢复到可手动重试状态；不会自动重新发送模型请求，也不会计入已用次数。
+
+每个 `turns` 元素固定返回 `client_turn_id`、`question`、`status`、`answer`、`citations`、`followups`、`error_code`、`error`。引用仍只有 `document_id`、`quote`、`title`、`source_url`、`content_scope`，不附加或推测作者年龄与阶段。
+
+V4 增量迁移新增 `content_ai_conversations` 与 `content_ai_conversation_turns`。原子占位和三次上限在短 SQLite 写事务内完成，模型网络等待不持有事务。
+
 ## 任务记录与错误
 
 增量迁移版本 3 新增 `content_ai_jobs`、`content_ai_calls`，并扩展 `content_derivatives`。每次实际请求记录耗时、requested/actual model、usage、提示词版本、HTTP 状态和明确错误码。模型网络请求期间不持有 SQLite 连接或写事务。

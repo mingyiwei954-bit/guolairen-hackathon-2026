@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 MIGRATION_V1 = """
@@ -173,6 +173,45 @@ CREATE INDEX IF NOT EXISTS content_ai_jobs_status ON content_ai_jobs(status,job_
 CREATE INDEX IF NOT EXISTS content_ai_calls_job ON content_ai_calls(job_id,id);
 """
 
+MIGRATION_V4 = """
+CREATE TABLE IF NOT EXISTS content_ai_conversations(
+  id INTEGER PRIMARY KEY,
+  visitor_id TEXT NOT NULL,
+  question_id INTEGER NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('ready','running','limit_reached','insufficient_evidence','source_unavailable')),
+  evidence_json TEXT NOT NULL DEFAULT '[]',
+  error_code TEXT,
+  error_message TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE(visitor_id,question_id)
+);
+
+CREATE TABLE IF NOT EXISTS content_ai_conversation_turns(
+  id INTEGER PRIMARY KEY,
+  conversation_id INTEGER NOT NULL REFERENCES content_ai_conversations(id) ON DELETE CASCADE,
+  sequence_no INTEGER NOT NULL,
+  client_turn_id TEXT NOT NULL,
+  question TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('running','answered','insufficient_evidence','failed')),
+  answer TEXT NOT NULL DEFAULT '',
+  citations_json TEXT NOT NULL DEFAULT '[]',
+  followups_json TEXT NOT NULL DEFAULT '[]',
+  error_code TEXT,
+  error_message TEXT,
+  ai_job_id INTEGER REFERENCES content_ai_jobs(id),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE(conversation_id,client_turn_id),
+  UNIQUE(conversation_id,sequence_no)
+);
+
+CREATE INDEX IF NOT EXISTS content_ai_conversations_lookup
+  ON content_ai_conversations(visitor_id,question_id);
+CREATE INDEX IF NOT EXISTS content_ai_conversation_turns_lookup
+  ON content_ai_conversation_turns(conversation_id,sequence_no);
+"""
+
 
 def connect_content_db(db_path: str | Path) -> sqlite3.Connection:
     path = Path(db_path)
@@ -235,6 +274,58 @@ def migrate_content_schema(db: sqlite3.Connection) -> None:
             "INSERT OR IGNORE INTO content_schema_migrations(version,applied_at) VALUES(3,?)",
             (int(time.time()),),
         )
+    if not db.execute("SELECT 1 FROM content_schema_migrations WHERE version=4").fetchone():
+        db.executescript(MIGRATION_V4)
+        db.execute(
+            "INSERT OR IGNORE INTO content_schema_migrations(version,applied_at) VALUES(4,?)",
+            (int(time.time()),),
+        )
+
+
+def recover_interrupted_ai_work(db: sqlite3.Connection) -> int:
+    """Fail unfinished AI work from an earlier server process without replaying it."""
+    migrate_content_schema(db)
+    now = int(time.time())
+    running_turns = db.execute(
+        "SELECT id,conversation_id,ai_job_id FROM content_ai_conversation_turns WHERE status='running'"
+    ).fetchall()
+    db.execute(
+        """UPDATE content_ai_jobs
+           SET status='failed',error_code='interrupted',error_message='服务重启，上一轮未完成',
+               completed_at=?,updated_at=?
+           WHERE status='running'""",
+        (now, now),
+    )
+    if not running_turns:
+        return 0
+
+    turn_ids = [int(row["id"]) for row in running_turns]
+    job_ids = [int(row["ai_job_id"]) for row in running_turns if row["ai_job_id"] is not None]
+    placeholders = ",".join("?" for _ in turn_ids)
+    db.execute(
+        """UPDATE content_ai_conversation_turns
+           SET status='failed',error_code='interrupted',error_message='服务重启，上一轮未完成',updated_at=?
+           WHERE id IN ({})""".format(placeholders),
+        [now] + turn_ids,
+    )
+    if job_ids:
+        job_placeholders = ",".join("?" for _ in job_ids)
+        db.execute(
+            """UPDATE content_ai_jobs
+               SET status='failed',error_code='interrupted',error_message='服务重启，上一轮未完成',
+                   completed_at=?,updated_at=?
+               WHERE id IN ({}) AND status IN ('queued','running')""".format(job_placeholders),
+            [now, now] + job_ids,
+        )
+    conversation_ids = sorted({int(row["conversation_id"]) for row in running_turns})
+    convo_placeholders = ",".join("?" for _ in conversation_ids)
+    db.execute(
+        """UPDATE content_ai_conversations
+           SET status='ready',error_code='interrupted',error_message='服务重启，上一轮未完成',updated_at=?
+           WHERE id IN ({}) AND status='running'""".format(convo_placeholders),
+        [now] + conversation_ids,
+    )
+    return len(turn_ids)
 
 
 def _escape_like(value: str) -> str:

@@ -14,7 +14,12 @@ from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 
 from content_pipeline.ai_processor import AIInputError, AIProcessor
-from content_pipeline.storage import get_library_item, list_library_items, migrate_content_schema
+from content_pipeline.storage import (
+    get_library_item,
+    list_library_items,
+    migrate_content_schema,
+    recover_interrupted_ai_work,
+)
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = os.environ.get('APP_DB', str(ROOT / 'data' / 'app.sqlite3'))
@@ -57,6 +62,7 @@ def initialize():
         CREATE INDEX IF NOT EXISTS questions_recent ON questions(created DESC);
         ''')
         migrate_content_schema(db)
+        recover_interrupted_ai_work(db)
         if not db.execute("SELECT 1 FROM metadata WHERE key='seed_v1'").fetchone():
             seed = [
                 ('我最近不太快乐，怎么办？', '想知道，你们会怎么让自己开心起来。', 'college', 'primary', [
@@ -87,8 +93,8 @@ def initialize():
             db.execute("INSERT INTO metadata(key,value) VALUES('seed_v1','1')")
 
 class RequestError(Exception):
-    def __init__(self, message, status=400):
-        self.message, self.status = message, status
+    def __init__(self, message, status=400, code=None):
+        self.message, self.status, self.code = message, status, code
 
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, payload, status=200):
@@ -166,6 +172,20 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path.path == '/api/ai/status':
                 return self.send_json(ai_service().public_status())
+            question_ai_parts = [part for part in path.path.split('/') if part]
+            if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'ai':
+                try:
+                    question_id = int(question_ai_parts[2])
+                except ValueError:
+                    raise RequestError('问题不存在', 404, 'question_not_found')
+                with connect() as db:
+                    user = self.session(db)
+                    db.commit()
+                try:
+                    result = ai_service().question_ai_snapshot(user['id'], question_id)
+                except AIInputError:
+                    raise RequestError('问题不存在', 404, 'question_not_found')
+                return self.send_json(result)
             derivative_parts = [part for part in path.path.split('/') if part]
             if len(derivative_parts) == 5 and derivative_parts[:3] == ['api', 'library', 'items'] and derivative_parts[4] == 'derivatives':
                 try:
@@ -245,7 +265,10 @@ class Handler(BaseHTTPRequestHandler):
                     raise RequestError('页面不存在', 404)
             self.send_json(result)
         except RequestError as e:
-            self.send_json({'error': e.message}, e.status)
+            payload = {'error': e.message}
+            if e.code:
+                payload['error_code'] = e.code
+            self.send_json(payload, e.status)
         except sqlite3.Error:
             self.send_json({'error': '数据暂时不可用，请稍后再试'}, 503)
 
@@ -257,6 +280,24 @@ class Handler(BaseHTTPRequestHandler):
                 raise RequestError('请求来源不匹配', 403)
             data = self.payload()
             path = urlsplit(self.path).path
+            question_ai_parts = [part for part in path.split('/') if part]
+            if len(question_ai_parts) == 4 and question_ai_parts[:2] == ['api', 'questions'] and question_ai_parts[3] == 'ai':
+                try:
+                    question_id = int(question_ai_parts[2])
+                except ValueError:
+                    raise RequestError('问题不存在', 404, 'question_not_found')
+                with connect() as db:
+                    user = self.session(db)
+                    if not db.execute('SELECT 1 FROM questions WHERE id=?', (question_id,)).fetchone():
+                        raise RequestError('问题不存在', 404, 'question_not_found')
+                    db.commit()
+                try:
+                    result, status = ai_service().question_ai_answer(
+                        user['id'], question_id, data.get('question'), data.get('client_turn_id')
+                    )
+                except AIInputError as exc:
+                    raise RequestError(str(exc), 400, 'invalid_input')
+                return self.send_json(result, status)
             if path == '/api/ai/answer':
                 question = data.get('question')
                 topic = data.get('topic')
@@ -315,7 +356,10 @@ class Handler(BaseHTTPRequestHandler):
                     raise RequestError('接口不存在', 404)
             self.send_json(result)
         except RequestError as e:
-            self.send_json({'error': e.message}, e.status)
+            payload = {'error': e.message}
+            if e.code:
+                payload['error_code'] = e.code
+            self.send_json(payload, e.status)
         except sqlite3.Error:
             self.send_json({'error': '保存失败，请稍后再试'}, 503)
 
