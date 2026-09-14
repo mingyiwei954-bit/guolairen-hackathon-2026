@@ -1,0 +1,212 @@
+/* Lightweight placeholder channels that keep the existing Zhihu-style shell intact. */
+.demo-shell {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.demo-feed {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.demo-feed::-webkit-scrollbar { display: none; }
+
+.demo-caption {
+  margin: 0;
+  padding: 11px 16px 9px;
+  border-bottom: 1px solid var(--line);
+  color: #929aa7;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.demo-row {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 15px 16px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+button.demo-row { cursor: pointer; }
+
+.demo-row:focus-visible,
+.demo-kanshan-suggestions button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--blue);
+  outline-offset: -3px;
+}
+
+.demo-title {
+  margin: 0;
+  color: #191b1f;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.demo-excerpt {
+  display: -webkit-box;
+  margin: 7px 0 0;
+  overflow: hidden;
+  color: #505966;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.demo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 9px;
+  margin-top: 9px;
+  color: #8a94a3;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.demo-meta > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.demo-rank {
+  flex: 0 0 28px;
+  width: 28px;
+  padding-top: 1px;
+  color: #6f7885;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.demo-row:has(.demo-rank) {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.demo-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.demo-kanshan {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100%;
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  background: #fff;
+}
+
+.demo-kanshan-heading {
+  margin: 0;
+  padding: 18px 16px 12px;
+  color: #191b1f;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.demo-kanshan-heading > span:first-child { display: block; color: #3f444c; }
+
+.demo-kanshan-heading strong {
+  display: block;
+  margin-top: clamp(68px, 13vh, 112px);
+  color: #202328;
+  font-size: 22px;
+  font-weight: 620;
+  line-height: 1.5;
+}
+
+.demo-kanshan-heading small {
+  display: block;
+  margin-top: 8px;
+  color: #8791a0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.demo-kanshan-suggestions {
+  display: grid;
+  margin-top: 12px;
+}
+
+.demo-kanshan-suggestions > * {
+  min-width: 0;
+}
+
+.demo-kanshan-suggestions button,
+.demo-kanshan-suggestions a {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #25282d;
+  font-size: 15px;
+  line-height: 1.55;
+  text-align: left;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.demo-kanshan-input {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  gap: 8px;
+  margin: auto 16px 0;
+  padding: 4px 12px;
+  border: 1px solid #d8dde5;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.demo-kanshan-input input {
+  min-width: 0;
+  min-height: 36px;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+}
+
+.demo-kanshan-input input:focus-visible { outline: 0; }
+.demo-kanshan-input:focus-within { border-color: #9fb9da; box-shadow: 0 0 0 2px rgb(23 114 246 / 10%); }
+.demo-kanshan-input button { flex: 0 0 auto; min-width: 44px; min-height: 44px; color: #596a81; }
+
+@media (max-width: 540px) {
+  .demo-title { font-size: 17px; }
+  .demo-row { padding-right: 15px; padding-left: 15px; }
+  .demo-caption { padding-right: 15px; padding-left: 15px; }
+  .demo-kanshan-heading { padding-right: 15px; padding-left: 15px; }
+}

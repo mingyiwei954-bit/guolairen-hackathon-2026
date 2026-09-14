@@ -421,6 +421,7 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
         files = {'/': ('index.html', 'text/html; charset=utf-8'), '/index.html': ('index.html', 'text/html; charset=utf-8'),
                  '/style.css': ('style.css', 'text/css; charset=utf-8'), '/splash.css': ('splash.css', 'text/css; charset=utf-8'),
                  '/auth-ui.js': ('auth-ui.js', 'text/javascript; charset=utf-8'),
+                 '/demo-channels.css': ('demo-channels.css', 'text/css; charset=utf-8'),
                  '/auth-ui.css': ('auth-ui.css', 'text/css; charset=utf-8'),
                  '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/splash.js': ('splash.js', 'text/javascript; charset=utf-8'),
                  '/assets/welcome-page.jpg': ('assets/welcome-page.jpg', 'image/jpeg')}

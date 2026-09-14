@@ -4,7 +4,8 @@ const phone = document.querySelector('.phone');
 const state = {
  user: null, mode: 'older', stage: 'all', feed: [], allowed: [], detail: null,
  screen: 'feed', request: 0, feedReturn: null, composerOrigin: null,
- detailViews: new Map(), aiRequest: 0
+ detailViews: new Map(), aiRequest: 0, demoChannel: null,
+ demoScroll: new Map(), kanshanSuggestion: null
 };
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stageName = id => state.user?.stages.find(s => s.id === id)?.label || id;
@@ -25,6 +26,54 @@ let filterCandidateDirection = 0;
 let filterCandidateDistance = 0;
 let aiPollTimer = 0;
 let aiPollStartedAt = 0;
+const DEMO_CHANNELS = {
+ recommend: {
+  label: '推荐',
+  items: [
+   {title:'毕业后的第一份工作，应该先看成长还是稳定？', excerpt:'把岗位能学到什么、生活成本和风险承受力分别列出来，比寻找唯一的标准答案更有用。', meta:'职业选择 · 示例提问'},
+   {title:'成年以后，怎样重新建立稳定的朋友关系？', excerpt:'关系往往不是从一次深聊开始，而是从可以重复的小约定、共同兴趣和可靠回应慢慢长出来。', meta:'人际关系 · 示例提问'},
+   {title:'在陌生城市生活，哪些小习惯能带来安全感？', excerpt:'固定一条散步路线、记住附近的店和建立应急联系人，都是把陌生感变成日常感的方法。', meta:'城市生活 · 示例提问'},
+   {title:'读中专或职校，如何找到适合自己的成长路径？', excerpt:'先从可验证的小项目和真实岗位要求入手，再决定考证、升学或积累作品，不必一次选定终点。', meta:'学习成长 · 示例提问'},
+   {title:'退休后开始一项新爱好，会不会太晚？', excerpt:'兴趣不需要证明效率。能持续带来好奇、连接和身体活动，本身就是值得的开始。', meta:'退休生活 · 示例提问'}
+  ]
+ },
+ hot: {
+  label: '热榜',
+  items: [
+   {title:'第一次独自租房，最容易忽略哪些细节？', excerpt:'从合同、通勤、隔音到水电交接，整理一份入住前检查清单。', meta:'示例序号 · 非实时热榜'},
+   {title:'换行业之前，怎样判断是短期倦怠还是方向不合适？', excerpt:'把工作内容、环境和个人状态拆开观察，避免把所有不适归为同一个原因。', meta:'示例序号 · 非实时热榜'},
+   {title:'和家人意见不同，怎样把一次争论变成有效沟通？', excerpt:'先确认彼此真正担心的事，再讨论可以共同承担的下一步。', meta:'示例序号 · 非实时热榜'},
+   {title:'学习一项新技能时，如何度过最初的挫败期？', excerpt:'缩短练习反馈周期，用完成一个小作品替代反复准备。', meta:'示例序号 · 非实时热榜'},
+   {title:'忙碌的时候，怎么保留一点属于自己的时间？', excerpt:'给恢复精力的事情安排最低可执行版本，而不是等待完整空闲。', meta:'示例序号 · 非实时热榜'}
+  ]
+ },
+ story: {
+  label: '故事',
+  items: [
+   {title:'我在凌晨的便利店，学会了不急着评价陌生人', excerpt:'那天雨很大，一个总来买热水的人把伞留给了没带伞的学生。店门合上前，我第一次听见了他的故事。', meta:'虚构片段 · 示例内容'},
+   {title:'奶奶第一次使用视频通话', excerpt:'她对着黑下去的屏幕继续说了很久，直到我们再次接通。后来她把每个按钮都写在纸上，贴在桌角。', meta:'虚构片段 · 示例内容'},
+   {title:'离职后的第一个普通星期一', excerpt:'我没有去远方，只是在早上九点走进菜市场。摊主问今天不用上班吗，我才意识到新的生活真的开始了。', meta:'虚构片段 · 示例内容'},
+   {title:'一封迟到了十年的回信', excerpt:'整理旧书时，我发现当年的地址仍清晰。回信没有解释遗憾，只认真回答了那个少年提出的三个问题。', meta:'虚构片段 · 示例内容'},
+   {title:'父亲学会拍照以后', excerpt:'他的相册里没有风景大片，只有每天不同的云、门口新开的花，以及家人回来时亮着的那扇窗。', meta:'虚构片段 · 示例内容'}
+  ]
+ },
+ knowledge: {
+  label: '知识',
+  items: [
+   {title:'沉没成本为什么会影响选择？', excerpt:'已经付出的时间和金钱无法收回，但人很容易继续投入，只为了让过去的投入看起来没有白费。', meta:'概念速览 · 示例内容'},
+   {title:'间隔练习为什么比集中突击更容易记住？', excerpt:'把学习分散到多个时间点，并在快要忘记时主动回忆，通常能让记忆线索变得更牢固。', meta:'概念速览 · 示例内容'},
+   {title:'什么是社会支持？', excerpt:'它既包括实际帮助，也包括被理解、获得信息和感到自己属于某个群体。不同支持解决的问题并不相同。', meta:'概念速览 · 示例内容'},
+   {title:'学习迁移为什么常常没有自动发生？', excerpt:'在一个场景里会做，并不代表能在新场景中识别同一种结构；比较案例和主动解释能帮助迁移。', meta:'概念速览 · 示例内容'},
+   {title:'机会成本该怎么理解？', excerpt:'选择一件事时放弃的最佳替代选项，就是这次选择的机会成本。它提醒我们同时看见没有选择的路径。', meta:'概念速览 · 示例内容'}
+  ]
+ }
+};
+const KANSHAN_SUGGESTIONS = [
+ {question:'换到陌生城市，怎么认识新朋友？', answer:'可以先选一个会重复出现的线下场景，比如固定课程、运动小组或志愿活动。稳定见面比一次热闹更容易建立连接。'},
+ {question:'第一份工作最该关注什么？', answer:'可以同时看学习密度、带教反馈、基本生活保障和可承受风险。先明确自己此刻最需要补足的部分。'},
+ {question:'周末想培养一个新爱好，怎么开始？', answer:'先选一个两小时内能完成的小体验，再决定是否继续投入。用作品或活动记录进展，比一开始购买全套装备更容易坚持。'},
+ {question:'我想听不同阶段的人怎么回答', home:true}
+];
 function notice(message) { const n = document.getElementById('notice'); n.textContent = message; n.classList.add('visible'); clearTimeout(noticeTimer); noticeTimer = setTimeout(() => n.classList.remove('visible'), 3200); }
 class APIError extends Error { constructor(message, status, payload) { super(message); this.status = status; this.payload = payload; } }
 async function api(path, data) {
@@ -205,7 +254,52 @@ function bindFilterControls() {
  filterScrollCleanup = () => boundViewport.removeEventListener('scroll', onScroll);
 }
 function controls(show) { app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
-function bottomTabBarHTML() { return `<nav class="bottom-tab-bar" aria-label="主导航"><button data-action="home" class="current" aria-current="page" aria-label="首页"><svg class="tab-icon tab-icon-home" viewBox="2 3 20 19" aria-hidden="true" focusable="false"><path d="M3.2 10.1 11 4.25a1.65 1.65 0 0 1 2 0l7.8 5.85v9.05a1.75 1.75 0 0 1-1.75 1.75H4.95a1.75 1.75 0 0 1-1.75-1.75Z" fill="currentColor"/><path d="M12 14.5v4" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="1.8"/></svg><span>首页</span></button><button data-action="unavailable" data-label="看山" aria-label="看山"><svg class="tab-icon tab-icon-mountain" viewBox="2.5 4.5 19 18.5" aria-hidden="true" focusable="false"><path d="M5.2 20.15c-1.3-1.12-1.6-3.15-1.27-5.25l1.16-7.72c.22-1.48 1.93-2.08 3-1.04l1.96 1.92A9.4 9.4 0 0 1 12 7.85c.67 0 1.32.07 1.95.21l1.96-1.92c1.07-1.04 2.78-.44 3 1.04l1.16 7.72c.33 2.1.03 4.13-1.27 5.25-1.32 1.14-3.65 1.35-6.8 1.35s-5.48-.21-6.8-1.35Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><circle cx="9.25" cy="14.25" r="1.05" fill="currentColor"/><circle cx="14.75" cy="14.25" r="1.05" fill="currentColor"/></svg><span>看山</span></button><button class="ask-entry" data-action="ask" aria-label="提出一个问题"><svg class="tab-create-icon" viewBox="0 0 42 32" aria-hidden="true" focusable="false"><rect width="42" height="32" rx="16" fill="currentColor"/><path d="M21 10v12M15 16h12" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2"/></svg></button><button data-action="unavailable" data-label="消息" aria-label="消息"><svg class="tab-icon tab-icon-message" viewBox="1.5 3 21 18" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="1.15" fill="currentColor"/><circle cx="15" cy="12" r="1.15" fill="currentColor"/></svg><span>消息</span></button><button data-action="profile" aria-label="未登录，设置我的阶段"><svg class="tab-icon tab-icon-profile" viewBox="2 2 20 20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 14.35c.78.82 1.78 1.23 3 1.23s2.22-.41 3-1.23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg><span>未登录</span></button></nav>`; }
+const CHANNEL_TABS = [['recommend','推荐'], ['hot','热榜'], ['story','故事'], ['knowledge','知识']];
+function channelTabsHTML(active = 'guolairen') {
+ const demoTabs = CHANNEL_TABS.map(([id, label]) => `<button data-action="channel" data-channel="${id}" class="${active === id ? 'active' : ''}" ${active === id ? 'aria-current="page"' : ''}>${label}</button>`).join('');
+ return `<nav class="channel-tabs" aria-label="内容频道">${demoTabs}<button data-action="home" class="${active === 'guolairen' ? 'active' : ''}" ${active === 'guolairen' ? 'aria-current="page"' : ''}>过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav>`;
+}
+function topNavigationHTML(active = 'guolairen') {
+ return `<header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div>${channelTabsHTML(active)}</header>`;
+}
+function bottomTabBarHTML(active = 'home') { return `<nav class="bottom-tab-bar" aria-label="主导航"><button data-action="home" class="${active === 'home' ? 'current' : ''}" ${active === 'home' ? 'aria-current="page"' : ''} aria-label="首页"><svg class="tab-icon tab-icon-home" viewBox="2 3 20 19" aria-hidden="true" focusable="false"><path d="M3.2 10.1 11 4.25a1.65 1.65 0 0 1 2 0l7.8 5.85v9.05a1.75 1.75 0 0 1-1.75 1.75H4.95a1.75 1.75 0 0 1-1.75-1.75Z" fill="currentColor"/><path d="M12 14.5v4" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="1.8"/></svg><span>首页</span></button><button data-action="kanshan" class="${active === 'kanshan' ? 'current' : ''}" ${active === 'kanshan' ? 'aria-current="page"' : ''} aria-label="看山"><svg class="tab-icon tab-icon-mountain" viewBox="2.5 4.5 19 18.5" aria-hidden="true" focusable="false"><path d="M5.2 20.15c-1.3-1.12-1.6-3.15-1.27-5.25l1.16-7.72c.22-1.48 1.93-2.08 3-1.04l1.96 1.92A9.4 9.4 0 0 1 12 7.85c.67 0 1.32.07 1.95.21l1.96-1.92c1.07-1.04 2.78-.44 3 1.04l1.16 7.72c.33 2.1.03 4.13-1.27 5.25-1.32 1.14-3.65 1.35-6.8 1.35s-5.48-.21-6.8-1.35Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><circle cx="9.25" cy="14.25" r="1.05" fill="currentColor"/><circle cx="14.75" cy="14.25" r="1.05" fill="currentColor"/></svg><span>看山</span></button><button class="ask-entry" data-action="ask" aria-label="提出一个问题"><svg class="tab-create-icon" viewBox="0 0 42 32" aria-hidden="true" focusable="false"><rect width="42" height="32" rx="16" fill="currentColor"/><path d="M21 10v12M15 16h12" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2"/></svg></button><button data-action="unavailable" data-label="消息" aria-label="消息"><svg class="tab-icon tab-icon-message" viewBox="1.5 3 21 18" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="1.15" fill="currentColor"/><circle cx="15" cy="12" r="1.15" fill="currentColor"/></svg><span>消息</span></button><button data-action="profile" aria-label="未登录，设置我的阶段"><svg class="tab-icon tab-icon-profile" viewBox="2 2 20 20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 14.35c.78.82 1.78 1.23 3 1.23s2.22-.41 3-1.23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg><span>未登录</span></button></nav>`; }
+function saveDemoScroll() {
+ if (state.screen !== 'demo' || !state.demoChannel) return;
+ const viewport = app.querySelector('.demo-feed');
+ if (viewport) state.demoScroll.set(state.demoChannel, viewport.scrollTop);
+}
+function prepareDemoScreen() {
+ if (state.screen === 'feed') captureFeedView();
+ else saveDemoScroll();
+ ++state.request; cleanupAIPoll(); state.aiRequest++; controls(false);
+}
+function demoRowHTML(item, rank = null) {
+ return `<article class="demo-row">${rank ? `<span class="demo-rank" aria-label="示例序号 ${rank}">${rank}</span>` : ''}<div class="demo-row-body"><h2 class="demo-title">${escape(item.title)}</h2><p class="demo-excerpt">${escape(item.excerpt)}</p><div class="demo-meta"><span>${escape(item.meta)}</span></div></div></article>`;
+}
+function renderDemoChannel(id) {
+ const channel = DEMO_CHANNELS[id]; if (!channel) return;
+ prepareDemoScreen(); state.screen = 'demo'; state.demoChannel = id; state.kanshanSuggestion = null;
+ app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML(id)}<section class="demo-feed" aria-label="${escape(channel.label)}频道示例内容" tabindex="0"><p class="demo-caption">频道预览 · 示例内容</p>${channel.items.map((item, index) => demoRowHTML(item, id === 'hot' ? index + 1 : null)).join('')}</section>${bottomTabBarHTML('home')}</div>`;
+ requestAnimationFrame(() => { const viewport = app.querySelector('.demo-feed'); if (viewport) viewport.scrollTop = state.demoScroll.get(id) || 0; });
+}
+function kanshanSuggestionHTML() {
+ if (state.kanshanSuggestion === null) return '';
+ const item = KANSHAN_SUGGESTIONS[state.kanshanSuggestion];
+ if (!item || item.home) return '';
+ return `<article class="demo-row" aria-live="polite"><div class="demo-row-body"><h2 class="demo-title">${escape(item.question)}</h2><p class="demo-excerpt">${escape(item.answer)}</p><div class="demo-meta"><span>本地预置回答 · 非 AI 实时生成</span></div></div></article>`;
+}
+function renderKanshan({prepare = true} = {}) {
+ if (prepare) prepareDemoScreen();
+ state.screen = 'kanshan'; state.demoChannel = null;
+ app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML('kanshan')}<section class="demo-feed demo-kanshan" aria-label="看山示例页"><div class="demo-kanshan-heading"><span>Hi，我是刘看山，你的 AI 朋友</span><strong>畅所欲问</strong><small>本页为本地交互示例，未接入实时 AI 或搜索服务。</small></div><div class="demo-kanshan-suggestions" aria-label="示例问题">${KANSHAN_SUGGESTIONS.map((item, index) => `<button type="button" data-action="kanshan-suggestion" data-index="${index}">${escape(item.question)}${item.home ? ' ↗' : ''}</button>`).join('')}</div>${kanshanSuggestionHTML()}<div class="demo-kanshan-input"><input type="text" value="体验版暂不支持自由对话" aria-label="体验版暂不支持自由对话" disabled><button type="button" data-action="ask">去提问</button></div></section>${bottomTabBarHTML('kanshan')}</div>`;
+}
+function showCachedFeed() {
+ const restore = state.feedReturn || stored('feed', null);
+ state.composerOrigin = null;
+ if (!state.feed.length) return returnToFeed();
+ if (restore) { state.mode = restore.mode || state.mode; state.stage = restore.stage || 'all'; }
+ renderFeed(restore); return Promise.resolve();
+}
 function bar(title, trailing = '') { return `<div class="screen-bar"><button data-action="back">← 返回</button><span>${escape(title)}</span><span class="screen-bar-trailing">${trailing}</span></div>`; }
 function answerFooterHTML(a, qid, detail = false) { return `<footer class="answer-footer"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted ? 'voted' : ''}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>${detail ? '<span>来自这一程的声音</span>' : `<button data-action="detail" data-id="${qid}">听听其他回答 ↗</button>`}</footer>`; }
 function answerHTML(a, qid, detail = false) { return `<article class="qa-card detail-answer-card" data-answer-id="${a.id}"><div class="answer-meta"><span class="answer-line"></span><span>${escape(stageName(a.stage))} · ${answerKind(a)}</span></div><p class="answer-text">${escape(a.body)}</p>${answerFooterHTML(a, qid, detail)}</article>`; }
@@ -260,7 +354,7 @@ function renderFeed(restore = null) {
  cleanupAIPoll(); state.aiRequest++;
  if (!restore) filterVisibilityProgress = 1;
  state.screen = 'feed'; controls(true);
- app.innerHTML = `<div class="app-shell"><header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div><nav class="channel-tabs" aria-label="内容频道"><button data-action="unavailable" data-label="推荐">推荐</button><button data-action="unavailable" data-label="热榜">热榜</button><button data-action="unavailable" data-label="故事">故事</button><button data-action="unavailable" data-label="知识">知识</button><button data-action="home" class="active" aria-current="page">过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav></header><div class="feed-layer"><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="filter-controls-spacer" aria-hidden="true"></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section></div>${bottomTabBarHTML()}</div>`;
+ app.innerHTML = `<div class="app-shell">${topNavigationHTML()}<div class="feed-layer"><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="filter-controls-spacer" aria-hidden="true"></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section></div>${bottomTabBarHTML()}</div>`;
  restoreFeedViewport(restore || {scrollTop:0, filterProgress:1});
 }
 async function loadFeed({restore = null} = {}) {
@@ -434,7 +528,17 @@ phone.addEventListener('click', async event => {
  if (b.disabled) return;
  try {
   const action = b.dataset.action;
-  if (action === 'home') return state.screen === 'feed' ? await loadFeed() : await returnToFeed();
+  if (action === 'home') return state.screen === 'feed' ? await loadFeed() : (state.screen === 'demo' || state.screen === 'kanshan' ? await showCachedFeed() : await returnToFeed());
+  if (action === 'channel') return renderDemoChannel(b.dataset.channel);
+  if (action === 'kanshan') return renderKanshan();
+  if (action === 'kanshan-suggestion') {
+   const index = Number(b.dataset.index); const suggestion = KANSHAN_SUGGESTIONS[index];
+   if (!suggestion) return;
+   if (suggestion.home) { await showCachedFeed(); return notice('已回到过来人，听不同阶段的人说'); }
+   state.kanshanSuggestion = index; renderKanshan({prepare:false});
+   requestAnimationFrame(() => app.querySelector('.demo-row[aria-live]')?.scrollIntoView({block:'nearest'}));
+   return;
+  }
   if (action === 'search') return notice('搜索尚未接入体验版，先从过来人问答逛起吧');
   if (action === 'unavailable') return notice(`${b.dataset.label || '这个入口'}尚未接入体验版`);
   if (action === 'profile') { if (state.screen === 'feed') captureFeedView(); return showProfile(); }
