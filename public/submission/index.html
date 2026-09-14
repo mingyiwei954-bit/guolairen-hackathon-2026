@@ -37,7 +37,7 @@
 <p>规则依据：<a href="https://my.feishu.cn/docx/Mc80dR5XvoPaYDxcTasc04POnjd">开发者手册</a>、<a href="https://pcnsiq9mmnww.feishu.cn/wiki/Pd1UwIIBriW0DBk8qlIczBAVnJc">参赛者开发流程</a>，2026-09-14 实际核对。</p>
 <section class="video-section"><h2>演示视频</h2><p><a href="demo.mp4">观看或下载演示视频</a></p><video controls preload="metadata" src="demo.mp4"></video><small>172 秒字幕导览，使用实际页面操作画面和本轮真实模型记录；不作为连续实时录屏或延迟证明。</small></section>
 <section id="verification"><h1>交付检查</h1>
-<p>核验日期：2026 年 9 月 14 日（北京时间）。本地实现已完成，公网发布及正式提交正在收尾。</p>
+<p>核验日期：2026 年 9 月 14 日（北京时间）。本地实现与公网候选版已完成，正式提交正在收尾。</p>
 <h2>本地实现与验证</h2>
 <ul>
 <li>后端全量隔离测试 <strong>28/28 通过</strong>，其中三问专项 11 项：计数、幂等、并发、访客隔离、固定证据、首次/后续资料不足、来源撤回与中断恢复。原资料查询、单轮 AI、浏览、提问、回答、点赞回归通过。</li>
@@ -62,5 +62,7 @@
 <li>唯一主工程使用 5174；不包含旧 5173 UI。</li>
 <li>GitHub：https://github.com/mingyiwei954-bit/guolairen-hackathon-2026</li>
 <li>演示视频已生成并检查：172 秒、13 个真实页面画面、字幕导览，AI 记录来自本次实调，未把画面停顿当作模型实时耗时。</li>
-<li>公网新版本与正式提交状态将在完成后登记。</li>
+<li>公网候选版本：20260914T071246Z-40a98fc9。HTTPS 页面、计划书与 MP4 均返回 200；线上又完成一轮真实三问，幂等、刷新与第四问限制通过。</li>
+<li>部署前后原问题 8 条、回答 11 条、赞同记录 0 条均保留；增量导入两条 ready 资料。</li>
+<li>服务器已保留此前代码版本与迁移前数据库备份。正式提交状态将在发布后登记。</li>
 </ul></section></main></html>

@@ -11,7 +11,7 @@
 - [演示脚本](docs/DEMO_SCRIPT.md)
 - [接口与协作契约](IMPLEMENTATION_CONTRACT.md)
 - [模型接入](AI_INTEGRATION.md) · [资料管线](CONTENT_PIPELINE.md)
-- 验证状态与已知限制见 [交付检查](docs/VERIFICATION.md)。开发中的代码不代表线上已经更新。
+- 验证状态与已知限制见 [交付检查](docs/VERIFICATION.md)。线上候选版已部署，具体核验日期与范围见交付检查。
 
 ## 本地启动
 
