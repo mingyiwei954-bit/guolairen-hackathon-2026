@@ -15,6 +15,7 @@ def initialize_demo_content(db):
         PRIMARY KEY(session_id,user_stage,mode,stage));
     ''')
     if db.execute("SELECT 1 FROM metadata WHERE key='guolairen_mock_v1'").fetchone():
+        expand_demo_answers(db)
         return
     payload = json.loads((Path(__file__).parent/'fixtures'/'guolairen_mock.json').read_text())
     for index, item in enumerate(payload['items']):
@@ -26,6 +27,31 @@ def initialize_demo_content(db):
         db.executemany('INSERT INTO answers(question_id,body,stage,sample,base_votes,created) VALUES(?,?,?,1,?,?)',
                        [(qid,a['body'],a['stage'],a['votes'],1600000000-index) for a in item['answers']])
     db.execute("INSERT INTO metadata(key,value) VALUES('guolairen_mock_v1','1')")
+    expand_demo_answers(db)
+
+def expand_demo_answers(db):
+    """Incrementally fill authored sample threads; never fabricate visitor replies."""
+    if db.execute("SELECT 1 FROM metadata WHERE key='answer_demo_expansion_v1'").fetchone():
+        return
+    payload = json.loads((Path(__file__).parent/'fixtures'/'answer_demo_expansion.json').read_text())
+    for item in payload['items']:
+        if 'key' in item:
+            row = db.execute('SELECT q.id,q.target,q.created FROM questions q JOIN demo_content_keys k ON k.question_id=q.id WHERE k.key=? AND q.sample=1',(item['key'],)).fetchone()
+        else:
+            row = db.execute('SELECT id,target,created FROM questions WHERE title=? AND sample=1 ORDER BY id LIMIT 1',(item['title'],)).fetchone()
+        if not row:
+            continue
+        qid, target, created = row
+        count = db.execute('SELECT COUNT(*) FROM answers WHERE question_id=?',(qid,)).fetchone()[0]
+        for answer in item['answers']:
+            if count >= 3:
+                break
+            if db.execute('SELECT 1 FROM answers WHERE question_id=? AND body=?',(qid,answer['body'])).fetchone():
+                continue
+            db.execute('INSERT INTO answers(question_id,body,stage,sample,base_votes,created) VALUES(?,?,?,1,0,?)',(qid,answer['body'],answer.get('stage',target),created))
+            count += 1
+    db.execute("INSERT INTO metadata(key,value) VALUES('answer_demo_expansion_v1','1')")
+
 
 def rotate_demo_feed(db, items, sid, user_stage, mode, stage, rotate=False):
     """Only synthetic conversations rotate; real questions/responses stay available."""

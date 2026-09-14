@@ -16,3 +16,9 @@ time+=1000;wheel();assert.equal(view.answerId,30,'last answer must stay in bound
 time+=1000;wheel(null,-40);assert.equal(view.answerId,20);
 time+=1000;const target={closest:()=>null};handlers.touchstart({touches:[{clientX:100,clientY:200}],target});handlers.touchend({changedTouches:[{clientX:101,clientY:120}]});assert.equal(view.answerId,30);
 console.log('Answer deck: wheel snap, inertia lock, long-reader boundary, limits and directional touch passed.');
+
+const selection=vm.createContext({});
+vm.runInContext(source.slice(source.indexOf('function detailAnswers('),source.indexOf('function answerActionIcon(')),selection);
+assert.equal(selection.detailAnswers({answers},{answerStage:'working'}),answers,'old saved stage must not hide answers');
+assert(!source.slice(source.indexOf('function renderDetail('),source.indexOf('function bindAnswerDeck(')).includes('detail-stage-filter'));
+console.log('Detail includes all answers regardless of previous stage selection.');

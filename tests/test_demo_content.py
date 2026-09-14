@@ -39,6 +39,20 @@ class DemoContentTests(unittest.TestCase):
                     for q in second['items']:
                         self.assertEqual(1,q['sample']);self.assertEqual(1,q['answer']['sample'])
                         self.assertIn(q['answer']['stage'],allowed if chosen=='all' else [chosen])
+    def test_sample_threads_have_three_answers_and_upgrade_preserves_real_data(self):
+        with server.connect() as db:
+            rows=db.execute('SELECT q.id,COUNT(a.id),COUNT(DISTINCT a.body) FROM questions q LEFT JOIN answers a ON a.question_id=q.id WHERE q.sample=1 GROUP BY q.id').fetchall()
+            self.assertEqual(98,len(rows))
+            self.assertTrue(all(count==3 and unique==3 for _,count,unique in rows))
+            db.execute("INSERT INTO questions(title,body,stage,target,sample,created) VALUES('真实空问题','','college','working',0,1)")
+            real_id=db.execute('SELECT last_insert_rowid()').fetchone()[0]
+            db.execute("DELETE FROM metadata WHERE key='answer_demo_expansion_v1'")
+            before=db.execute('SELECT COUNT(*) FROM answers').fetchone()[0]
+        server.initialize()
+        with server.connect() as db:
+            self.assertEqual(before,db.execute('SELECT COUNT(*) FROM answers').fetchone()[0])
+            self.assertEqual(0,db.execute('SELECT COUNT(*) FROM answers WHERE question_id=?',(real_id,)).fetchone()[0])
+
     def test_idempotent_seed_and_real_interaction(self):
         data=json.loads((server.ROOT/'fixtures'/'guolairen_mock.json').read_text())['items']
         self.assertEqual(90,len(data));self.assertEqual(90,len({q['title'] for q in data}))

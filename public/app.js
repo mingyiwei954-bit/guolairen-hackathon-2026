@@ -549,23 +549,27 @@ function aiPanelHTML(q, view) {
  const check = snapshot?.status === 'running' ? '<button class="ai-check-button" type="button" data-action="refresh-ai">检查结果</button>' : '';
  return `${turns.map((turn, index) => aiTurnHTML(turn, index, invite)).join('')}${empty}${status}${check}${form}`;
 }
-function detailAnswers(q,view) {return view.answerStage==='all'?q.answers:q.answers.filter(a=>a.stage===view.answerStage);}
+function detailAnswers(q) { return q.answers; }
+function answerActionIcon(type) {
+ const paths = {up:'<path d="m12 3 10 17H2Z"/>',down:'<path d="m12 21 10-17H2Z"/>',save:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1Z"/>',comment:'<path d="M21 11.5a9 9 0 0 1-9 9H4l-2 2v-11a9.5 9.5 0 0 1 19 0Z"/>',more:'<circle cx="12" cy="4" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="20" r="1"/>'};
+ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type]}</svg>`;
+}
 function answerFlowFooter(q,view,answers,index) {
- const a=answers[index];
- return `<div class="answer-flow-person"><span>${a?escape(stageName(a.stage)):'等待回答'}</span><small>${a?answerKind(a):'分享你的经历'}</small></div>${a?`<button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted?'voted':''}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${a.voted?'♥':'♡'} <span>${a.votes}</span></button>`:''}<button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button>`;
+ const a=answers[index], saved=a&&stored('saved-answer:'+a.id,false), unhelpful=a&&stored('unhelpful-answer:'+a.id,false);
+ return `<button class="answer-anonymous" data-action="answer"><span>匿名</span><strong>写回答</strong></button>${a?`<button class="answer-icon-button ${a.voted?'voted':''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${answerActionIcon('up')}<span class="answer-action-count">${a.votes}</span></button><button class="answer-icon-button ${unhelpful?'voted':''}" data-action="answer-unhelpful" data-id="${a.id}" aria-pressed="${!!unhelpful}" aria-label="这条回答暂时没帮到我">${answerActionIcon('down')}</button><button class="answer-icon-button ${saved?'voted':''}" data-action="answer-save" data-id="${a.id}" aria-pressed="${!!saved}" aria-label="${saved?'取消收藏':'收藏回答'}">${answerActionIcon('save')}</button><button class="answer-icon-button" data-action="${view.aiOpen?'toggle-ai':'answer-followup'}" data-id="${a.id}" aria-label="${view.aiOpen?'返回回答':'追问这条回答（资料三问）'}">${answerActionIcon('comment')}</button>`:''}<details class="answer-more"><summary aria-label="更多回答操作">${answerActionIcon('more')}</summary><div><button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button></div></details>`;
 }
 function renderDetail({focusAnswerId = null} = {}) {
  const q=state.detail;if(!q)return;
- const view=detailView(q.id),stages=availableAnswerStages(q);
+ const view=detailView(q.id);
  const previousAI=app.querySelector('.answer-ai-view');if(previousAI)view.aiScroll=previousAI.scrollTop;
- if(view.answerStage!=='all'&&!stages.includes(view.answerStage))view.answerStage='all';
+ view.answerStage='all';
  const answers=detailAnswers(q,view);
  if(focusAnswerId){view.answerId=focusAnswerId;view.aiOpen=false;}
  let index=Math.max(0,answers.findIndex(a=>a.id===view.answerId));
  if(answers[index])view.answerId=answers[index].id;
  controls(false);app.classList.add('answer-flow-mode');state.screen='detail';
- const head=`<header class="answer-flow-header"><div class="answer-flow-toolbar"><button data-action="back" aria-label="返回">‹</button><span>过来人 · 同题不同声音</span><div class="answer-flow-pager"><button data-action="answer-page" data-step="-1" aria-label="上一条回答" ${index===0||view.aiOpen?'disabled':''}>↑</button><span class="answer-flow-count">${answers.length?index+1:0} / ${answers.length}</span><button data-action="answer-page" data-step="1" aria-label="下一条回答" ${index>=answers.length-1||view.aiOpen?'disabled':''}>↓</button></div></div><h1>${escape(q.title)}</h1>${q.body?`<p class="answer-flow-background">${escape(q.body)}</p>`:''}<div class="answer-flow-meta">${q.stage?escape(stageName(q.stage))+' · ':''}${q.answers.length} 个回答 · 高赞优先</div><div class="detail-stage-filter chips" aria-label="筛选回答阶段"><button data-action="detail-stage" data-value="all" class="${view.answerStage==='all'?'active':''}">全部</button>${stages.map(id=>`<button data-action="detail-stage" data-value="${id}" class="${view.answerStage===id?'active':''}">${escape(stageName(id))}</button>`).join('')}</div></header>`;
- const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>${escape(stageName(a.stage))}</strong><span>${answerKind(a)} · ${a.votes} 人赞同</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><span>关于这条回答</span><button data-action="answer-followup" data-id="${a.id}">带着这段话，继续问资料 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<answers.length-1?'向上滑，听下一位说':'已是最后一条回答，可向下滑回看'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有这个阶段的回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
+ const head=`<header class="answer-flow-header"><div class="answer-flow-toolbar"><button data-action="back" aria-label="返回">‹</button><span>过来人 · 同题不同声音</span><div class="answer-flow-pager"><button data-action="answer-page" data-step="-1" aria-label="上一条回答" ${index===0||view.aiOpen?'disabled':''}>↑</button><span class="answer-flow-count">${answers.length?index+1:0} / ${answers.length}</span><button data-action="answer-page" data-step="1" aria-label="下一条回答" ${index>=answers.length-1||view.aiOpen?'disabled':''}>↓</button></div></div><h1>${escape(q.title)}</h1>${q.body?`<p class="answer-flow-background">${escape(q.body)}</p>`:''}<div class="answer-flow-meta">${q.answers.length} 个回答 · 匿名交流</div></header>`;
+ const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>匿名回答</strong><span>${escape(stageName(a.stage))} · ${answerKind(a)} · ${a.votes} 人赞同</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><span>关于这条回答</span><button data-action="answer-followup" data-id="${a.id}">带着这段话，继续问资料 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<answers.length-1?'向上滑，听下一位说':'已是最后一条回答，可向下滑回看'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
  app.innerHTML=`<div class="answer-flow-shell">${head}${body}<footer class="answer-flow-bottom">${answerFlowFooter(q,view,answers,index)}</footer></div>`;
  app.scrollTop=0;saveDetailView(q.id);
  requestAnimationFrame(()=>{if(state.screen!=='detail'||state.detail?.id!==q.id)return;if(view.aiOpen){const ai=app.querySelector('.answer-ai-view');if(ai)ai.scrollTop=view.aiScroll||0;}else bindAnswerDeck(q,view,answers,index);});
@@ -797,7 +801,13 @@ phone.addEventListener('click', async event => {
   if (action === 'filter') { state.stage = b.dataset.value; return await loadFeed(); }
   if (action === 'answer-page') return app.querySelector('.answer-deck')?.answerMove?.(Number(b.dataset.step));
   if (action === 'answer-followup') {const view=detailView(state.detail.id);const a=state.detail.answers.find(a=>a.id===Number(b.dataset.id));if(!a)return;view.answerId=a.id;if(view.aiAnswerId!==a.id){view.aiDrafts=view.aiDrafts||{};view.aiDrafts[view.aiAnswerId||'question']=view.aiDraft;view.aiDraft=view.aiDrafts[a.id]||`关于这条回答「${a.body.slice(0,200)}」，资料中有什么可以补充或需要注意的地方？`;view.aiAnswerId=a.id;}view.aiOpen=true;saveDetailView(state.detail.id);renderDetail();loadAIState(state.detail.id);return;}
-  if (action === 'detail-stage') { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; view.answerStage = b.dataset.value; saveDetailView(state.detail.id); return renderDetail(); }
+
+  if (action === 'answer-save' || action === 'answer-unhelpful') {
+   const saving=action==='answer-save', key=(saving?'saved-answer:':'unhelpful-answer:')+b.dataset.id;
+   const active=!stored(key,false);store(key,active);b.classList.toggle('voted',active);b.setAttribute('aria-pressed',String(active));
+   if(saving)b.setAttribute('aria-label',active?'取消收藏':'收藏回答');
+   return notice(saving?(active?'已收藏在当前浏览器':'已取消收藏'):(active?'已记录在当前浏览器':'已取消反馈'));
+  }
   if (action === 'detail') return await showDetail(Number(b.dataset.id));
   if (action === 'reopen-detail') return await showDetail(Number(b.dataset.id), {captureFeed:false});
   if (action === 'toggle-ai') {
@@ -833,7 +843,7 @@ phone.addEventListener('click', async event => {
    if (input) input.checked = false; syncComposerUI(); return;
   }
   if (action === 'retry') return await boot();
-  if (action === 'vote') { const answerId = Number(b.dataset.id); b.disabled = true; const result = await api('/vote', {answer_id:answerId, active:b.dataset.voted !== 'true'}); updateVoteState(answerId, result); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = `${result.voted ? '♥' : '♡'} <span>${result.votes}</span>`; }
+  if (action === 'vote') { const answerId = Number(b.dataset.id); b.disabled = true; const result = await api('/vote', {answer_id:answerId, active:b.dataset.voted !== 'true'}); updateVoteState(answerId, result); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = b.classList.contains('answer-icon-button') ? `${answerActionIcon('up')}<span class="answer-action-count">${result.votes}</span>` : `${result.voted ? '♥' : '♡'} <span>${result.votes}</span>`; }
  } catch (e) { notice(e.message); } finally { b.disabled = false; }
 });
 phone.addEventListener('keydown', event => {
