@@ -162,7 +162,7 @@ function detailView(id) {
  if (!state.detailViews.has(id)) {
   const saved = stored('detail:' + id, {});
   state.detailViews.set(id, {
-   answerStage: saved.answerStage || 'all', scrollTop: Number(saved.scrollTop) || 0,
+   aiAnswerId:saved.aiAnswerId||null, aiDrafts:saved.aiDrafts&&typeof saved.aiDrafts==='object'?saved.aiDrafts:{}, answerId: saved.answerId || null, answerStage: saved.answerStage || 'all', scrollTop: Number(saved.scrollTop) || 0,
    aiOpen: !!saved.aiOpen, aiDraft: typeof saved.aiDraft === 'string' ? saved.aiDraft : '',
    aiSnapshot: null, aiLoading: false, aiSubmitting: false, aiUncertain: false, aiError: ''
   });
@@ -171,7 +171,7 @@ function detailView(id) {
 }
 function saveDetailView(id) {
  const view = detailView(id);
- store('detail:' + id, {answerStage:view.answerStage, scrollTop:view.scrollTop, aiOpen:view.aiOpen, aiDraft:view.aiDraft});
+ store('detail:' + id, {aiAnswerId:view.aiAnswerId, aiDrafts:view.aiDrafts, answerId:view.answerId, answerStage:view.answerStage, scrollTop:view.scrollTop, aiOpen:view.aiOpen, aiDraft:view.aiDraft});
 }
 function cleanupAIPoll() { clearTimeout(aiPollTimer); aiPollTimer = 0; aiPollStartedAt = 0; }
 function cleanupFilterControls() {
@@ -253,7 +253,8 @@ function bindFilterControls() {
  boundViewport.addEventListener('scroll', onScroll, {passive:true});
  filterScrollCleanup = () => boundViewport.removeEventListener('scroll', onScroll);
 }
-function controls(show) { app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
+let answerDeckResize=null;
+function controls(show) { answerDeckResize?.disconnect();answerDeckResize=null;app.classList.remove('answer-flow-mode'); app.classList.toggle('feed-mode', show); if (!show) cleanupFilterControls(); }
 const CHANNEL_TABS = [['recommend','推荐'], ['hot','热榜'], ['story','故事'], ['knowledge','知识']];
 function channelTabsHTML(active = 'guolairen') {
  const demoTabs = CHANNEL_TABS.map(([id, label]) => `<button data-action="channel" data-channel="${id}" class="${active === id ? 'active' : ''}" ${active === id ? 'aria-current="page"' : ''}>${label}</button>`).join('');
@@ -488,20 +489,48 @@ function aiPanelHTML(q, view) {
  const check = snapshot?.status === 'running' ? '<button class="ai-check-button" type="button" data-action="refresh-ai">检查结果</button>' : '';
  return `${turns.map((turn, index) => aiTurnHTML(turn, index, invite)).join('')}${empty}${status}${check}${form}`;
 }
-function renderDetail({focusAnswerId = null, restoreScroll = true} = {}) {
- const q = state.detail; if (!q) return;
- const view = detailView(q.id);
- const requestedStages = questionTargets(q);
- const stages = availableAnswerStages(q);
- if (view.answerStage !== 'all' && !stages.includes(view.answerStage)) view.answerStage = 'all';
- const answers = view.answerStage === 'all' ? q.answers : q.answers.filter(answer => answer.stage === view.answerStage);
- const stageLabel = view.answerStage === 'all' ? '全部阶段' : stageName(view.answerStage);
- controls(false); state.screen = 'detail';
- app.innerHTML = `${bar('这一问，听大家说')}<section class="detail-screen"><article class="qa-card detail-question-card"><div class="question-meta">${q.stage ? `<span class="stage-tag">${escape(stageName(q.stage))}</span>` : ''}${requestedStages.length ? `<span>想听 · ${requestedStages.map(id => escape(stageName(id))).join('、')}</span>` : ''}</div><h2>${escape(q.title)}</h2>${q.body ? `<p class="question-body">${escape(q.body)}</p>` : ''}</article><div class="detail-actions"><button class="primary-button" data-action="answer">说说我的看法</button></div><section class="detail-answers" aria-labelledby="answer-section-title"><div class="detail-section-heading"><div><strong id="answer-section-title">听不同阶段的人说</strong><span>${q.answers.length} 条 · 按赞同数排列</span></div><div class="detail-stage-filter chips" role="group" aria-label="同题回答阶段筛选"><button data-action="detail-stage" data-value="all" class="${view.answerStage === 'all' ? 'active' : ''}" aria-pressed="${view.answerStage === 'all'}">全部</button>${stages.map(id => `<button data-action="detail-stage" data-value="${id}" class="${view.answerStage === id ? 'active' : ''}" aria-pressed="${view.answerStage === id}">${escape(stageName(id))}</button>`).join('')}</div></div><div class="section-caption">${escape(stageLabel)}的回答 · ${answers.length} 条</div>${answers.length ? answers.map(answer => answerHTML(answer, q.id, true)).join('') : '<div class="empty-state">这一阶段还没有回答。你的经历，也许能带来第一个新视角。</div>'}</section><section class="detail-ai-section"><button class="detail-ai-toggle" type="button" data-action="toggle-ai" aria-expanded="${view.aiOpen}" aria-controls="detail-ai-panel"><span><strong>带着资料继续问</strong><small>AI 依据资料整理 · 最多三问 · 来源可查</small></span><span aria-hidden="true">${view.aiOpen ? '收起' : '展开'}</span></button><div id="detail-ai-panel" class="detail-ai-panel" ${view.aiOpen ? '' : 'hidden'} aria-live="polite">${view.aiOpen ? aiPanelHTML(q, view) : ''}</div></section></section>`;
- if (focusAnswerId) {
-  requestAnimationFrame(() => { const answer = app.querySelector(`[data-answer-id="${focusAnswerId}"]`); if (answer) { answer.tabIndex = -1; answer.scrollIntoView({block:'center'}); answer.focus({preventScroll:true}); view.scrollTop = app.scrollTop; saveDetailView(q.id); } });
- } else if (restoreScroll) app.scrollTop = clamp(view.scrollTop || 0, 0, Math.max(0, app.scrollHeight - app.clientHeight));
- saveDetailView(q.id);
+function detailAnswers(q,view) {return view.answerStage==='all'?q.answers:q.answers.filter(a=>a.stage===view.answerStage);}
+function answerFlowFooter(q,view,answers,index) {
+ const a=answers[index];
+ return `<div class="answer-flow-person"><span>${a?escape(stageName(a.stage)):'等待回答'}</span><small>${a?answerKind(a):'分享你的经历'}</small></div>${a?`<button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted?'voted':''}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${a.voted?'♥':'♡'} <span>${a.votes}</span></button>`:''}<button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button>`;
+}
+function renderDetail({focusAnswerId = null} = {}) {
+ const q=state.detail;if(!q)return;
+ const view=detailView(q.id),stages=availableAnswerStages(q);
+ const previousAI=app.querySelector('.answer-ai-view');if(previousAI)view.aiScroll=previousAI.scrollTop;
+ if(view.answerStage!=='all'&&!stages.includes(view.answerStage))view.answerStage='all';
+ const answers=detailAnswers(q,view);
+ if(focusAnswerId){view.answerId=focusAnswerId;view.aiOpen=false;}
+ let index=Math.max(0,answers.findIndex(a=>a.id===view.answerId));
+ if(answers[index])view.answerId=answers[index].id;
+ controls(false);app.classList.add('answer-flow-mode');state.screen='detail';
+ const head=`<header class="answer-flow-header"><div class="answer-flow-toolbar"><button data-action="back" aria-label="返回">‹</button><span>过来人 · 同题不同声音</span><div class="answer-flow-pager"><button data-action="answer-page" data-step="-1" aria-label="上一条回答" ${index===0||view.aiOpen?'disabled':''}>↑</button><span class="answer-flow-count">${answers.length?index+1:0} / ${answers.length}</span><button data-action="answer-page" data-step="1" aria-label="下一条回答" ${index>=answers.length-1||view.aiOpen?'disabled':''}>↓</button></div></div><h1>${escape(q.title)}</h1>${q.body?`<p class="answer-flow-background">${escape(q.body)}</p>`:''}<div class="answer-flow-meta">${q.stage?escape(stageName(q.stage))+' · ':''}${q.answers.length} 个回答 · 高赞优先</div><div class="detail-stage-filter chips" aria-label="筛选回答阶段"><button data-action="detail-stage" data-value="all" class="${view.answerStage==='all'?'active':''}">全部</button>${stages.map(id=>`<button data-action="detail-stage" data-value="${id}" class="${view.answerStage===id?'active':''}">${escape(stageName(id))}</button>`).join('')}</div></header>`;
+ const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>${escape(stageName(a.stage))}</strong><span>${answerKind(a)} · ${a.votes} 人赞同</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><span>关于这条回答</span><button data-action="answer-followup" data-id="${a.id}">带着这段话，继续问资料 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<answers.length-1?'向上滑，听下一位说':'已是最后一条回答，可向下滑回看'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有这个阶段的回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
+ app.innerHTML=`<div class="answer-flow-shell">${head}${body}<footer class="answer-flow-bottom">${answerFlowFooter(q,view,answers,index)}</footer></div>`;
+ app.scrollTop=0;saveDetailView(q.id);
+ requestAnimationFrame(()=>{if(state.screen!=='detail'||state.detail?.id!==q.id)return;if(view.aiOpen){const ai=app.querySelector('.answer-ai-view');if(ai)ai.scrollTop=view.aiScroll||0;}else bindAnswerDeck(q,view,answers,index);});
+}
+function bindAnswerDeck(q,view,answers,start) {
+ const deck=app.querySelector('.answer-deck');if(!deck||!answers.length)return;
+ let index=start,lockedUntil=0,lastWheel=0,wheelConsumed=false,touch=null;
+ function go(next,animate=true) {
+  index=clamp(next,0,answers.length-1);view.answerId=answers[index].id;saveDetailView(q.id);
+  deck.querySelectorAll('.answer-page').forEach((p,i)=>{p.inert=i!==index;p.setAttribute('aria-hidden',String(i!==index));});
+  deck.scrollTo({top:index*deck.clientHeight,behavior:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?'smooth':'instant'});
+  app.querySelector('.answer-flow-count').textContent=`${index+1} / ${answers.length}`;
+  app.querySelector('[data-action="answer-page"][data-step="-1"]').disabled=index===0;
+  app.querySelector('[data-action="answer-page"][data-step="1"]').disabled=index===answers.length-1;
+  app.querySelector('.answer-flow-bottom').innerHTML=answerFlowFooter(q,view,answers,index);
+ }
+ function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+2||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
+ function move(step){if(performance.now()<lockedUntil)return;const next=clamp(index+step,0,answers.length-1);if(next===index)return;lockedUntil=performance.now()+420;go(next);}
+ deck.answerMove=move;go(index,false);
+ answerDeckResize=new ResizeObserver(()=>{if(deck.isConnected)deck.scrollTo({top:index*deck.clientHeight,behavior:'instant'});});answerDeckResize.observe(deck);
+ deck.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)<Math.abs(e.deltaX)||Math.abs(e.deltaY)<2)return;const now=performance.now();if(now-lastWheel>180)wheelConsumed=false;lastWheel=now;const dir=e.deltaY>0?1:-1;const reader=e.target.closest('.answer-reader');if(!canFlip(reader,dir))return;e.preventDefault();if(!wheelConsumed){wheelConsumed=true;move(dir);}},{passive:false});
+ deck.addEventListener('touchstart',e=>{if(e.touches.length!==1||e.target.closest('button,input,textarea,a')){touch=null;return;}const t=e.touches[0],r=e.target.closest('.answer-reader');touch={x:t.clientX,y:t.clientY,up:canFlip(r,1),down:canFlip(r,-1)};},{passive:true});
+ deck.addEventListener('touchmove',e=>{if(!touch||e.touches.length!==1)return;const t=e.touches[0],dy=touch.y-t.clientY;if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(t.clientX-touch.x)&& (dy>0?touch.up:touch.down))e.preventDefault();},{passive:false});
+ deck.addEventListener('touchend',e=>{if(!touch)return;const t=e.changedTouches[0],dy=touch.y-t.clientY;if(Math.abs(dy)>20&&Math.abs(dy)>Math.abs(t.clientX-touch.x)&&(dy>0?touch.up:touch.down))move(dy>0?1:-1);touch=null;},{passive:true});
+ deck.addEventListener('keydown',e=>{if(e.target.closest('button,input,textarea,a'))return;if(['ArrowDown','PageDown','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();move(['ArrowDown','PageDown'].includes(e.key)?1:-1);}});
 }
 function applyAISnapshot(id, snapshot, error = '') {
  const view = detailView(id); view.aiSnapshot = snapshot; view.aiLoading = false; view.aiSubmitting = false; view.aiUncertain = false; view.aiError = error;
@@ -704,6 +733,8 @@ phone.addEventListener('click', async event => {
   if (action === 'back') return await handleBack();
   if (action === 'mode') { state.mode = b.dataset.value; state.stage = 'all'; return await loadFeed(); }
   if (action === 'filter') { state.stage = b.dataset.value; return await loadFeed(); }
+  if (action === 'answer-page') return app.querySelector('.answer-deck')?.answerMove?.(Number(b.dataset.step));
+  if (action === 'answer-followup') {const view=detailView(state.detail.id);const a=state.detail.answers.find(a=>a.id===Number(b.dataset.id));if(!a)return;view.answerId=a.id;if(view.aiAnswerId!==a.id){view.aiDrafts=view.aiDrafts||{};view.aiDrafts[view.aiAnswerId||'question']=view.aiDraft;view.aiDraft=view.aiDrafts[a.id]||`关于这条回答「${a.body.slice(0,200)}」，资料中有什么可以补充或需要注意的地方？`;view.aiAnswerId=a.id;}view.aiOpen=true;saveDetailView(state.detail.id);renderDetail();loadAIState(state.detail.id);return;}
   if (action === 'detail-stage') { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; view.answerStage = b.dataset.value; saveDetailView(state.detail.id); return renderDetail(); }
   if (action === 'detail') return await showDetail(Number(b.dataset.id));
   if (action === 'reopen-detail') return await showDetail(Number(b.dataset.id), {captureFeed:false});
