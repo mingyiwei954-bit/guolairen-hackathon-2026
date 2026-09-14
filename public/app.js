@@ -209,19 +209,10 @@ function applyFilterVisibility() {
   filterStack.inert = true;
  }
 }
-// Separate input gestures count once; even a tiny nonzero return gesture counts.
-function createFilterRevealGate() {
- let streak = 0, counted = false;
- return {
-  begin() { counted = false; },
-  reset() { streak = 0; counted = false; },
-  input(delta) {
-   if (!Number.isFinite(delta) || delta === 0) return null;
-   if (delta > 0) { streak = 0; counted = false; return 'hide'; }
-   if (!counted) { streak = Math.min(2, streak + 1); counted = true; }
-   return streak >= 2 ? 'show' : 'hold';
-  }
- };
+// Any nonzero vertical return input reveals the filters immediately.
+function filterScrollIntent(delta) {
+ if (!Number.isFinite(delta) || delta === 0) return null;
+ return delta < 0 ? 'show' : 'hide';
 }
 function bindFilterControls() {
  cleanupFilterControls();
@@ -231,12 +222,11 @@ function bindFilterControls() {
  const viewport = filterViewport;
  filterLastScrollTop = Math.max(0, viewport.scrollTop);
  syncFilterSpacerHeight();
- const gate = createFilterRevealGate();
- let action = null, lastWheel = -Infinity, touchY = null, touchX = null;
+ let action = null, touchY = null, touchX = null;
  let animation = 0, target = null, disposed = false;
  const stop = () => { cancelAnimationFrame(animation); animation = 0; target = null; };
  const pinTop = () => {
-  stop(); gate.reset(); action = null;
+  stop(); action = null;
   filterVisibilityProgress = 1; applyFilterVisibility();
  };
  const animateTo = to => {
@@ -259,7 +249,7 @@ function bindFilterControls() {
   animation = requestAnimationFrame(tick);
  };
  const input = delta => {
-  const next = gate.input(delta);
+  const next = filterScrollIntent(delta);
   if (!next) return;
   action = next;
   if (viewport.scrollTop <= 1) {
@@ -273,14 +263,10 @@ function bindFilterControls() {
  };
  const onWheel = event => {
   if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-  const now = performance.now();
-  if (now - lastWheel > 240) gate.begin();
-  lastWheel = now;
   const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1;
   input(event.deltaY * scale);
  };
  const onTouchStart = event => {
-  gate.begin();
   touchY = event.touches.length === 1 ? event.touches[0].clientY : null;
   touchX = event.touches.length === 1 ? event.touches[0].clientX : null;
  };
@@ -296,7 +282,6 @@ function bindFilterControls() {
   const up = ['ArrowUp','PageUp','Home'].includes(event.key) || (event.key === ' ' && event.shiftKey);
   const down = ['ArrowDown','PageDown','End'].includes(event.key) || (event.key === ' ' && !event.shiftKey);
   if (!up && !down) return;
-  if (!event.repeat) gate.begin();
   input(up ? -40 : 40);
  };
  const onScroll = () => {
