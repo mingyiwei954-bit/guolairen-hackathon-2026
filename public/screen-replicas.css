@@ -1,4 +1,4 @@
-/* Screenshot-specific shell. The Guolairen channel keeps its own layout. */
+/* Shared community typography; channel layouts remain independent. */
 .shot-shell{container-type:inline-size;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#17191b;background:#fff;grid-template-rows:auto minmax(0,1fr) auto;gap:0}
 .shot-shell button{font-family:inherit}
 .shot-header{background:#fff;min-width:0;z-index:10}
@@ -33,6 +33,11 @@
 .shot-shell .bottom-tab-bar{height:21.6cqi;min-height:21.6cqi;padding:2.8cqi 0 8cqi;gap:0;background:#fff;border-top:0;box-shadow:0 -3px 14px #f8f8f866;align-items:start}.shot-shell .bottom-tab-bar .tab-item{gap:1.2cqi;min-height:0;padding:0;font-size:2.8cqi}.shot-shell .bottom-tab-bar svg{width:6cqi;height:6cqi}.shot-shell .bottom-tab-bar .tab-create{margin-top:0}
 /* Match the reference's denser title setting and full-sized tab glyphs. */
 .shot-item .shot-question{font-size:4.1cqi;line-height:1.45;font-weight:500}
+/* Resolve the size before entering the card's narrower tag-layout container.
+   Labels keep their existing explicit sizes; only question/answer text inherits it. */
+.guolairen-shell .qa-feed-card,.answer-flow-shell{font-size:4.1cqi}
+.guolairen-shell .question-content h2,.answer-flow-header h1{font-family:inherit;font-size:1em;font-weight:500;line-height:1.45;letter-spacing:0;color:#131516}
+.guolairen-shell .answer-content .answer-text,.answer-flow-shell .answer-full-text{font-family:inherit;font-size:1em;font-weight:400;line-height:1.44;letter-spacing:.007317073em;color:#64666a}
 .shot-hot-line .shot-question{font-size:4.1cqi;line-height:1.4;font-weight:500}
 .shot-follow-item>.shot-question{font-size:4.45cqi;font-weight:500}
 .shot-shell .bottom-tab-bar>button{gap:1.2cqi;min-height:0;font-size:2.8cqi}
