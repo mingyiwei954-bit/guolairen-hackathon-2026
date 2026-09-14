@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>过来人 · 听听另一程</title>
+  <link rel="preload" href="/assets/welcome-page.jpg" as="image">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/splash.css">
+</head>
+<body class="splash-active">
+  <div id="site-shell">
+    <div class="desktop-note">
+      <span class="brand-mark">过</span>
+      <span>过来人 <small>听听另一程</small></span>
+    </div>
+    <div class="phone">
+      <div id="welcome-splash" class="welcome-splash" role="status" aria-label="正在进入网站">
+        <img src="/assets/welcome-page.jpg" width="1170" height="2532" alt="有问题，就会有答案">
+      </div>
+      <script src="/splash.js"></script>
+      <div id="phone-content" class="phone-content" inert aria-hidden="true">
+        <main id="app" class="feed-mode">
+          <div class="app-shell">
+            <header class="top-navigation-group">
+              <div class="search-bar"><span class="search-placeholder">搜索你感兴趣的问题</span><button>搜索</button></div>
+              <nav class="channel-tabs"><button>推荐</button><button>热榜</button><button>故事</button><button>知识</button><button class="active">过来人</button><button>关注</button></nav>
+            </header>
+            <div class="filter-controls-stack" role="group" aria-label="内容筛选">
+              <section class="direction-layer"><div class="direction-switch"><button class="selected">听过来人说</button><button>听没过来人说</button></div></section>
+              <section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button class="active">全部</button><button>已经工作</button><button>退休生活</button></div></div></section>
+            </div>
+            <section class="feed-viewport" aria-label="问答内容流">
+              <div class="feed-heading"><span>所选阶段 · 高赞优先</span><small>独立体验版</small></div>
+              <article class="qa-card qa-feed-card">
+                <div class="question-section">
+                  <div class="question-content"><h2>我最近不太快乐，怎么办？</h2></div>
+                  <div class="question-tags" aria-label="问题标签"><span class="stage-tag">大学阶段</span><span class="target-stage-tag">想听小学阶段</span></div>
+                </div>
+                <div class="answer-section">
+                  <div class="answer-tags" aria-label="回答标签"><span class="stage-tag">小学阶段 · 自述</span></div>
+                  <div class="answer-content"><p class="answer-text">吃个雪糕吧。<br>选你最喜欢的味道，今天可以先开心这一小会儿。</p></div>
+                </div>
+                <footer class="answer-footer"><span>♡ 24</span><span>听听其他回答 ↗</span></footer>
+              </article>
+            </section>
+            <nav class="bottom-tab-bar" aria-label="主导航"></nav>
+          </div>
+        </main>
+        <div id="notice" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+    <p class="desktop-footer">不同的阶段，也能坐下来聊一会儿。</p>
+    <script src="/app.js" defer></script>
+  </div>
+</body>
+</html>

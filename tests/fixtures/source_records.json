@@ -1,0 +1,14 @@
+[
+  {
+    "fixture_notice": "TEST DATA: synthetic official-API-like summary",
+    "external_id": "answer-summary-001",
+    "source_url": "https://www.zhihu.com/question/123456789/answer/987654321?utm_source=test",
+    "content_kind": "answer",
+    "content_scope": "summary",
+    "title": "毕业后如何选择第一份工作？",
+    "summary": "第一份工作不必一次定终身，但要保留对职业方向的复盘记录。",
+    "author_name": null,
+    "author_age": null,
+    "author_stage": null
+  }
+]

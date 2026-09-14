@@ -1,0 +1,48 @@
+.welcome-splash {
+  position: absolute;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  opacity: 1;
+  transition: opacity 1200ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.welcome-splash.is-fading {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.welcome-splash img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.splash-active {
+  overflow: hidden;
+}
+
+.phone-content {
+  height: 100%;
+}
+
+.splash-active #phone-content {
+  visibility: hidden;
+}
+
+.splash-active.splash-fading #phone-content {
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-splash { transition-duration: 1ms; }
+}

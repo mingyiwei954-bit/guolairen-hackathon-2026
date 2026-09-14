@@ -1,0 +1,12 @@
+{
+  "fixture_notice": "EXAMPLE ONLY: replace with an already obtained source record",
+  "external_id": "official-answer-id",
+  "source_url": "https://www.zhihu.com/question/123456789/answer/987654321",
+  "content_kind": "answer",
+  "content_scope": "summary",
+  "title": "来源标题",
+  "summary": "已获得的官方 API 摘要，不会被当作全文。",
+  "author_name": null,
+  "author_age": null,
+  "author_stage": null
+}
