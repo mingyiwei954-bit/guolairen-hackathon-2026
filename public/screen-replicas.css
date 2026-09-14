@@ -56,6 +56,7 @@
 /* Compact secondary navigation; the shared search and channel rows stay unchanged. */
 .guolairen-shell .feed-layer{--filter-controls-height:49px}
 .guolairen-shell .feed-viewport{overflow-anchor:none}
+.guolairen-shell .filter-controls-stack,.guolairen-shell .filter-controls-stack.is-hidden{transform:none;will-change:opacity}
 .guolairen-shell .direction-layer{padding-top:0}
 .guolairen-shell .direction-switch{padding:0 14px;gap:8px}
 .guolairen-shell .direction-switch button{height:24px;min-height:24px;padding:0 6px;font-size:12px;line-height:1.25}

@@ -11,15 +11,11 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp
 const stageName = id => state.user?.stages.find(s => s.id === id)?.label || id;
 const answerKind = answer => (answer?.is_demo ?? answer?.sample) ? '示例' : '自述';
 let noticeTimer;
-const FILTER_FADE_DISTANCE = 210;
-const FILTER_SCROLL_JITTER = 1.75;
-const FILTER_DIRECTION_CONFIRM = 5;
 const STORAGE_PREFIX = 'past-voices-v1:';
 let filterVisibilityProgress = 1;
 let filterViewport = null;
 let filterStack = null;
 let filterScrollCleanup = null;
-let filterFrame = 0;
 let filterLastScrollTop = 0;
 let aiPollTimer = 0;
 let aiPollStartedAt = 0;
@@ -173,27 +169,21 @@ function saveDetailView(id) {
 function cleanupAIPoll() { clearTimeout(aiPollTimer); aiPollTimer = 0; aiPollStartedAt = 0; }
 function cleanupFilterControls() {
  if (filterScrollCleanup) filterScrollCleanup();
- if (filterFrame) cancelAnimationFrame(filterFrame);
  filterViewport = null; filterStack = null; filterScrollCleanup = null;
- filterFrame = 0;
 }
 function syncFilterSpacerHeight() {
  const layer = filterStack?.closest('.feed-layer');
- if (!layer || filterStack.classList.contains('is-hidden')) return;
+ if (!layer) return;
  const height = filterStack.getBoundingClientRect().height;
  if (height > 0) layer.style.setProperty('--filter-controls-height', `${height}px`);
 }
-function syncFilterSpacer(viewport, stack, visible, preservePosition = true) {
+function syncFilterSpacer(viewport, stack) {
  const spacer = viewport.querySelector('.filter-controls-spacer');
  if (!spacer) return;
- const before = spacer.getBoundingClientRect().height;
- const height = visible ? stack.getBoundingClientRect().height : 0;
- if (Math.abs(before - height) < .1) return;
- const scroll = viewport.scrollTop;
- spacer.style.height = `${height}px`;
- // Counter the layout change once; do not mistake it for a user scroll.
- if (preservePosition && scroll > 0) viewport.scrollTop = Math.max(0, scroll + height - before);
- filterLastScrollTop = viewport.scrollTop;
+ // Natural document space: it scrolls out with the feed, never changes per frame.
+ // Top has a hard visible invariant, so an empty hidden gap cannot remain there.
+ const height = stack.getBoundingClientRect().height;
+ if (Math.abs(spacer.getBoundingClientRect().height - height) >= .1) spacer.style.height = `${height}px`;
 }
 function feedEntryView(view) { return view ? {...view, filterProgress:1} : null; }
 function revealFeedFilters() {
@@ -203,38 +193,31 @@ function revealFeedFilters() {
  filterVisibilityProgress = 1; applyFilterVisibility(); bindFilterControls();
 }
 function applyFilterVisibility() {
- filterFrame = 0;
  if (!filterStack || !filterViewport) return;
  const progress = clamp(filterVisibilityProgress, 0, 1);
- syncFilterSpacer(filterViewport, filterStack, progress > 0);
+ syncFilterSpacer(filterViewport, filterStack);
  if (progress > 0 && filterStack.classList.contains('is-hidden')) {
   filterStack.classList.remove('is-hidden');
   filterStack.removeAttribute('aria-hidden');
   filterStack.inert = false;
  }
  filterStack.style.setProperty('--filter-progress', progress.toFixed(4));
- filterStack.style.setProperty('--filter-offset', `${(-7 * (1 - progress)).toFixed(2)}px`);
+ filterStack.style.setProperty('--filter-offset', '0px');
  if (progress === 0 && !filterStack.classList.contains('is-hidden')) {
   filterStack.classList.add('is-hidden');
   filterStack.setAttribute('aria-hidden', 'true');
   filterStack.inert = true;
  }
 }
-function queueFilterVisibility() {
- if (!filterFrame) filterFrame = requestAnimationFrame(applyFilterVisibility);
-}
-// Count deliberate input gestures, not scroll events or momentum frames.
+// Separate input gestures count once; even a tiny nonzero return gesture counts.
 function createFilterRevealGate() {
- let streak = 0, direction = 0, distance = 0, counted = false;
+ let streak = 0, counted = false;
  return {
-  begin() { direction = 0; distance = 0; counted = false; },
+  begin() { counted = false; },
+  reset() { streak = 0; counted = false; },
   input(delta) {
-   if (!Number.isFinite(delta) || Math.abs(delta) < .1) return null;
-   const next = delta > 0 ? -1 : 1;
-   if (next !== direction) { direction = next; distance = 0; }
-   distance += Math.abs(delta);
-   if (distance < (direction === 1 ? 12 : FILTER_DIRECTION_CONFIRM)) return null;
-   if (direction === -1) { streak = 0; counted = false; return 'hide'; }
+   if (!Number.isFinite(delta) || delta === 0) return null;
+   if (delta > 0) { streak = 0; counted = false; return 'hide'; }
    if (!counted) { streak = Math.min(2, streak + 1); counted = true; }
    return streak >= 2 ? 'show' : 'hold';
   }
@@ -245,49 +228,59 @@ function bindFilterControls() {
  filterViewport = app.querySelector('.feed-viewport');
  filterStack = app.querySelector('.filter-controls-stack');
  if (!filterViewport || !filterStack) return;
- const boundViewport = filterViewport;
- filterLastScrollTop = clamp(boundViewport.scrollTop, 0, Math.max(0, boundViewport.scrollHeight - boundViewport.clientHeight));
+ const viewport = filterViewport;
+ filterLastScrollTop = Math.max(0, viewport.scrollTop);
  syncFilterSpacerHeight();
- applyFilterVisibility();
  const gate = createFilterRevealGate();
  let action = null, lastWheel = -Infinity, touchY = null, touchX = null;
- let settleTimer = 0, settleFrame = 0, disposed = false;
- const cancelSettle = () => {
-  clearTimeout(settleTimer); cancelAnimationFrame(settleFrame);
-  settleTimer = 0; settleFrame = 0;
+ let animation = 0, target = null, disposed = false;
+ const stop = () => { cancelAnimationFrame(animation); animation = 0; target = null; };
+ const pinTop = () => {
+  stop(); gate.reset(); action = null;
+  filterVisibilityProgress = 1; applyFilterVisibility();
  };
- const settle = () => {
-  if (disposed || !action || (action === 'hold' && filterVisibilityProgress === 1)) return;
-  const from = filterVisibilityProgress, to = action === 'show' ? 1 : 0;
-  const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150;
-  const start = performance.now();
+ const animateTo = to => {
+  if (disposed) return;
+  if (viewport.scrollTop <= 1) { pinTop(); return; }
+  if (target === to || (filterVisibilityProgress === to && !animation)) return;
+  stop(); target = to;
+  const from = filterVisibilityProgress, start = performance.now();
+  const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 360;
   const tick = now => {
    if (disposed) return;
+   // Touch overscroll and arriving at zero always win over a pending hide frame.
+   if (viewport.scrollTop <= 1) { pinTop(); return; }
    const t = duration ? Math.min(1, (now - start) / duration) : 1;
    filterVisibilityProgress = from + (to - from) * (1 - Math.pow(1 - t, 3));
    applyFilterVisibility();
-   if (t < 1) settleFrame = requestAnimationFrame(tick);
+   if (t < 1) animation = requestAnimationFrame(tick);
+   else { animation = 0; target = null; }
   };
-  settleFrame = requestAnimationFrame(tick);
+  animation = requestAnimationFrame(tick);
  };
- const scheduleSettle = () => { clearTimeout(settleTimer); settleTimer = setTimeout(settle, 180); };
  const input = delta => {
   const next = gate.input(delta);
   if (!next) return;
-  cancelSettle(); action = next;
-  // Holding the first return gesture must never increase visibility.
-  scheduleSettle();
+  action = next;
+  if (viewport.scrollTop <= 1) {
+   // Wheel/touch intent arrives before native scrolling: retain downward intent
+   // so onScroll can start fading after leaving the top, never while still at it.
+   if (next !== 'hide') pinTop();
+   return;
+  }
+  if (next === 'show') animateTo(1);
+  else if (next === 'hide') animateTo(0);
  };
  const onWheel = event => {
   if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
   const now = performance.now();
   if (now - lastWheel > 240) gate.begin();
   lastWheel = now;
-  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? boundViewport.clientHeight : 1;
+  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1;
   input(event.deltaY * scale);
  };
  const onTouchStart = event => {
-  cancelSettle(); gate.begin();
+  gate.begin();
   touchY = event.touches.length === 1 ? event.touches[0].clientY : null;
   touchX = event.touches.length === 1 ? event.touches[0].clientX : null;
  };
@@ -297,7 +290,7 @@ function bindFilterControls() {
   touchY = touch.clientY; touchX = touch.clientX;
   if (Math.abs(dy) > Math.abs(dx)) input(dy);
  };
- const onTouchEnd = () => { touchY = null; touchX = null; scheduleSettle(); };
+ const onTouchEnd = () => { touchY = null; touchX = null; if (viewport.scrollTop <= 1) pinTop(); };
  const onKey = event => {
   if (event.target.closest?.('input,textarea,select,button,[contenteditable="true"]')) return;
   const up = ['ArrowUp','PageUp','Home'].includes(event.key) || (event.key === ' ' && event.shiftKey);
@@ -307,24 +300,19 @@ function bindFilterControls() {
   input(up ? -40 : 40);
  };
  const onScroll = () => {
-  const maxScroll = Math.max(0, boundViewport.scrollHeight - boundViewport.clientHeight);
-  const raw = boundViewport.scrollTop;
-  if (raw < 0 || raw > maxScroll + 2) return;
-  const current = clamp(raw, 0, maxScroll), delta = current - filterLastScrollTop;
+  const current = Math.max(0, viewport.scrollTop);
+  const delta = current - filterLastScrollTop;
   filterLastScrollTop = current;
-  // Scroll restoration and layout changes cannot manufacture a gesture.
-  if (Math.abs(delta) < FILTER_SCROLL_JITTER || Math.abs(delta) > Math.max(240, boundViewport.clientHeight * .75)) return;
-  if ((action === 'hide' && delta > 0) || (action === 'show' && delta < 0)) {
-   cancelSettle();
-   filterVisibilityProgress = clamp(filterVisibilityProgress + (action === 'show' ? 1 : -1) * Math.abs(delta) / FILTER_FADE_DISTANCE, 0, 1);
-   queueFilterVisibility(); scheduleSettle();
-  }
+  if (current <= 1) { pinTop(); return; }
+  if (delta > 0 && action === 'hide') animateTo(0);
+  else if (delta < 0 && action === 'show') animateTo(1);
  };
+ if (viewport.scrollTop <= 1) pinTop(); else applyFilterVisibility();
  const listeners = {scroll:onScroll,wheel:onWheel,touchstart:onTouchStart,touchmove:onTouchMove,touchend:onTouchEnd,touchcancel:onTouchEnd,keydown:onKey};
- Object.entries(listeners).forEach(([type,fn]) => boundViewport.addEventListener(type,fn,{passive:true}));
+ Object.entries(listeners).forEach(([type,fn]) => viewport.addEventListener(type,fn,{passive:true}));
  filterScrollCleanup = () => {
-  disposed = true; cancelSettle();
-  Object.entries(listeners).forEach(([type,fn]) => boundViewport.removeEventListener(type,fn));
+  disposed = true; stop();
+  Object.entries(listeners).forEach(([type,fn]) => viewport.removeEventListener(type,fn));
  };
 }
 let answerDeckResize=null;
@@ -448,13 +436,13 @@ function restoreFeedViewport(view) {
  const naturalHeight = stack.getBoundingClientRect().height;
  if (naturalHeight > 0) stack.closest('.feed-layer')?.style.setProperty('--filter-controls-height', `${naturalHeight}px`);
  stack.style.setProperty('--filter-progress', filterVisibilityProgress.toFixed(4));
- stack.style.setProperty('--filter-offset', `${(-7 * (1 - filterVisibilityProgress)).toFixed(2)}px`);
+ stack.style.setProperty('--filter-offset', '0px');
  if (filterVisibilityProgress === 0) {
   stack.classList.add('is-hidden'); stack.setAttribute('aria-hidden', 'true'); stack.inert = true;
  } else {
   stack.classList.remove('is-hidden'); stack.removeAttribute('aria-hidden'); stack.inert = false;
  }
- syncFilterSpacer(viewport, stack, filterVisibilityProgress > 0, false);
+ syncFilterSpacer(viewport, stack);
  viewport.scrollTop = clamp(Number(view?.scrollTop) || 0, 0, Math.max(0, viewport.scrollHeight - viewport.clientHeight));
  if (view?.anchorId) {
   const anchor = viewport.querySelector(`[data-question-id="${view.anchorId}"]`);
