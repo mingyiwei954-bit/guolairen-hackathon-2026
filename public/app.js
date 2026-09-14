@@ -333,11 +333,18 @@ function showCachedFeed() {
 function bar(title, trailing = '') { return `<div class="screen-bar"><button data-action="back">← 返回</button><span>${escape(title)}</span><span class="screen-bar-trailing">${trailing}</span></div>`; }
 function answerFooterHTML(a, qid, detail = false) { return `<footer class="answer-footer"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted ? 'voted' : ''}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>${detail ? '<span>来自这一程的声音</span>' : `<button data-action="detail" data-id="${qid}">听听其他回答 ↗</button>`}</footer>`; }
 function answerHTML(a, qid, detail = false) { return `<article class="qa-card detail-answer-card" data-answer-id="${a.id}"><div class="answer-meta"><span class="answer-line"></span><span>${escape(stageName(a.stage))} · ${answerKind(a)}</span></div><p class="answer-text">${escape(a.body)}</p>${answerFooterHTML(a, qid, detail)}</article>`; }
-function feedAnswerHTML(a, qid) { return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签">${a.stage ? `<span class="stage-tag">${escape(stageName(a.stage))} · ${answerKind(a)}</span>` : ''}</div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p></div></div>${answerFooterHTML(a, qid)}`; }
-function cardHTML(q) {
+const ITEM_STAGE_NAMES = {primary:'小学',middle:'初中',secondary:'中学',college:'大学',working:'工作',retired:'退休'};
+const itemStageName = id => ITEM_STAGE_NAMES[id] || stageName(id);
+function itemRouteHTML(q) {
  const targets = questionTargets(q);
- const targetTags = targets.length ? `<span class="target-stage-tag">想听${escape(stageName(targets[0]))}</span>${targets.length > 1 ? `<span class="target-stage-count">另${targets.length - 1}个阶段</span>` : ''}` : '';
- return `<article class="qa-card qa-feed-card" data-question-id="${q.id}" role="link" tabindex="0" aria-label="查看问题：${escape(q.title)}"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${q.stage ? `<span class="stage-tag">${escape(stageName(q.stage))}</span>` : ''}${targetTags}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">这一程的声音，还在路上。<br>暂时没有所选阶段的回答。</p></div></div><footer class="answer-footer"><span>等待一个新视角</span><button data-action="detail" data-id="${q.id}">去回答 ↗</button></footer>`}</article>`;
+ if (!q.stage && !targets.length) return '';
+ const full = `${q.stage ? stageName(q.stage) : '阶段未填'} → ${targets.length ? targets.map(stageName).join('、') : '不限阶段'}`;
+ const compact = `${q.stage ? itemStageName(q.stage) : '未填'} → ${targets.length ? itemStageName(targets[0]) : '不限'}${targets.length > 1 ? ` +${targets.length - 1}` : ''}`;
+ return `<span class="stage-tag item-route" title="${escape(full)}" aria-label="${escape(full)}">${escape(compact)}</span>`;
+}
+function feedAnswerHTML(a, qid) { return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签"><span class="stage-tag" title="${escape(a.stage ? stageName(a.stage) : '阶段未填')} · ${answerKind(a)}">${a.stage ? escape(itemStageName(a.stage)) + ' · ' : ''}${answerKind(a)}</span></div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p><button class="item-vote ${a.voted ? 'voted' : ''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button></div></div>`; }
+function cardHTML(q) {
+ return `<article class="qa-card qa-feed-card" data-question-id="${q.id}" role="link" tabindex="0" aria-label="查看问题：${escape(q.title)}"><div class="question-section"><div class="question-content"><h2>${escape(q.title)}</h2></div><div class="question-tags" aria-label="问题标签">${itemRouteHTML(q)}</div></div>${q.answer ? feedAnswerHTML(q.answer, q.id) : `<div class="answer-section"><div class="answer-tags" aria-hidden="true"></div><div class="answer-content"><p class="empty-answer">暂时没有这个阶段的回答，等你来说。</p></div></div>`}</article>`;
 }
 function captureFeedView(focusedQuestionId = null) {
  const viewport = app.querySelector('.feed-viewport');

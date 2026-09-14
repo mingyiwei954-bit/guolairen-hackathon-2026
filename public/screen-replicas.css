@@ -63,6 +63,14 @@
 .guolairen-shell .stage-filter .chips button{min-height:24px;padding:0 8px;font-size:10.5px;line-height:1.2}
 .guolairen-shell .stage-filter .my-stage-entry{min-height:24px;padding:0 0 0 9px;font-size:10.5px;line-height:1.2}
 .guolairen-shell .my-stage-entry>span:last-child{font-size:14px;line-height:12px}
+/* Keep the two staggered text rows; voting shares the answer row. */
+.guolairen-shell .qa-feed-card{padding-top:10px;padding-bottom:10px}
+.guolairen-shell .qa-feed-card .answer-section{margin-top:9px}
+.guolairen-shell .qa-feed-card .answer-content{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;column-gap:6px}
+.guolairen-shell .qa-feed-card .stage-tag{font-size:10px;line-height:1.4;padding:2px 4px}
+.guolairen-shell .qa-feed-card .item-route{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;letter-spacing:-.2px}
+.guolairen-shell .item-vote{min-width:28px;min-height:24px;padding:2px 0;font-size:11px;line-height:20px;white-space:nowrap;color:#929ba6;background:transparent;align-self:start}
+.guolairen-shell .item-vote.voted{color:var(--blue)}
 .composer-channel-context{font-size:12px;line-height:1.5;color:#9ba1aa;margin:2px 0 15px;font-weight:400}
 .composer-channel-context span{color:#1772f6}
 #app .composer-bar{padding-top:10px;padding-bottom:10px;min-height:55px}
