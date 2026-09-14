@@ -257,7 +257,7 @@ function controls(show) { app.classList.toggle('feed-mode', show); if (!show) cl
 const CHANNEL_TABS = [['recommend','推荐'], ['hot','热榜'], ['story','故事'], ['knowledge','知识']];
 function channelTabsHTML(active = 'guolairen') {
  const demoTabs = CHANNEL_TABS.map(([id, label]) => `<button data-action="channel" data-channel="${id}" class="${active === id ? 'active' : ''}" ${active === id ? 'aria-current="page"' : ''}>${label}</button>`).join('');
- return `<nav class="channel-tabs" aria-label="内容频道">${demoTabs}<button data-action="home" class="${active === 'guolairen' ? 'active' : ''}" ${active === 'guolairen' ? 'aria-current="page"' : ''}>过来人</button><button data-action="unavailable" data-label="关注">关注</button></nav>`;
+ return `<nav class="channel-tabs" aria-label="内容频道">${demoTabs}<button data-action="home" class="${active === 'guolairen' ? 'active' : ''}" ${active === 'guolairen' ? 'aria-current="page"' : ''}>过来人</button><button data-action="channel" data-channel="follow">关注</button></nav>`;
 }
 function topNavigationHTML(active = 'guolairen') {
  return `<header class="top-navigation-group"><div class="search-bar" role="search" aria-label="社区搜索"><span class="search-placeholder"><span class="search-icon" aria-hidden="true"></span>搜索你感兴趣的问题</span><button type="button" data-action="search">搜索</button></div>${channelTabsHTML(active)}</header>`;
@@ -301,13 +301,14 @@ function demoSubnavHTML(id) {
  return '';
 }
 function renderDemoChannel(id) {
+ if (['follow','recommend','hot'].includes(id)) return renderScreenshotChannel(id);
  const channel = DEMO_CHANNELS[id]; if (!channel) return;
  prepareDemoScreen(); state.screen = 'demo'; state.demoChannel = id; state.kanshanSuggestion = null;
  app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML(id)}<section class="demo-feed demo-feed-${id}" aria-label="${escape(channel.label)}频道示例内容" tabindex="0"><p class="demo-caption">频道预览 · 内容、昵称与互动数据均为示例</p>${demoSubnavHTML(id)}${channel.items.map((item,index)=>demoRowHTML(item,index,id)).join('')}</section>${bottomTabBarHTML('home')}</div>`;
  requestAnimationFrame(() => { const viewport = app.querySelector('.demo-feed'); if (viewport && state.demoChannel===id) viewport.scrollTop = state.demoScroll.get(id) || 0; });
 }
 function showDemoArticle(channel,index) {
- const item=DEMO_CHANNELS[channel]?.items[index]; if(!item)return;
+ const raw=SHOT_DATA[channel]?.[index]; const item=raw?{title:raw.title,excerpt:raw.text||'以下为截图界面示例内容，可带着问题去过来人发起讨论。'}:DEMO_CHANNELS[channel]?.items[index]; if(!item)return;
  saveDemoScroll(); controls(false); state.screen='demo-detail'; state.demoChannel=channel;
  app.innerHTML=`${bar(channel==='story'?'故事':channel==='knowledge'?'知识':'这一条讨论')}<section class="demo-reader"><p class="demo-caption">示例内容 · 不对应真实知乎帖子</p>${demoAuthorHTML(index,channel)}<h1>${escape(item.title)}</h1><p>${escape(item.excerpt)}</p><div class="demo-reader-note">这一条是频道界面示例。想听真实的经历，可以把这个问题带到过来人。</div><button class="demo-discuss" data-action="demo-discuss" data-channel="${channel}" data-index="${index}">去过来人问问大家 ↗</button><div class="demo-comment-empty"><strong>评论</strong><p>还没有真实评论。留一个问题，让交流从这里开始。</p></div></section>`;
  app.scrollTop=0;
@@ -558,6 +559,11 @@ phone.addEventListener('click', async event => {
  if (b.disabled) return;
  try {
   const action = b.dataset.action;
+  if (action === 'shot-notice') return notice('这是截图界面演示，过来人可进行真实交流');
+  if (action === 'shot-shortcut') return b.dataset.label==='知乎日报'?renderDemoChannel('follow'):notice(b.dataset.label+' · 界面示例');
+  if (action === 'shot-mark') { const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));return; }
+  if (action === 'shot-hide') {if(state.demoChannel==='follow')return notice('这是关注动态示例');b.closest('article')?.remove();return;}
+  if (action === 'shot-follow-filter') {const t=b.textContent;app.querySelectorAll('.shot-follow-filters button').forEach(e=>e.setAttribute('aria-pressed',String(e===b)));const list=app.querySelector('.shot-follow-posts');const rows=[...list.children];rows.forEach(e=>e.hidden=t==='想法'&&e.dataset.kind!=='想法');if(t==='最新')rows.sort((a,b)=>a.dataset.kind==='想法'?-1:1).forEach(e=>list.append(e));else rows.sort((a,b)=>a.dataset.kind==='文章'?-1:1).forEach(e=>list.append(e));return;}
   if (action === 'demo-share') return notice('这是一条榜单示例，可进入过来人发起真实讨论');
   if (action === 'demo-open') return showDemoArticle(b.dataset.channel,Number(b.dataset.index));
   if (action === 'demo-mark') {
@@ -565,7 +571,7 @@ phone.addEventListener('click', async event => {
    const marked=demoMarks.has(key);b.setAttribute('aria-pressed',String(marked));b.querySelector('span').textContent=key.startsWith('vote:')?(marked?'已赞同':'赞同'):(marked?'已收藏':'收藏');return;
   }
   if (action === 'demo-discuss') {
-   const item=DEMO_CHANNELS[b.dataset.channel]?.items[Number(b.dataset.index)];if(!item)return;
+   const item=SHOT_DATA[b.dataset.channel]?.[Number(b.dataset.index)]||DEMO_CHANNELS[b.dataset.channel]?.items[Number(b.dataset.index)];if(!item)return;
    await showCachedFeed();return showAsk(item.title,{type:'demo-item',channel:b.dataset.channel,index:Number(b.dataset.index)});
   }
   if (action === 'back' && state.screen==='demo-detail') return renderDemoChannel(state.demoChannel);
