@@ -522,7 +522,7 @@ function bindAnswerDeck(q,view,answers,start) {
   app.querySelector('[data-action="answer-page"][data-step="1"]').disabled=index===answers.length-1;
   app.querySelector('.answer-flow-bottom').innerHTML=answerFlowFooter(q,view,answers,index);
  }
- function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+2||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
+ function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+48||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
  function move(step){if(performance.now()<lockedUntil)return;const next=clamp(index+step,0,answers.length-1);if(next===index)return;lockedUntil=performance.now()+420;go(next);}
  deck.answerMove=move;go(index,false);
  answerDeckResize=new ResizeObserver(()=>{if(deck.isConnected)deck.scrollTo({top:index*deck.clientHeight,behavior:'instant'});});answerDeckResize.observe(deck);
@@ -579,10 +579,12 @@ async function submitAIQuestion(form) {
  } finally { saveDetailView(q.id); }
 }
 async function showDetail(id, {captureFeed = true, focusAnswerId = null} = {}) {
+ const enteringFromFeed=captureFeed&&state.screen==='feed';
  if (captureFeed && state.screen === 'feed') captureFeedView(id);
  if (state.screen === 'detail' && state.detail) { const current = detailView(state.detail.id); current.scrollTop = app.scrollTop; saveDetailView(state.detail.id); }
  cleanupAIPoll(); state.aiRequest++;
  const ticket = ++state.request; const q = await api('/questions/' + id); if (ticket !== state.request) return;
+ if(enteringFromFeed)detailView(q.id).aiOpen=false;
  state.detail = q; state.screen = 'detail'; renderDetail({focusAnswerId});
  const view = detailView(id); if (view.aiOpen) loadAIState(id);
 }
