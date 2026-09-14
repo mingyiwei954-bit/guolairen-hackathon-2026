@@ -385,7 +385,7 @@ function renderFeed(restore = null) {
  cleanupAIPoll(); state.aiRequest++;
  if (!restore) filterVisibilityProgress = 1;
  state.screen = 'feed'; controls(true);
- app.innerHTML = `<div class="app-shell">${topNavigationHTML()}<div class="feed-layer"><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div></div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="filter-controls-spacer" aria-hidden="true"></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section></div>${bottomTabBarHTML()}</div>`;
+ app.innerHTML = `<div class="app-shell">${topNavigationHTML()}<div class="feed-layer"><div class="filter-controls-stack" role="group" aria-label="内容筛选"><section class="direction-layer"><div class="direction-switch" aria-label="浏览方向"><button data-action="mode" data-value="older" class="${state.mode === 'older' ? 'selected' : ''}" aria-pressed="${state.mode === 'older'}">听过来人说</button><button data-action="mode" data-value="younger" class="${state.mode === 'younger' ? 'selected' : ''}" aria-pressed="${state.mode === 'younger'}">听没过来人说</button></div></section><section class="stage-filter-layer"><div class="stage-filter" aria-label="回答者阶段筛选"><div class="chips"><button data-action="filter" data-value="all" class="${state.stage === 'all' ? 'active' : ''}" aria-pressed="${state.stage === 'all'}">全部</button>${state.allowed.map(id => `<button data-action="filter" data-value="${id}" class="${state.stage === id ? 'active' : ''}" aria-pressed="${state.stage === id}">${escape(stageName(id))}</button>`).join('')}</div>${myStageEntryHTML()}</div></section></div><section class="feed-viewport" aria-label="问答内容流" tabindex="0"><div class="filter-controls-spacer" aria-hidden="true"></div>${state.feed.length ? state.feed.map(cardHTML).join('') : '<div class="empty-state">这一边暂时还没有回声。<br>换一个方向，或先留下你的问题。</div>'}</section></div>${bottomTabBarHTML()}</div>`;
  restoreFeedViewport(restore || {scrollTop:0, filterProgress:1});
 }
 async function loadFeed({restore = null} = {}) {
@@ -397,6 +397,38 @@ async function loadFeed({restore = null} = {}) {
 }
 async function returnToFeed() { const restore = state.feedReturn || stored('feed', null); state.composerOrigin = null; return loadFeed({restore}); }
 function options(selected) { return state.user.stages.map(s => `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${escape(s.label)}</option>`).join(''); }
+const PERSONAL_STAGE_LABELS={primary:'小学生',middle:'初中生',secondary:'高中 / 中专生',college:'大学生',working:'上班族',retired:'已退休'};
+function myStageEntryHTML() {
+ const label=PERSONAL_STAGE_LABELS[state.user.stage]||stageName(state.user.stage);
+ return `<button type="button" class="my-stage-entry" data-action="stage-settings" aria-label="我是${escape(label)}，切换我的阶段"><span>我是${escape(label)}</span><span aria-hidden="true">›</span></button>`;
+}
+function showStagePicker() {
+ captureFeedView();++state.request;cleanupAIPoll();controls(false);state.screen='stage-picker';
+ const descriptions={primary:'正在读小学',middle:'正在读初中',secondary:'正在读高中或中专',college:'正在大学学习',working:'已经进入职场',retired:'正在享受退休生活'};
+ app.innerHTML=`<header class="screen-bar stage-picker-bar"><button type="button" data-action="stage-picker-back" aria-label="返回"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4-8 8 8 8"/></svg></button><span>我的阶段</span><button class="stage-picker-done" type="submit" form="stage-switch-form">完成</button></header><section class="stage-picker-page"><h1>你现在处于哪个阶段？</h1><p class="stage-picker-intro">让另一程的声音，离你近一点。</p><form id="stage-switch-form"><fieldset><legend class="sr-only">选择我的阶段</legend>${state.user.stages.map((stage,i)=>`<label class="stage-picker-option"><input type="radio" name="stage" value="${escape(stage.id)}" ${stage.id===state.user.stage?'checked':''}><span class="stage-picker-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><span class="stage-picker-copy"><strong>${escape(stage.label)}</strong><small>${descriptions[stage.id]||''}</small></span><svg class="stage-picker-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></label>`).join('')}</fieldset><p class="stage-picker-note">阶段由你自己选择，随时可以切换。<br>影响推荐与之后回答的阶段标签，已发布内容不变。</p><p class="stage-picker-status" role="status" aria-live="polite"></p></form></section>`;
+ app.scrollTop=0;
+}
+async function saveStagePicker(form) {
+ const submit=app.querySelector('.stage-picker-done');if(!submit||submit.disabled)return;
+ const stage=form.dataset.saved?state.user.stage:new FormData(form).get('stage');
+ if(!state.user.stages.some(x=>x.id===stage)){notice('请选择一个阶段');return;}
+ const back=app.querySelector('[data-action="stage-picker-back"]');
+ submit.disabled=true;back.disabled=true;submit.textContent='保存中';
+ const radios=[...form.querySelectorAll('input')];radios.forEach(x=>x.disabled=true);
+ try {
+  if(!form.dataset.saved && stage!==state.user.stage){const result=await api('/profile',{stage});state.user.stage=result.stage;}
+  form.dataset.saved='true';state.stage='all';state.feedReturn=null;removeStored('feed');
+  submit.textContent='更新中';
+  await loadFeed();captureFeedView();notice('已切换为'+(PERSONAL_STAGE_LABELS[state.user.stage]||stageName(state.user.stage)));
+  app.querySelector('.my-stage-entry')?.focus({preventScroll:true});
+ } catch(error) {
+  const saved=!!form.dataset.saved;
+  form.querySelector('.stage-picker-status').textContent=saved?'阶段已保存，内容暂未刷新。点击右上角重试即可。':'暂时没有保存成功，请重试。';
+  submit.textContent=saved?'重新加载':'完成';
+  if(!saved)radios.forEach(x=>x.disabled=false);
+  notice(saved?'阶段已保存，无需重复选择':error.message);
+ } finally {if(submit.isConnected)submit.disabled=false;if(back.isConnected)back.disabled=false;}
+}
 function showProfile() { ++state.request; state.screen = 'profile'; controls(false); app.innerHTML = `${bar('我的阶段')}<section class="form-screen"><h2>你正走到哪一程？</h2><p class="helper">用阶段认识彼此，不用头衔定义彼此。<br>阶段由你自己选择，会随问题和回答一起显示。</p><form id="profile-form"><label for="profile-stage">我目前的阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><p class="helper">体验版按求学、工作、退休的顺序组织浏览方向，不代表经验或能力的高低。默认阶段为大学，可随时修改。</p><button class="primary-button" type="submit">保存我的阶段</button></form><p class="helper">当前使用本浏览器的访客身份保存操作，尚未接入知乎账号。</p></section>`; app.scrollTop = 0; }
 function showAsk(prefill = '', origin = null) {
  ++state.request; cleanupAIPoll(); state.screen = 'ask'; controls(false);
@@ -623,6 +655,8 @@ phone.addEventListener('click', async event => {
   }
   if (action === 'search') return notice('搜索尚未接入体验版，先从过来人问答逛起吧');
   if (action === 'unavailable') return notice(`${b.dataset.label || '这个入口'}尚未接入体验版`);
+  if (action === 'stage-settings') return showStagePicker();
+  if (action === 'stage-picker-back') {if(app.querySelector('#stage-switch-form')?.dataset.saved){await loadFeed();captureFeedView();}else await showCachedFeed();app.querySelector('.my-stage-entry')?.focus({preventScroll:true});return;}
   if (action === 'profile') { if (state.screen === 'feed') captureFeedView(); return showProfile(); }
   if (action === 'ask') { if (state.screen === 'feed') captureFeedView(); return showAsk('', {type:'feed'}); }
   if (action === 'answer') { const view = detailView(state.detail.id); view.scrollTop = app.scrollTop; saveDetailView(state.detail.id); return showAnswer(); }
@@ -690,6 +724,7 @@ app.addEventListener('change', event => {
 app.addEventListener('submit', async event => {
  event.preventDefault(); const form = event.target;
  if (form.id === 'ai-question-form') return submitAIQuestion(form);
+ if (form.id === 'stage-switch-form') return saveStagePicker(form);
  const submit = form.querySelector('[type=submit]') || app.querySelector(`[type="submit"][form="${form.id}"]`); if (!submit || submit.disabled) return;
  submit.disabled = true; if (form.id === 'ask-form') form.dataset.submitting = 'true'; let writeSucceeded = false;
  const data = Object.fromEntries(new FormData(form));
