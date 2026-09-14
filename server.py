@@ -14,6 +14,7 @@ from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 
 from oauth_login import OAuthMixin, SCHEMA as OAUTH_SCHEMA
+from demo_content import initialize_demo_content, rotate_demo_feed
 
 from content_pipeline.ai_processor import AIInputError, AIProcessor
 from content_pipeline.storage import (
@@ -105,6 +106,8 @@ def initialize():
                SELECT id,target,0 FROM questions
                WHERE target IN ('primary','middle','secondary','college','working','retired')"""
         )
+
+        initialize_demo_content(db)
 
 class RequestError(Exception):
     def __init__(self, message, status=400, code=None):
@@ -294,7 +297,8 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                         q['answer'] = eligible[0] if eligible else None
                         q['answer_count'] = len(eligible)
                         items.append(q)
-                    result = {'items': items, 'allowed_stages': allowed, 'stage': user['stage']}
+                    items, demo_total = rotate_demo_feed(db, items, sid, user['stage'], mode, chosen, params.get('refresh', ['0'])[0] == '1')
+                    result = {'items': items, 'allowed_stages': allowed, 'stage': user['stage'], 'demo_total': demo_total, 'demo_batch_size': 12}
                 elif path.path.startswith('/api/questions/'):
                     try:
                         qid = int(path.path.rsplit('/', 1)[1])

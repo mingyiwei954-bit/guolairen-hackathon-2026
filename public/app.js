@@ -718,7 +718,7 @@ async function refreshCurrentChannel(channel) {
  try {
   let count=0;
   if(channel==='guolairen') {
-   const [data]=await Promise.all([api(`/feed?mode=${state.mode}&stage=${state.stage}`,undefined,{signal:controller.signal}),minimum]);
+   const [data]=await Promise.all([api(`/feed?mode=${state.mode}&stage=${state.stage}&refresh=1`,undefined,{signal:controller.signal}),minimum]);
    if(!stillHere())return;
    if(!Array.isArray(data.items)||!Array.isArray(data.allowed_stages))throw new Error('内容响应不完整');
    state.feed=data.items;state.allowed=data.allowed_stages;count=data.items.length;

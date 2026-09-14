@@ -1,0 +1,1986 @@
+{
+  "version": 1,
+  "provenance": "原创合成体验示例，非知乎真实用户内容，不作为AI检索证据",
+  "items": [
+    {
+      "key": "glr-v1-00-0",
+      "title": "你最近一次笑出声，是因为什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "同桌把橡皮画成了土豆，我们笑了一节下课。",
+          "votes": 5
+        },
+        {
+          "stage": "middle",
+          "body": "放学回家发现妈妈留了最后一块西瓜。",
+          "votes": 8
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-00-1",
+      "title": "没有特别的事，你会怎么让一天变好？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "实训做成功一个零件，忍不住给朋友发照片。",
+          "votes": 18
+        },
+        {
+          "stage": "college",
+          "body": "答辩结束那晚，我们坐在操场上什么也没聊。",
+          "votes": 21
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-00-2",
+      "title": "你现在的快乐，和以前有什么不同？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "下班时天还亮着，我绕路买了一束花。",
+          "votes": 31
+        },
+        {
+          "stage": "retired",
+          "body": "晨练的朋友把我的名字记住了，隔老远就喊我。",
+          "votes": 34
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-01-0",
+      "title": "你会怎样认识一个新朋友？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "有人给我讲不会的题，后来我们什么都聊。",
+          "votes": 19
+        },
+        {
+          "stage": "secondary",
+          "body": "换班后我先借了一次笔，才慢慢敢开口说话。",
+          "votes": 22
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-01-1",
+      "title": "多久没联系的朋友，你还会主动找他？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "社团活动总一起收尾，我们就熟起来了。",
+          "votes": 32
+        },
+        {
+          "stage": "working",
+          "body": "不急着约大聚会，先问一句周末要不要散步。",
+          "votes": 35
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-01-2",
+      "title": "朋友之间，哪件小事让你很在意？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "老邻居搬走后，我们每周还会通一次电话。",
+          "votes": 45
+        },
+        {
+          "stage": "primary",
+          "body": "我问他要不要一起踢球，第二天就又一起玩了。",
+          "votes": 30
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-02-0",
+      "title": "一个人吃饭，你会觉得自在吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我喜欢自己坐车看窗外，到站再回消息。",
+          "votes": 33
+        },
+        {
+          "stage": "college",
+          "body": "食堂一个人吃饭以后，选什么都不用商量了。",
+          "votes": 36
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-02-1",
+      "title": "独处的时候，你通常会做什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "一个人做晚饭挺自在，只是偶尔想找人聊两句。",
+          "votes": 46
+        },
+        {
+          "stage": "retired",
+          "body": "没人来做客的时候，我把收音机开小一点。",
+          "votes": 6
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-02-2",
+      "title": "你怎么分辨独处和孤单？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我会把积木城堡搭完，不喜欢被人拆掉。",
+          "votes": 41
+        },
+        {
+          "stage": "middle",
+          "body": "有时戴耳机看漫画，一个人待着也挺舒服。",
+          "votes": 44
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-03-0",
+      "title": "你现在还会担心考试吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "面试也像考试，但我开始接受不是每次都合适。",
+          "votes": 47
+        },
+        {
+          "stage": "working",
+          "body": "考证没过时，我先检查是不是根本没时间准备。",
+          "votes": 7
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-03-1",
+      "title": "一次没考好，你希望听到什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "我在学手机摄影，照片比上个月清楚就高兴。",
+          "votes": 17
+        },
+        {
+          "stage": "primary",
+          "body": "我想先听一句没关系，再一起看错在哪里。",
+          "votes": 45
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-03-2",
+      "title": "分数以外，你怎样判断自己有进步？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "上次没及格，这次终于能做完最后一道题。",
+          "votes": 12
+        },
+        {
+          "stage": "secondary",
+          "body": "我会把试卷放一天，平静下来再订正。",
+          "votes": 15
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-04-0",
+      "title": "如果可以重选一门课，你会选什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "最近学做饭，先把一道菜做稳，不求花样多。",
+          "votes": 18
+        },
+        {
+          "stage": "retired",
+          "body": "我学会发语音了，孙子回我比打字快。",
+          "votes": 21
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-04-1",
+      "title": "你最近学会了什么小技能？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我想学游泳，敢把头埋进水里就算第一步。",
+          "votes": 13
+        },
+        {
+          "stage": "middle",
+          "body": "我刚学会打鸡蛋，蛋壳终于不掉进碗里了。",
+          "votes": 16
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-04-2",
+      "title": "学一个新东西，你最怕哪一步？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我喜欢实训课，做出来的东西可以拿在手上。",
+          "votes": 26
+        },
+        {
+          "stage": "college",
+          "body": "我想补一门沟通课，早一点学会把需求讲清楚。",
+          "votes": 29
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-05-0",
+      "title": "你希望家人怎样关心你？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "孩子工作忙，我现在会先问他方便不方便。",
+          "votes": 32
+        },
+        {
+          "stage": "primary",
+          "body": "不要一直问考几分，也问问我今天玩了什么。",
+          "votes": 17
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-05-1",
+      "title": "和家人意见不一样时，你会怎么办？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "我想先把话讲完，再听他们的建议。",
+          "votes": 27
+        },
+        {
+          "stage": "secondary",
+          "body": "有时我会写下来，比当面说不容易吵起来。",
+          "votes": 30
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-05-2",
+      "title": "你多久没有认真听家人讲一件小事了？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "我开始告诉爸妈具体安排，他们就少一些猜测。",
+          "votes": 40
+        },
+        {
+          "stage": "working",
+          "body": "我约好周末再聊，累的时候很容易把话说重。",
+          "votes": 43
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-06-0",
+      "title": "你喜欢现在住的城市吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "有可以踢球的小空地，我就觉得不错。",
+          "votes": 28
+        },
+        {
+          "stage": "middle",
+          "body": "我先看附近有没有书店，可以逛很久。",
+          "votes": 31
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-06-1",
+      "title": "第一次到陌生地方，你先找什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我会记住车站和便利店，不容易慌。",
+          "votes": 41
+        },
+        {
+          "stage": "college",
+          "body": "宿舍楼下那家面馆记得我的口味以后就亲切了。",
+          "votes": 44
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-06-2",
+      "title": "什么地方会让你觉得有点像家？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "搬家后先找菜市场，生活很快就有了节奏。",
+          "votes": 11
+        },
+        {
+          "stage": "retired",
+          "body": "楼下有人肯停下来聊几句，我就住得安心。",
+          "votes": 14
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-07-0",
+      "title": "你会给自己安排一个完全空白的周末吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "我想骑车去河边，先把作业写完再去。",
+          "votes": 42
+        },
+        {
+          "stage": "secondary",
+          "body": "我想一天不看群消息，陪朋友逛逛。",
+          "votes": 45
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-07-1",
+      "title": "放假第一天，你最想做什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "不设闹钟，但也不强迫自己一定要玩出意义。",
+          "votes": 12
+        },
+        {
+          "stage": "working",
+          "body": "我给周末留半天空白，不然休息也像赶任务。",
+          "votes": 15
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-07-2",
+      "title": "你现在还有放假的感觉吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "每天都能安排时间了，我反而固定周三去学唱歌。",
+          "votes": 25
+        },
+        {
+          "stage": "primary",
+          "body": "睡醒不用赶着穿校服，就像放假了。",
+          "votes": 10
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-08-0",
+      "title": "你为什么会开始喜欢一个爱好？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我拍照片不发出去，也愿意翻着自己看。",
+          "votes": 13
+        },
+        {
+          "stage": "college",
+          "body": "跑步成绩没提高，可那半小时不用赶任何事。",
+          "votes": 16
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-08-1",
+      "title": "一个爱好没有成绩，还值得继续吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "重新拼模型以后，我找回了慢慢做事的耐心。",
+          "votes": 26
+        },
+        {
+          "stage": "retired",
+          "body": "学书法写得歪，老师说先把每天练习保留下来。",
+          "votes": 29
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-08-2",
+      "title": "多久没做你小时候喜欢的事情了？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "画得不像也没事，我画的是自己想的怪兽。",
+          "votes": 21
+        },
+        {
+          "stage": "middle",
+          "body": "吉他还弹不好，但会一小段歌就很开心。",
+          "votes": 24
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-09-0",
+      "title": "你会怎样花第一笔自己存下的钱？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "我给自己买了张回家的票，剩下的钱慢慢安排。",
+          "votes": 27
+        },
+        {
+          "stage": "working",
+          "body": "第一份工资请家人吃饭，菜不贵，大家聊很久。",
+          "votes": 30
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-09-1",
+      "title": "想买的东西很多时，你怎么选择？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "我给老朋友寄了点家乡小吃，比买新衣服高兴。",
+          "votes": 40
+        },
+        {
+          "stage": "primary",
+          "body": "我存着买一本漫画，数硬币的时候很有盼头。",
+          "votes": 25
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-09-2",
+      "title": "哪次花钱不多，却让你记了很久？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "我和朋友凑钱买了个球，用了好久。",
+          "votes": 35
+        },
+        {
+          "stage": "secondary",
+          "body": "我先看看能不能借到，用过才知道想不想买。",
+          "votes": 38
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-10-0",
+      "title": "你有没有一件拖了很久的小事？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "有些事确实不重要，我会直接从清单里划掉。",
+          "votes": 41
+        },
+        {
+          "stage": "retired",
+          "body": "练字不想练时，我只写一页，写完就收笔。",
+          "votes": 44
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-10-1",
+      "title": "不想开始的时候，你怎么迈出第一步？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我先把作业本拿出来，坐下再想写哪题。",
+          "votes": 36
+        },
+        {
+          "stage": "middle",
+          "body": "书桌太乱时，我只收拾一小块地方。",
+          "votes": 39
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-10-2",
+      "title": "做到一半想放弃，你会怎么处理？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我把任务分成今天能完成的一段，别一口气想完。",
+          "votes": 6
+        },
+        {
+          "stage": "college",
+          "body": "先写很粗糙的一版，比盯着空白页面好受。",
+          "votes": 9
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-11-0",
+      "title": "睡前你最常想起什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "睡前看看阳台上的花，明天再处理明天的事情。",
+          "votes": 12
+        },
+        {
+          "stage": "primary",
+          "body": "我会想明天课间和谁一起玩。",
+          "votes": 40
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-11-1",
+      "title": "忙了一天，怎样才算真的休息？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "戴耳机听一首歌，先不看群里又发了什么。",
+          "votes": 7
+        },
+        {
+          "stage": "secondary",
+          "body": "我想安静洗个热水澡，不急着回答所有问题。",
+          "votes": 10
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-11-2",
+      "title": "你什么时候最希望别人别来打扰？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "睡前把明天的事记在纸上，不用一直在脑子里转。",
+          "votes": 20
+        },
+        {
+          "stage": "working",
+          "body": "下班先坐十分钟，再做饭，我需要一点过渡。",
+          "votes": 23
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-12-0",
+      "title": "别人误会你的时候，你会解释吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我会说这是我的橡皮，借之前要先问我。",
+          "votes": 8
+        },
+        {
+          "stage": "middle",
+          "body": "朋友一直抄作业，我说可以讲题但不想再借了。",
+          "votes": 11
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-12-1",
+      "title": "不敢拒绝别人，怎么办？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我先解释自己的难处，不硬撑着答应所有事。",
+          "votes": 21
+        },
+        {
+          "stage": "college",
+          "body": "我学着把没空说清楚，不给一大串理由。",
+          "votes": 24
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-12-2",
+      "title": "你最近一次认真说“不”是什么时候？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "有时先停一下再回复，比立刻答应后反悔好。",
+          "votes": 34
+        },
+        {
+          "stage": "retired",
+          "body": "身体累了就不参加聚会，朋友能理解。",
+          "votes": 37
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-13-0",
+      "title": "看到别人进步很快，你会着急吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "我会找同桌聊，他也有不会的题。",
+          "votes": 22
+        },
+        {
+          "stage": "secondary",
+          "body": "别人选的方向不一定适合我，我先把手头这项练好。",
+          "votes": 25
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-13-1",
+      "title": "你觉得自己走得慢的时候，会找谁聊？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "朋友圈看起来都很顺，见面才知道大家也会慌。",
+          "votes": 35
+        },
+        {
+          "stage": "working",
+          "body": "以前比升职，现在更在意每天过得是否撑得住。",
+          "votes": 38
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-13-2",
+      "title": "有什么事，你现在不再和别人比了？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "有人到处旅行，我在楼下养花也有自己的日子。",
+          "votes": 5
+        },
+        {
+          "stage": "primary",
+          "body": "有人跑得比我快，但我跳绳比上次多了十个。",
+          "votes": 33
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-14-0",
+      "title": "你最喜欢一天里的哪个时刻？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "晚上收拾好第二天的书包，心里就不那么乱。",
+          "votes": 36
+        },
+        {
+          "stage": "college",
+          "body": "图书馆靠窗有个位置，下午能晒到一点太阳。",
+          "votes": 39
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-14-1",
+      "title": "有什么小习惯让你觉得生活很稳？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "早起十分钟喝杯热的，不用端着杯子追公交。",
+          "votes": 6
+        },
+        {
+          "stage": "retired",
+          "body": "傍晚去买菜，顺便和熟人说几句话。",
+          "votes": 9
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-14-2",
+      "title": "怎样把普通的一天过得有点期待？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "放学铃响的时候，可以冲出去找朋友。",
+          "votes": 44
+        },
+        {
+          "stage": "middle",
+          "body": "早上路过早餐店，老板知道我要什么。",
+          "votes": 47
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-15-0",
+      "title": "你会怎样纪念一段结束的日子？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "宿舍钥匙交掉以后，我还保留着最后一张合照。",
+          "votes": 7
+        },
+        {
+          "stage": "working",
+          "body": "换工作时把大家一起吃饭的照片备份了。",
+          "votes": 10
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-15-1",
+      "title": "分别时说不出口的话，你后来会补上吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "我留着老相册，翻一次就能讲一下午。",
+          "votes": 20
+        },
+        {
+          "stage": "primary",
+          "body": "我留着同桌送的小贴纸，夹在书里面。",
+          "votes": 5
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-15-2",
+      "title": "你还留着以前的什么东西？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "毕业那天没哭，回家看到合照才难过。",
+          "votes": 15
+        },
+        {
+          "stage": "secondary",
+          "body": "我把想说的话写在明信片上，后来寄出去了。",
+          "votes": 18
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-16-0",
+      "title": "你觉得大人也会害怕吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "我会把卡住的地方讲具体，同事才好接着帮。",
+          "votes": 21
+        },
+        {
+          "stage": "retired",
+          "body": "手机操作不会就问，不会不是什么丢人的事。",
+          "votes": 24
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-16-1",
+      "title": "需要帮忙的时候，你会主动说吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "过马路时爸爸也会看很久，我觉得大人也会怕。",
+          "votes": 16
+        },
+        {
+          "stage": "middle",
+          "body": "有人陪我去问老师以后，我就敢多问一点了。",
+          "votes": 19
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-16-2",
+      "title": "哪次被帮助，让你后来也想帮别人？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我不懂机器怎么用就先问，装懂反而容易出错。",
+          "votes": 29
+        },
+        {
+          "stage": "college",
+          "body": "第一次租房我请学长陪着看，少一点慌张。",
+          "votes": 32
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-17-0",
+      "title": "一件事做得不够好，你还愿意给别人看吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "绣错了一针，我就当那片叶子长得特别些。",
+          "votes": 35
+        },
+        {
+          "stage": "primary",
+          "body": "我画的猫像老虎，妈妈还是贴在了冰箱上。",
+          "votes": 20
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-17-1",
+      "title": "你第一次做饭、画画或写作是什么样？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "第一次剪视频很乱，但朋友说有一段很好笑。",
+          "votes": 30
+        },
+        {
+          "stage": "secondary",
+          "body": "第一件作品歪了一点，留下来才看得见后来进步。",
+          "votes": 33
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-17-2",
+      "title": "你能接受一个不完美的成果吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "项目能跑起来时我先给朋友试，再一点点改。",
+          "votes": 43
+        },
+        {
+          "stage": "working",
+          "body": "我先说明这是草稿，大家反而更愿意提意见。",
+          "votes": 46
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-18-0",
+      "title": "如果今天没有手机，你会做什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我会找楼下的小伙伴玩捉迷藏。",
+          "votes": 31
+        },
+        {
+          "stage": "middle",
+          "body": "有时消息太多，我先做完作业再回。",
+          "votes": 34
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-18-1",
+      "title": "你会因为没及时回消息而紧张吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "和朋友吃饭时，大家约好先聊一会儿。",
+          "votes": 44
+        },
+        {
+          "stage": "college",
+          "body": "我会提前说在图书馆，晚点回复，心里就轻松些。",
+          "votes": 47
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-18-2",
+      "title": "什么时候你会主动把手机放下？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "工作消息和朋友消息分开看，不想每次响都起身。",
+          "votes": 14
+        },
+        {
+          "stage": "retired",
+          "body": "出门散步我只带钥匙，回来再看谁找过我。",
+          "votes": 17
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-19-0",
+      "title": "你喜欢和比自己年长的人聊天吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "小表弟问我为什么每天背这么重的书包。",
+          "votes": 45
+        },
+        {
+          "stage": "secondary",
+          "body": "邻居教我修东西，讲得比视频慢，我反而懂了。",
+          "votes": 5
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-19-1",
+      "title": "和比自己小的人聊过什么有趣的事？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "我问小学生最想做什么，他说想有更长的课间。",
+          "votes": 15
+        },
+        {
+          "stage": "working",
+          "body": "听刚毕业的同事讲社团，我想起以前的自己。",
+          "votes": 18
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-19-2",
+      "title": "哪句话让你发现，不同阶段也能聊到一起？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "年轻人教我用地图，我给他讲这条街以前什么样。",
+          "votes": 28
+        },
+        {
+          "stage": "primary",
+          "body": "爷爷讲小时候怎么过河，我听得特别入迷。",
+          "votes": 13
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-20-0",
+      "title": "你会怎样准备一次重要的尝试？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "我把容易忘的步骤写成小纸条，放在手边。",
+          "votes": 16
+        },
+        {
+          "stage": "college",
+          "body": "展示前找朋友故意问难题，早点暴露问题。",
+          "votes": 19
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-20-1",
+      "title": "第一次站到大家面前，你紧张吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "把最关键的材料检查好，其他的允许临场调整。",
+          "votes": 29
+        },
+        {
+          "stage": "retired",
+          "body": "第一次合唱演出结束，我和同伴去吃了碗面。",
+          "votes": 32
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-20-2",
+      "title": "做完一件很难的事，你会怎样奖励自己？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "上台前我会偷偷看一眼老师，她点头我就放心些。",
+          "votes": 24
+        },
+        {
+          "stage": "middle",
+          "body": "我先对着空教室练一遍，正式讲就没那么怕了。",
+          "votes": 27
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-21-0",
+      "title": "你有没有想去很久但一直没去的地方？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "我去外地找朋友，景点没逛几个，聊得很尽兴。",
+          "votes": 30
+        },
+        {
+          "stage": "working",
+          "body": "周末坐两站地铁换个地方走走，也算给自己放风。",
+          "votes": 33
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-21-1",
+      "title": "出门旅行，你更想看风景还是见人？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "现在不赶景点，找个有树荫的地方坐坐就好。",
+          "votes": 43
+        },
+        {
+          "stage": "primary",
+          "body": "我想坐一次很长的火车，看窗外一直变。",
+          "votes": 28
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-21-2",
+      "title": "一次很近的小出行，也算旅行吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "骑车去城另一边的公园，我也会当成探险。",
+          "votes": 38
+        },
+        {
+          "stage": "secondary",
+          "body": "我想看看书里写的地方，哪怕只去一天。",
+          "votes": 41
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-22-0",
+      "title": "你会怎么布置自己的小角落？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "搬家才发现买过很多根本没用的东西。",
+          "votes": 44
+        },
+        {
+          "stage": "retired",
+          "body": "我把旧家具挪了一下，窗边多出一个晒太阳的位置。",
+          "votes": 47
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-22-1",
+      "title": "什么东西舍不得扔，却很少再用了？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我给床边贴了一排自己画的小动物。",
+          "votes": 39
+        },
+        {
+          "stage": "middle",
+          "body": "旧练习本后面全是涂鸦，我不想扔。",
+          "votes": 42
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-22-2",
+      "title": "搬一次家，会让你重新认识自己吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "工具按顺序摆好，开工的时候少找很多次。",
+          "votes": 9
+        },
+        {
+          "stage": "college",
+          "body": "宿舍桌上只放一盏台灯，也能有自己的感觉。",
+          "votes": 12
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-23-0",
+      "title": "你会因为什么突然觉得自己长大了？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "college",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "我想保留对新鲜事情的好奇，不把年龄当理由。",
+          "votes": 15
+        },
+        {
+          "stage": "primary",
+          "body": "我能自己背着书包出门，觉得挺厉害的。",
+          "votes": 43
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-23-1",
+      "title": "长大有没有让你更自由一点？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "第一次自己去办事，发现也没有想象中难。",
+          "votes": 10
+        },
+        {
+          "stage": "secondary",
+          "body": "我开始自己查路线，不是什么都等家人安排。",
+          "votes": 13
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-23-2",
+      "title": "你希望保留小时候的哪一部分？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "自己决定一件事以后，也学着承担不合适的结果。",
+          "votes": 23
+        },
+        {
+          "stage": "working",
+          "body": "自由变多了，账单也多了，我还在找平衡。",
+          "votes": 26
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-24-0",
+      "title": "你最近一次道歉，是因为什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "我弄坏朋友的铅笔，说明天带一支赔他。",
+          "votes": 11
+        },
+        {
+          "stage": "middle",
+          "body": "我希望对方知道哪句话让我不舒服。",
+          "votes": 14
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-24-1",
+      "title": "吵完架以后，你会怎么重新开口？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "冷静一会儿后，我会先问现在能不能聊。",
+          "votes": 24
+        },
+        {
+          "stage": "college",
+          "body": "我不再说你太敏感，而是把自己的话重新讲清楚。",
+          "votes": 27
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-24-2",
+      "title": "一句道歉里，你最希望听到什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "先承认自己做了什么，再谈下次怎么办。",
+          "votes": 37
+        },
+        {
+          "stage": "retired",
+          "body": "一家人有时话赶话，先倒杯水，别急着争输赢。",
+          "votes": 40
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-25-0",
+      "title": "你会想象十年后的自己吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "我想学会一门乐器，不是为了比赛。",
+          "votes": 25
+        },
+        {
+          "stage": "secondary",
+          "body": "现在先把这一年的事情做好，后面的路再慢慢看。",
+          "votes": 28
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-25-1",
+      "title": "面对还没发生的事情，你会担心吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "以前列了很多期限，现在允许计划改变。",
+          "votes": 38
+        },
+        {
+          "stage": "working",
+          "body": "我想留点时间做喜欢的事，不全等以后。",
+          "votes": 41
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-25-2",
+      "title": "有没有一个很小但一直保留着的愿望？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "我希望还能自己出门，和朋友约下一次见面。",
+          "votes": 8
+        },
+        {
+          "stage": "primary",
+          "body": "我想以后有一只狗，也不知道能不能养。",
+          "votes": 36
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-26-0",
+      "title": "你觉得怎样的鼓励最有用？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "帮我看一眼具体哪里卡住，比空说加油有用。",
+          "votes": 39
+        },
+        {
+          "stage": "college",
+          "body": "我会问他想听建议，还是只想有人陪着吐槽。",
+          "votes": 42
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-26-1",
+      "title": "别人说“加油”时，你希望他再做什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "我愿意一起拆一下下一步，别让事情显得一大团。",
+          "votes": 9
+        },
+        {
+          "stage": "retired",
+          "body": "有时不用劝，坐在旁边一起喝杯茶就够了。",
+          "votes": 12
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-26-2",
+      "title": "你会怎么安慰一个失落的朋友？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "secondary",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "陪我玩一会儿，我就愿意讲为什么不高兴了。",
+          "votes": 47
+        },
+        {
+          "stage": "middle",
+          "body": "不要马上说别人更惨，先听我说完。",
+          "votes": 7
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-27-0",
+      "title": "你现在还相信自己会变成喜欢的大人吗？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "我想成为愿意给刚开始的人留点空间的人。",
+          "votes": 10
+        },
+        {
+          "stage": "working",
+          "body": "同事做错事时先一起解决，我很感谢这样的搭档。",
+          "votes": 13
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-27-1",
+      "title": "你欣赏的人，有什么很普通的特点？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "middle",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "小辈愿意来问我，我尽量先听，不急着替他决定。",
+          "votes": 23
+        },
+        {
+          "stage": "primary",
+          "body": "我喜欢会蹲下来听我说话的大人。",
+          "votes": 8
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-27-2",
+      "title": "你想把哪种温柔留给以后的人？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "老师记得我喜欢什么，我就觉得被认真看见。",
+          "votes": 18
+        },
+        {
+          "stage": "secondary",
+          "body": "我欣赏肯承认自己也不会的人，问问题没那么怕。",
+          "votes": 21
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-28-0",
+      "title": "你在学校或工作里最喜欢哪种合作？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "working",
+        "retired"
+      ],
+      "answers": [
+        {
+          "stage": "working",
+          "body": "我会把时间和交付说具体，不把沉默当默认同意。",
+          "votes": 24
+        },
+        {
+          "stage": "retired",
+          "body": "社区排节目时，谁擅长什么就多做一点，不必争着领头。",
+          "votes": 27
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-28-1",
+      "title": "遇到不合拍的队友，你怎么办？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "primary",
+        "middle"
+      ],
+      "answers": [
+        {
+          "stage": "primary",
+          "body": "一起搭积木的时候，每个人管一小块，最后接起来。",
+          "votes": 19
+        },
+        {
+          "stage": "middle",
+          "body": "小组作业先说好谁做什么，就少一点互相猜。",
+          "votes": 22
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-28-2",
+      "title": "一群人一起完成过什么，让你很难忘？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "secondary",
+        "college"
+      ],
+      "answers": [
+        {
+          "stage": "secondary",
+          "body": "实训有人检查图纸，有人操作，互相提醒很重要。",
+          "votes": 32
+        },
+        {
+          "stage": "college",
+          "body": "比赛前夜大家轮流修问题，最后跑起来那刻最难忘。",
+          "votes": 35
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-29-0",
+      "title": "你希望有人向你请教什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "working",
+      "targets": [
+        "retired",
+        "primary"
+      ],
+      "answers": [
+        {
+          "stage": "retired",
+          "body": "我会几道家常菜，有人想学我就慢慢教。",
+          "votes": 38
+        },
+        {
+          "stage": "primary",
+          "body": "我知道哪块操场下午最凉快，可以带你去。",
+          "votes": 23
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-29-1",
+      "title": "你有什么看起来不起眼、却很拿手的事？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "retired",
+      "targets": [
+        "middle",
+        "secondary"
+      ],
+      "answers": [
+        {
+          "stage": "middle",
+          "body": "我很会给同学讲游戏规则，慢慢讲都能听懂。",
+          "votes": 33
+        },
+        {
+          "stage": "secondary",
+          "body": "我能把坏掉的小东西拆开看看，也会说自己修不了。",
+          "votes": 36
+        }
+      ]
+    },
+    {
+      "key": "glr-v1-29-2",
+      "title": "如果能给另一个阶段的人留一句话，你会说什么？",
+      "body": "本题及初始回答为体验示例，可继续分享你自己的经历。",
+      "stage": "primary",
+      "targets": [
+        "college",
+        "working"
+      ],
+      "answers": [
+        {
+          "stage": "college",
+          "body": "我整理过选课踩的坑，愿意分享给刚入学的人。",
+          "votes": 46
+        },
+        {
+          "stage": "working",
+          "body": "我能讲讲第一年工作怎么熬过来，但你的路不必照搬。",
+          "votes": 6
+        }
+      ]
+    }
+  ]
+}
