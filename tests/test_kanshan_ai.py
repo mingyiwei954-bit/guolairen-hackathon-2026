@@ -3,6 +3,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import http.cookiejar
 import urllib.request
 from pathlib import Path
@@ -12,8 +13,14 @@ import server
 from kanshan_ai import KanshanService, migrate_kanshan
 from content_pipeline.model_adapter import ModelResponse, ModelCallError
 
+class FakeSearch:
+    def __init__(self):self.calls=0
+    def search(self,question):
+        self.calls+=1
+        return {'status':'completed','searched_at':int(time.time()),'sources':[{'id':'S1','title':'有关人际交往的资料','text':'先找一个能一起做的小事情，再慢慢建立联系。','url':'https://www.zhihu.com/question/123','scope':'summary','retrieved_at':int(time.time())}]}
+
 class FakeClient:
-    def __init__(self, output='{"answer":"可以换个角度，先找一个能一起做的小事情。"}', error=None, blocked=False):
+    def __init__(self, output='{"answer":"可以换个角度，先找一个能一起做的小事情。[S1]", "citations":[{"source_id":"S1","quote":"先找一个能一起做的小事情"}]}', error=None, blocked=False):
         self.calls=0;self.output=output;self.error=error;self.started=threading.Event();self.release=threading.Event()
         if not blocked:self.release.set()
     def complete_json(self,messages,**kwargs):
@@ -27,6 +34,7 @@ class KanshanTests(unittest.TestCase):
         with server.connect() as db:
             db.execute("INSERT INTO sessions VALUES('visitor-a','college',1)")
             db.execute("INSERT INTO sessions VALUES('visitor-b','college',1)")
+        self.search=FakeSearch();self.search_patch=patch('kanshan_ai.ZhihuSearch',return_value=self.search);self.search_patch.start();self.addCleanup(self.search_patch.stop)
         self.client=FakeClient();self.service=KanshanService(server.DB_PATH,self.client)
     def tearDown(self):
         self.client.release.set();server._AI_SERVICES.pop(server.DB_PATH,None);server.DB_PATH=self.old;self.tmp.cleanup()
@@ -81,5 +89,36 @@ class KanshanTests(unittest.TestCase):
                 time.sleep(.01)
             self.assertEqual('completed',result['status']);json.load(opener.open(req()));self.assertEqual(1,self.client.calls)
         finally:httpd.shutdown();httpd.server_close();thread.join()
+
+    def test_refresh_is_repeatable_idempotent_and_uses_recent_evidence(self):
+        self.service.start('visitor-a',1);first=self.done();self.assertEqual(1,first['generation'])
+        self.service.start('visitor-a',1,refresh=True,client_turn_id='refresh-1',expected_generation=1)
+        second=self.done();self.assertEqual(2,second['generation']);self.assertEqual(2,self.client.calls)
+        # Duplicate ID returns its completed generation, even after a later refresh.
+        self.service.start('visitor-a',1,refresh=True,client_turn_id='refresh-2',expected_generation=2);self.done()
+        duplicate=self.service.start('visitor-a',1,refresh=True,client_turn_id='refresh-1',expected_generation=1)
+        self.assertEqual(2,duplicate['generation']);self.assertEqual(3,self.client.calls)
+        self.service.start('visitor-a',1,refresh=True,client_turn_id='stale-tab',expected_generation=1)
+        self.assertEqual(3,self.client.calls);self.assertEqual(1,self.search.calls)
+        self.assertTrue(second['retrieval']['cached']);self.assertEqual('summary',second['sources'][0]['scope'])
+
+    def test_refresh_failure_preserves_answer_and_allows_explicit_retry(self):
+        self.service.start('visitor-a',1);first=self.done()
+        self.client.error='timeout';self.service.start('visitor-a',1,refresh=True,client_turn_id='timeout',expected_generation=1)
+        result=self.done();self.assertEqual('failed',result['status']);self.assertEqual(first['answer'],result['answer']);self.assertEqual(first['sources'],result['sources'])
+        self.client.error=None;self.service.start('visitor-a',1,refresh=True,client_turn_id='retry',expected_generation=2)
+        self.assertEqual('completed',self.done()['status']);self.assertEqual(3,self.client.calls)
+
+    def test_concurrent_refresh_does_not_create_a_queue(self):
+        self.service.start('visitor-a',1);self.done();self.client.release.clear()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            list(pool.map(lambda i:self.service.start('visitor-a',1,refresh=True,client_turn_id='click-'+str(i),expected_generation=1),range(8)))
+        self.client.release.set();self.done();self.assertEqual(2,self.client.calls)
+
+    def test_fabricated_citations_rejected_and_inputs_are_bounded(self):
+        self.client.output='{"answer":"不成立的引用[S9]", "citations":[{"source_id":"S9","quote":"先找一个能一起做的小事情"}]}'
+        self.service.start('visitor-a',1);self.assertEqual('invalid_output',self.done()['error_code'])
+        with self.assertRaises(ValueError):self.service.start('visitor-a',1,refresh=True)
+        with self.assertRaises(ValueError):self.service.start('visitor-a',1,refresh=True,client_turn_id='x'*101,expected_generation=1)
 
 if __name__=='__main__':unittest.main()

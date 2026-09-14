@@ -1,18 +1,18 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../public/app.js'),'utf8');
 let time=1000;const handlers={},view={},answers=[{id:10},{id:20},{id:30}],counter={},footer={},up={},down={};
-const pages=answers.map(()=>({setAttribute(){}}));
+const pages=Array.from({length:4},()=>({style:{},setAttribute(){}}));
 const deck={clientHeight:400,isConnected:true,querySelectorAll:()=>pages,scrollTo({top}){this.scrollTop=top;},addEventListener(type,fn){handlers[type]=fn;}};
 const app={querySelector(s){if(s==='.answer-deck')return deck;if(s==='.answer-flow-count')return counter;if(s==='.answer-flow-bottom')return footer;return s.includes('-1')?up:down;}};
 let aiLoads=[];
 const ctx=vm.createContext({clearTimeout(){},kanshanPollTimer:0,loadKanshanPage:(id,opts)=>aiLoads.push(opts.start),app,clamp:(x,a,b)=>Math.min(b,Math.max(a,x)),performance:{now:()=>time},matchMedia:()=>({matches:true}),saveDetailView(){},answerFlowFooter:()=>'',ResizeObserver:class{observe(){}},answerDeckResize:null});
 vm.runInContext(source.slice(source.indexOf('function bindAnswerDeck('),source.indexOf('function applyAISnapshot')),ctx);
-ctx.bindAnswerDeck({id:1},view,answers,0);assert.equal(deck.scrollTop,0);
+ctx.bindAnswerDeck({id:1},view,answers,0);assert.equal(pages[0].style.transform,'translate3d(0,0%,0)');
 function wheel(reader=null,delta=40){let blocked=false;handlers.wheel({deltaY:delta,deltaX:0,target:{closest:()=>reader},preventDefault(){blocked=true;}});return blocked;}
-assert(wheel());assert.equal(view.answerId,20);assert.equal(deck.scrollTop,400);
+assert(wheel());assert.equal(view.answerId,20);assert.equal(pages[1].style.transform,'translate3d(0,0%,0)');
 time+=30;wheel();assert.equal(view.answerId,20,'momentum must not skip another answer');
 time+=1000;assert(!wheel({scrollHeight:1000,clientHeight:300,scrollTop:20}));assert.equal(view.answerId,20,'long answer must scroll before advancing');
-time+=1000;wheel();assert.equal(view.answerId,30);assert.equal(deck.scrollTop,800);
+time+=1000;wheel();assert.equal(view.answerId,30);assert.equal(pages[2].style.transform,'translate3d(0,0%,0)');
 time+=1000;wheel();assert.equal(view.answerId,30,'last answer must stay in bounds');
 time+=1000;wheel(null,-40);assert.equal(view.answerId,20);
 function swipe(delta,reader=null,type='touch'){
@@ -36,7 +36,7 @@ console.log('Answer deck: bidirectional pointer swipes, 20 cycles, desktop drag,
 
 const selection=vm.createContext({});
 vm.runInContext(source.slice(source.indexOf('function detailAnswers('),source.indexOf('function answerActionIcon(')),selection);
-const withAI=selection.detailAnswers({answers},{answerStage:'working'});assert.equal(withAI.length,4);assert.equal(withAI[3].id,'kanshan');assert.equal(selection.detailAnswers({answers:[]}).length,0);
+const withAI=selection.detailAnswers({answers},{answerStage:'working'});assert.equal(withAI.length,4);assert.equal(withAI[3].id,'kanshan');assert.equal(selection.detailAnswers({answers:[]}).length,1);
 assert(!source.slice(source.indexOf('function renderDetail('),source.indexOf('function bindAnswerDeck(')).includes('detail-stage-filter'));
 console.log('Detail includes all answers regardless of previous stage selection.');
 
@@ -46,3 +46,19 @@ swipe(60);assert.equal(view.answerId,'kanshan');assert.equal(aiLoads.length,1);a
 swipe(60);assert.equal(view.answerId,'kanshan');assert.equal(aiLoads.length,1,'cannot swipe to a second AI page');
 swipe(-60);assert.equal(view.answerId,30);ctx.bindAnswerDeck({id:1},view,full,3);assert.equal(aiLoads.at(-1),false,'restoring AI page only reads');
 console.log('Final AI page: explicit entry starts, restoration reads, one-page boundary and return passed.');
+
+// The AI boundary uses the same CSS transform transition; resize cannot cancel it.
+vm.runInContext("matchMedia=()=>({matches:false})",ctx);
+ctx.bindAnswerDeck({id:1},view,full,2);swipe(60);
+assert.equal(pages[3].style.transform,'translate3d(0,0%,0)');
+assert.equal(pages[2].style.transform,'translate3d(0,-100%,0)');
+assert.match(pages[3].style.transition,/340ms/);
+assert.equal(pages[2].style.transition,pages[3].style.transition);
+deck.clientHeight=226.609375;
+assert.equal(pages[3].style.transform,'translate3d(0,0%,0)','fractional viewport resize needs no instant-scroll correction');
+swipe(-60);assert.equal(view.answerId,30);assert.match(pages[3].style.transition,/340ms/);
+console.log('AI boundary: identical bidirectional animation, fractional responsive heights, no ResizeObserver interruption.');
+
+ctx.bindAnswerDeck({id:1},view,full,2);time+=1000;wheel();assert.equal(view.answerId,'kanshan');
+time+=50;wheel(null,-40);assert.equal(view.answerId,30,'a deliberate reverse wheel gesture is not swallowed by the previous transition lock');
+console.log('Rapid reverse gesture remains responsive during animation.');

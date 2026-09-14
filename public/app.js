@@ -564,41 +564,58 @@ function aiPanelHTML(q, view) {
  const check = snapshot?.status === 'running' ? '<button class="ai-check-button" type="button" data-action="refresh-ai">检查结果</button>' : '';
  return `${turns.map((turn, index) => aiTurnHTML(turn, index, invite)).join('')}${empty}${status}${check}${form}`;
 }
-function detailAnswers(q) { return q.answers.length ? [...q.answers,{id:'kanshan',ai_page:true}] : []; }
+function detailAnswers(q) { return [...q.answers,{id:'kanshan',ai_page:true}]; }
 function answerActionIcon(type) {
  const paths = {up:'<path d="m12 3 10 17H2Z"/>',down:'<path d="m12 21 10-17H2Z"/>',save:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1Z"/>',comment:'<path d="M21 11.5a9 9 0 0 1-9 9H4l-2 2v-11a9.5 9.5 0 0 1 19 0Z"/>',more:'<circle cx="12" cy="4" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="20" r="1"/>'};
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type]}</svg>`;
 }
 function kanshanPageContent(view) {
- const snapshot=view.kanshanSnapshot;
- if(view.kanshanError)return `<div class="kanshan-state" role="status">${escape(view.kanshanError)}<button data-action="kanshan-check">查看生成结果</button></div>`;
- if(snapshot?.status==='completed')return `<p class="answer-full-text">${escape(snapshot.answer)}</p><p class="kanshan-footnote">这是 AI 提供的一个思考角度，未联网核验。本题已生成一次，不会重复刷新。</p>`;
- if(snapshot?.status==='failed')return `<div class="kanshan-state" role="status">${escape(snapshot.error||'本次生成未完成。')}<p>不会自动重试，你仍可以返回大家的回答。</p></div>`;
- if(view.kanshanBusy||snapshot?.status==='running')return `<div class="kanshan-state" role="status"><span class="kanshan-thinking" aria-hidden="true">✦</span><strong>换个角度，想一想…</strong><p>看山正在整理思路，生成后会保存在这里。</p></div>`;
- return '<div class="kanshan-state"><p>再听一个 AI 的视角。本题仅生成一次。</p><button data-action="kanshan-start">请看山想一想</button></div>';
+ const snapshot=view.kanshanSnapshot, busy=view.kanshanBusy||snapshot?.status==='running';
+ const retrieval=snapshot?.retrieval||{};
+ const searchLabels={insufficient_evidence:'已检索，但资料不足以支持本题',completed:'已检索联网资料',empty:'暂未找到合适的联网资料',not_configured:'联网检索暂未配置',authentication_error:'联网检索暂不可用',rate_limited:'联网检索额度暂不可用',timeout:'联网检索超时',upstream_error:'联网检索暂不可用'};
+ const status=busy?`<div class="kanshan-state" role="status"><span class="kanshan-thinking" aria-hidden="true">${refreshDogHTML()}</span><strong>${snapshot?.phase==='generating'?'看山正在整理回答…':'正在查找相关资料…'}</strong><p>可以先回看大家的回答，结果会保存在这里。</p></div>`:'';
+ const error=view.kanshanError||snapshot?.error;
+ const errorHTML=error?`<div class="kanshan-state" role="status">${escape(error)}${view.kanshanError?'<button data-action="kanshan-check">查看生成结果</button>':''}</div>`:'';
+ const sources=snapshot?.sources||[];
+ const answer=snapshot?.answer?`<p class="answer-full-text">${escape(snapshot.answer)}</p><div class="kanshan-sources">${sources.map(source=>`<details><summary>[${escape(source.id)}] ${escape(source.title)}</summary><blockquote>${escape(source.quote)}</blockquote><a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">查看原文 ↗</a><small>搜索摘要 · ${new Date(source.retrieved_at*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} 检索</small></details>`).join('')}</div><p class="kanshan-footnote">${escape(searchLabels[retrieval.status]||'此条为此前保存的回答，尚无联网资料')}。${sources.length?'依据搜索摘要提供思路，重要事实请结合原文判断。':'以下仅为一般思路，不代表事实已核验。'}</p>`:'';
+ if(busy||error||answer)return status+errorHTML+answer;
+ return '<div class="kanshan-state"><p>看看资料，再听一个新的角度。</p><button data-action="kanshan-start">请看山想一想</button></div>';
+}
+function kanshanHeader(view) {
+ const busy=view.kanshanBusy||view.kanshanSnapshot?.status==='running';
+ return `<span class="kanshan-avatar" role="img" aria-label="看山">${refreshDogHTML()}</span><span class="kanshan-ai-mark">AI</span><button class="kanshan-refresh" data-action="kanshan-refresh" aria-label="重新生成 AI 回答" title="重新生成" ${busy?'disabled':''}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a7.5 7.5 0 0 1 12.3-1L20 9M4 15l2.2 3A7.5 7.5 0 0 0 18.5 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
 function kanshanAnswerPage(view,index,active) {
- return `<article class="answer-page kanshan-answer-page" data-answer-id="kanshan" aria-label="看山 AI 的回答" aria-hidden="${!active}" ${active?'':'inert'}><div class="answer-reader"><div class="answer-person"><strong>看山 AI</strong><span>DeepSeek 驱动 · 项目体验</span></div><div class="kanshan-content">${kanshanPageContent(view)}</div><div class="answer-swipe-hint">下滑回看大家的回答 · AI 仅此一页</div></div></article>`;
+ return `<article class="answer-page kanshan-answer-page" data-answer-id="kanshan" aria-label="看山 AI 的回答" aria-hidden="${!active}" ${active?'':'inert'}><div class="answer-reader"><div class="answer-person kanshan-person">${kanshanHeader(view)}</div><div class="kanshan-content">${kanshanPageContent(view)}</div><div class="answer-swipe-hint">下滑回看大家的回答</div></div></article>`;
 }
-async function loadKanshanPage(questionId,{start=false}={}) {
+async function loadKanshanPage(questionId,{start=false,refresh=false}={}) {
  const view=detailView(questionId);if(view.kanshanBusy)return;
  const visible=()=>state.screen==='detail'&&state.detail?.id===questionId&&view.answerId==='kanshan'&&!view.aiOpen;
- const paint=()=>{if(visible()){const content=app.querySelector('.kanshan-content');if(content)content.innerHTML=kanshanPageContent(view);}};
- clearTimeout(kanshanPollTimer);view.kanshanBusy=true;view.kanshanError='';paint();
+ const paint=()=>{if(visible()){
+  const content=app.querySelector('.kanshan-content');if(content)content.innerHTML=kanshanPageContent(view);
+  const header=app.querySelector('.kanshan-person');if(header)header.innerHTML=kanshanHeader(view);
+ }};
+ clearTimeout(kanshanPollTimer);view.kanshanBusy=true;view.kanshanError='';
+ // Preserve the displayed generation for cross-tab optimistic concurrency.
+ const expected=view.kanshanSnapshot?.generation;
+ const requestId=refresh?newClientTurnId():null;
+ if(refresh){view.kanshanPollStart=0;const reader=app.querySelector('.kanshan-answer-page .answer-reader');if(reader)reader.scrollTop=0;}
+ paint();
  try {
   let snapshot=await api(`/questions/${questionId}/kanshan`);
-  if(snapshot.status==='not_started'&&start&&visible())snapshot=await api(`/questions/${questionId}/kanshan`,{});
+  if(refresh&&visible()&&snapshot.status!=='running')snapshot=await api(`/questions/${questionId}/kanshan`,{refresh:true,client_turn_id:requestId,expected_generation:expected??snapshot.generation});
+  else if(snapshot.status==='not_started'&&start&&visible())snapshot=await api(`/questions/${questionId}/kanshan`,{});
   view.kanshanSnapshot=snapshot;
   if(snapshot.status==='running'&&!view.kanshanPollStart)view.kanshanPollStart=Date.now();
-  if(snapshot.status==='running'&&visible()){
-   if(Date.now()-view.kanshanPollStart<120000)kanshanPollTimer=setTimeout(()=>loadKanshanPage(questionId),2000);
-   else view.kanshanError='整理时间较长，可以稍后查看结果。不会重复生成。';
+  if(snapshot.status==='running'&&visible()) {
+   if(Date.now()-view.kanshanPollStart<120000)kanshanPollTimer=setTimeout(()=>loadKanshanPage(questionId),1500);
+   else view.kanshanError='整理时间较长，可以稍后查看结果。';
   }else view.kanshanPollStart=0;
- }catch(error){view.kanshanError='暂时无法确认生成结果，请查看已有记录。不会自动重发。';}
+ }catch(error){view.kanshanError='暂时无法确认生成结果，请先查看已有记录。';}
  finally{view.kanshanBusy=false;paint();}
 }
 function answerFlowFooter(q,view,answers,index) {
- if(answers[index]?.ai_page)return '<div class="kanshan-footer"><strong>看山 AI</strong><small>由 DeepSeek 驱动</small></div><button data-action="answer-page" data-step="-1">返回大家的回答</button>';
+ if(answers[index]?.ai_page)return '<details class="kanshan-about"><summary>AI 回答说明</summary><p>本项目使用 DeepSeek 生成回答，知乎开放平台提供联网检索；并非知乎官方看山服务。</p></details>'+ (q.answers.length?'<button class="kanshan-return" data-action="answer-page" data-step="-1">返回大家的回答</button>':'<button class="kanshan-return" data-action="answer">我来回答</button>');
  const a=answers[index], saved=a&&stored('saved-answer:'+a.id,false), unhelpful=a&&stored('unhelpful-answer:'+a.id,false);
  return `<button class="answer-anonymous" data-action="answer"><span>匿名</span><strong>写回答</strong></button>${a?`<button class="answer-icon-button ${a.voted?'voted':''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${answerActionIcon('up')}<span class="answer-action-count">${a.votes}</span></button><button class="answer-icon-button ${unhelpful?'voted':''}" data-action="answer-unhelpful" data-id="${a.id}" aria-pressed="${!!unhelpful}" aria-label="这条回答暂时没帮到我">${answerActionIcon('down')}</button><button class="answer-icon-button ${saved?'voted':''}" data-action="answer-save" data-id="${a.id}" aria-pressed="${!!saved}" aria-label="${saved?'取消收藏':'收藏回答'}">${answerActionIcon('save')}</button><button class="answer-icon-button" data-action="${view.aiOpen?'toggle-ai':'answer-followup'}" data-id="${a.id}" aria-label="${view.aiOpen?'返回回答':'追问这条回答（资料三问）'}">${answerActionIcon('comment')}</button>`:''}<details class="answer-more"><summary aria-label="更多回答操作">${answerActionIcon('more')}</summary><div><button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button>${a?`<small>${answerKind(a)==='示例'?'本条为体验示例':'阶段由回答者自述'}</small>`:''}</div></details>`;
 }
@@ -613,7 +630,7 @@ function renderDetail({focusAnswerId = null} = {}) {
  if(answers[index])view.answerId=answers[index].id;
  controls(false);app.classList.add('answer-flow-mode');state.screen='detail';
  const head=`<header class="answer-flow-header"><div class="answer-flow-toolbar"><button data-action="back" aria-label="返回">‹</button><span>过来人 · 同题不同声音</span><div class="answer-flow-pager"><button data-action="answer-page" data-step="-1" aria-label="上一条回答" ${index===0||view.aiOpen?'disabled':''}>↑</button><span class="answer-flow-count">${answers.length?index+1:0} / ${answers.length}</span><button data-action="answer-page" data-step="1" aria-label="下一条回答" ${index>=answers.length-1||view.aiOpen?'disabled':''}>↓</button></div></div><h1>${escape(q.title)}</h1>${q.body?`<p class="answer-flow-background">${escape(q.body)}</p>`:''}<div class="answer-flow-meta">${q.answers.length} 个回答 · 匿名交流</div></header>`;
- const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>a.ai_page?kanshanAnswerPage(view,i,i===index):`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>匿名回答</strong><span>${escape(stageName(a.stage))}</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><button data-action="answer-followup" data-id="${a.id}">带着这段话，继续问资料 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<q.answers.length-1?'向上滑，听下一位说':'再上滑，听看山 AI 说 · 本题仅生成一次'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
+ const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>a.ai_page?kanshanAnswerPage(view,i,i===index):`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>匿名回答</strong><span>${escape(stageName(a.stage))}</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><button data-action="answer-followup" data-id="${a.id}">查资料，追问这条回答 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<q.answers.length-1?'向上滑，听下一位说':'再上滑，听看山 AI 说'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
  app.innerHTML=`<div class="answer-flow-shell">${head}${body}<footer class="answer-flow-bottom">${answerFlowFooter(q,view,answers,index)}</footer></div>`;
  app.scrollTop=0;saveDetailView(q.id);
  requestAnimationFrame(()=>{if(state.screen!=='detail'||state.detail?.id!==q.id)return;if(view.aiOpen){const ai=app.querySelector('.answer-ai-view');if(ai)ai.scrollTop=view.aiScroll||0;}else bindAnswerDeck(q,view,answers,index);});
@@ -623,8 +640,13 @@ function bindAnswerDeck(q,view,answers,start) {
  let index=start,lockedUntil=0,lastWheel=0,wheelDirection=0,wheelConsumed=false,drag=null,suppressClickUntil=0;
  function go(next,animate=true) {
   index=clamp(next,0,answers.length-1);view.answerId=answers[index].id;saveDetailView(q.id);
-  deck.querySelectorAll('.answer-page').forEach((p,i)=>{p.inert=i!==index;p.setAttribute('aria-hidden',String(i!==index));});
-  deck.scrollTo({top:index*deck.clientHeight,behavior:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?'smooth':'instant'});
+  // Every page, including AI, moves in the same fixed viewport. Percentage transforms
+  // survive footer/content changes without ResizeObserver cancelling the transition.
+  deck.querySelectorAll('.answer-page').forEach((p,i)=>{
+   p.inert=i!==index;p.setAttribute('aria-hidden',String(i!==index));
+   p.style.transition=animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?'transform 340ms cubic-bezier(.22,.68,.25,1)':'none';
+   p.style.transform=`translate3d(0,${(i-index)*100}%,0)`;
+  });
   app.querySelector('.answer-flow-count').textContent=`${index+1} / ${answers.length}`;
   app.querySelector('[data-action="answer-page"][data-step="-1"]').disabled=index===0;
   app.querySelector('[data-action="answer-page"][data-step="1"]').disabled=index===answers.length-1;
@@ -635,14 +657,16 @@ function bindAnswerDeck(q,view,answers,start) {
  function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+48||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
  function move(step,discrete=false){if(!discrete&&performance.now()<lockedUntil)return false;const next=clamp(index+step,0,answers.length-1);if(next===index)return false;lockedUntil=performance.now()+420;go(next);return true;}
  deck.answerMove=step=>move(step,true);go(index,false);
- answerDeckResize=new ResizeObserver(()=>{if(deck.isConnected)deck.scrollTo({top:index*deck.clientHeight,behavior:'instant'});});answerDeckResize.observe(deck);
+ // No scroll-position reset on resize: pages share the deck's exact fractional height.
+ answerDeckResize=null;
  deck.addEventListener('wheel',e=>{
   if(e.ctrlKey||Math.abs(e.deltaY)<Math.abs(e.deltaX)||Math.abs(e.deltaY)<2)return;
   const now=performance.now(),dir=e.deltaY>0?1:-1;
-  if(now-lastWheel>180||dir!==wheelDirection)wheelConsumed=false;
+  const newGesture=now-lastWheel>180||dir!==wheelDirection;
+  if(newGesture)wheelConsumed=false;
   lastWheel=now;wheelDirection=dir;
   const reader=e.target.closest('.answer-reader');if(!canFlip(reader,dir))return;
-  e.preventDefault();if(!wheelConsumed)wheelConsumed=move(dir);
+  e.preventDefault();if(!wheelConsumed)wheelConsumed=move(dir,newGesture);
  },{passive:false});
  // Pointer events handle phone swipes and desktop dragging through one path.
  // Vertical native panning is disabled on this deck, preventing touchcancel from
@@ -885,7 +909,7 @@ phone.addEventListener('click', async event => {
   if (action === 'back') return await handleBack();
   if (action === 'mode') { state.mode = b.dataset.value; state.stage = 'all'; return await loadFeed(); }
   if (action === 'filter') { state.stage = b.dataset.value; return await loadFeed(); }
-  if (action === 'kanshan-start' || action === 'kanshan-check') {detailView(state.detail.id).kanshanPollStart=0;return loadKanshanPage(state.detail.id,{start:action==='kanshan-start'});}
+  if (['kanshan-start','kanshan-check','kanshan-refresh'].includes(action)) {detailView(state.detail.id).kanshanPollStart=0;return loadKanshanPage(state.detail.id,{start:action==='kanshan-start',refresh:action==='kanshan-refresh'});}
   if (action === 'answer-page') return app.querySelector('.answer-deck')?.answerMove?.(Number(b.dataset.step));
   if (action === 'answer-followup') {const view=detailView(state.detail.id);const a=state.detail.answers.find(a=>a.id===Number(b.dataset.id));if(!a)return;view.answerId=a.id;if(view.aiAnswerId!==a.id){view.aiDrafts=view.aiDrafts||{};view.aiDrafts[view.aiAnswerId||'question']=view.aiDraft;view.aiDraft=view.aiDrafts[a.id]||`关于这条回答「${a.body.slice(0,200)}」，资料中有什么可以补充或需要注意的地方？`;view.aiAnswerId=a.id;}view.aiOpen=true;saveDetailView(state.detail.id);renderDetail();loadAIState(state.detail.id);return;}
 

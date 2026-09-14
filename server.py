@@ -351,8 +351,12 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                     with connect() as db:
                         user = self.session(db)
                         db.commit()
-                    result = KanshanService(DB_PATH, ai_service().client).start(user['id'], question_id)
-                except (ValueError, KeyError):
+                    result = KanshanService(DB_PATH, ai_service().client).start(user['id'], question_id,
+                        refresh=data.get('refresh', False), client_turn_id=data.get('client_turn_id'),
+                        expected_generation=data.get('expected_generation'))
+                except ValueError:
+                    raise RequestError('刷新请求参数不完整', 400, 'invalid_refresh')
+                except KeyError:
                     raise RequestError('问题不存在', 404, 'question_not_found')
                 return self.send_json(result, 202 if result['status'] == 'running' else 200)
 

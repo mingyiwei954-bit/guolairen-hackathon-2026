@@ -15,6 +15,7 @@ p.add_argument('--key',type=Path,default=Path.home()/'.ssh/id_ed25519')
 p.add_argument('--model-env',type=Path,required=True)
 p.add_argument('--source-records',type=Path,required=True)
 p.add_argument('--oauth-env',type=Path)
+p.add_argument('--search-env',type=Path)
 a=p.parse_args()
 m=json.loads(a.manifest.read_text()); archive=Path(m['archive'])
 if not re.fullmatch(r'\d{8}T\d{6}Z-[a-f0-9]{8}',m['release']): raise SystemExit('Invalid release ID')
@@ -29,6 +30,9 @@ uploads=[(archive,'release.tar.gz'),(a.model_env,'deepseek.env'),(a.source_recor
 if a.oauth_env:
     if not a.oauth_env.is_file(): raise SystemExit('OAuth configuration not found')
     uploads.append((a.oauth_env,'oauth.env'))
+if a.search_env:
+    if not a.search_env.is_file(): raise SystemExit('Search configuration not found')
+    uploads.append((a.search_env,'search.env'))
 for src,name in uploads:
     subprocess.run(scp+[str(src),a.host+':'+stage+'/'+name],check=True)
 script=r'''set -eu
@@ -55,6 +59,8 @@ test ! -f /etc/systemd/system/zhihu-demo.service.d/runtime.conf || cp /etc/syste
 test ! -f /etc/zhihu-hackathon/deepseek.env || cp /etc/zhihu-hackathon/deepseek.env "$backup/deepseek.env"
 test ! -f /etc/systemd/system/zhihu-demo.service.d/oauth.conf || cp /etc/systemd/system/zhihu-demo.service.d/oauth.conf "$backup/oauth.conf"
 test ! -f /etc/zhihu-hackathon/oauth.env || cp /etc/zhihu-hackathon/oauth.env "$backup/oauth.env"
+test ! -f /etc/systemd/system/zhihu-demo.service.d/search.conf || cp /etc/systemd/system/zhihu-demo.service.d/search.conf "$backup/search.conf"
+test ! -f /etc/zhihu-hackathon/search.env || cp /etc/zhihu-hackathon/search.env "$backup/search.env"
 "$python" - "$backup/app.sqlite3" <<'PY'
 import sqlite3,sys
 src=sqlite3.connect('/srv/zhihu-hackathon/shared/app.sqlite3'); dst=sqlite3.connect(sys.argv[1]); src.backup(dst); dst.close(); src.close()
@@ -67,6 +73,8 @@ rollback() {
   if test -f "$backup/deepseek.env"; then cp "$backup/deepseek.env" /etc/zhihu-hackathon/deepseek.env; fi
   if test -f "$backup/oauth.conf"; then cp "$backup/oauth.conf" /etc/systemd/system/zhihu-demo.service.d/oauth.conf; else rm -f /etc/systemd/system/zhihu-demo.service.d/oauth.conf; fi
   if test -f "$backup/oauth.env"; then cp "$backup/oauth.env" /etc/zhihu-hackathon/oauth.env; else rm -f /etc/zhihu-hackathon/oauth.env; fi
+  if test -f "$backup/search.conf"; then cp "$backup/search.conf" /etc/systemd/system/zhihu-demo.service.d/search.conf; else rm -f /etc/systemd/system/zhihu-demo.service.d/search.conf; fi
+  if test -f "$backup/search.env"; then cp "$backup/search.env" /etc/zhihu-hackathon/search.env; else rm -f /etc/zhihu-hackathon/search.env; fi
   systemctl daemon-reload
   nginx -t && systemctl reload nginx
   systemctl restart zhihu-demo.service
@@ -79,6 +87,11 @@ if test -f "$stage/oauth.env"; then
     install -m 600 -o root -g root "$stage/oauth.env" /etc/zhihu-hackathon/oauth.env
     rm "$stage/oauth.env"
     printf '[Service]\nEnvironmentFile=/etc/zhihu-hackathon/oauth.env\n' > /etc/systemd/system/zhihu-demo.service.d/oauth.conf
+fi
+if test -f "$stage/search.env"; then
+    install -m 600 -o root -g root "$stage/search.env" /etc/zhihu-hackathon/search.env
+    rm "$stage/search.env"
+    printf '[Service]\nEnvironmentFile=/etc/zhihu-hackathon/search.env\n' > /etc/systemd/system/zhihu-demo.service.d/search.conf
 fi
 cat > /etc/systemd/system/zhihu-demo.service.d/runtime.conf <<'UNIT'
 [Service]
