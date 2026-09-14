@@ -579,11 +579,8 @@ main::-webkit-scrollbar, .feed-viewport::-webkit-scrollbar, .channel-tabs::-webk
   line-height: 1.55;
 }
 .composer-form { min-width: 0; }
-.composer-field {
-  padding: 17px 0 13px;
-  border-bottom: 1px solid var(--line);
-}
-.composer-field:focus-within { border-bottom-color: #91bdf3; box-shadow: inset 2px 0 0 #91bdf3; }
+.composer-field { padding: 17px 0 13px; border: 0; }
+.composer-field:focus-within { box-shadow: none; }
 .composer-field > label {
   margin: 0 0 7px;
   color: #59677b;
@@ -626,10 +623,10 @@ main::-webkit-scrollbar, .feed-viewport::-webkit-scrollbar, .channel-tabs::-webk
   font-size: 13px;
   line-height: 1;
 }
-.composer-target-chip { background: var(--blue-soft); color: #3f6fAB; }
+.composer-target-chip { background: transparent; color: #3f6fAB; }
 .composer-target-chip span { margin-left: 4px; color: #7496bf; }
-.composer-target-add { background: #f5f6f8; color: #66758a; }
-.composer-target-picker { margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--line); }
+.composer-target-add { background: transparent; color: #66758a; }
+.composer-target-picker { margin-top: 15px; padding-top: 14px; border: 0; }
 .composer-target-picker[hidden] { display: none; }
 .composer-target-picker fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .composer-target-options { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -644,13 +641,13 @@ main::-webkit-scrollbar, .feed-viewport::-webkit-scrollbar, .channel-tabs::-webk
   margin: 0;
   padding: 9px 13px;
   border-radius: 999px;
-  background: #f7f8fa;
+  background: transparent;
   color: #5d6b7e;
   font-size: 13px;
   line-height: 1.35;
   cursor: pointer;
 }
-.composer-target-option:has(input:checked) { background: var(--blue-soft); color: #315f98; font-weight: 550; }
+.composer-target-option:has(input:checked) { background: transparent; color: #315f98; font-weight: 650; }
 .composer-target-option input {
   flex: 0 0 auto;
   width: 17px;
@@ -713,3 +710,22 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .filter-controls-stack { transform: none; }
 }
+
+/* Lightweight question composer: text choices retain accessible native controls. */
+.composer-bar .composer-back { font-size: 28px; line-height: 1; min-width: 44px; min-height: 44px; padding: 0; }
+.composer-bar .composer-publish { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; white-space: nowrap; }
+.composer-publish svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.composer-personal, .composer-direction { min-width: 0; padding: 12px 0; margin: 0; border: 0; }
+.composer-personal legend, .composer-direction legend { font-size: 14px; font-weight: 600; }
+.composer-personal legend small { color: #98a1ae; font-size: 11px; font-weight: 400; margin-left: 6px; }
+.composer-personal-options { display: flex; flex-wrap: wrap; gap: 4px 15px; }
+.composer-text-option, .composer-target-option { position: relative; padding: 0; margin: 0; min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; border: 0; border-radius: 0; background: transparent; font-size: 13px; color: #7c8798; }
+.composer-text-option input, .composer-target-option input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.composer-text-option:has(input:checked), .composer-target-option:has(input:checked) { color: #256ab6; font-weight: 650; background: transparent; }
+.composer-text-option:has(input:focus-visible) span, .composer-target-option:has(input:focus-visible) span { color: #153f70; font-weight: 750; }
+.composer-target-option[hidden] { display: none; }
+.composer-target-options { gap: 4px 20px; }
+.composer-target-chip, .composer-target-add { background: transparent; border: 0; border-radius: 0; padding: 7px 0; min-height: 44px; }
+.composer-target-summary { gap: 6px 16px; }
+.composer-target-picker-footer { margin-top: 28px; padding-bottom: 18px; }
+.composer-target-picker-footer button { border: 0; border-radius: 0; background: transparent; color: var(--blue); min-height: 44px; }

@@ -167,14 +167,12 @@ class Handler(BaseHTTPRequestHandler):
         if 'targets' not in data:
             return [self.stage(data.get('target'))]
         values = data.get('targets')
-        if not isinstance(values, list) or not 1 <= len(values) <= len(STAGE_IDS):
-            raise RequestError('请选择 1 至 6 个人生阶段')
+        if not isinstance(values, list) or not 0 <= len(values) <= len(STAGE_IDS):
+            raise RequestError('最多选择 6 个人生阶段')
         if any(not isinstance(value, str) or value not in STAGE_IDS for value in values):
             raise RequestError('目标阶段格式不正确')
         selected = set(values)
         normalized = [stage_id for stage_id in STAGE_IDS if stage_id in selected]
-        if not normalized:
-            raise RequestError('请选择至少一个人生阶段')
         return normalized
 
     def target_rows(self, db, qid, fallback):
@@ -282,7 +280,9 @@ class Handler(BaseHTTPRequestHandler):
                         q['targets'] = self.target_rows(db, q['id'], q['target'])
                         eligible = self.answer_rows(db, q['id'], sid, answer_stages) if answer_stages else []
                         if not eligible and not set(q['targets']).intersection(answer_stages):
-                            continue
+                            unrestricted_waiting = not q['targets'] and not db.execute('SELECT 1 FROM answers WHERE question_id=? LIMIT 1', (q['id'],)).fetchone()
+                            if not unrestricted_waiting:
+                                continue
                         q['answer'] = eligible[0] if eligible else None
                         q['answer_count'] = len(eligible)
                         items.append(q)
@@ -360,12 +360,14 @@ class Handler(BaseHTTPRequestHandler):
                     title = self.field(data, 'title', 100)
                     body = self.field(data, 'body', 1000, False)
                     targets = self.question_targets(data)
-                    target = targets[0]
+                    target = targets[0] if targets else ''
+                    author_stage = data.get('stage', user['stage'])
+                    author_stage = '' if author_stage is None or author_stage == '' else self.stage(author_stage)
                     recent = db.execute('SELECT COUNT(*) FROM questions WHERE owner=? AND created>?', (sid, int(time.time())-60)).fetchone()[0]
                     if recent >= 5:
                         raise RequestError('已经收到你的问题，稍等一下再发吧', 429)
                     qid = db.execute('INSERT INTO questions(title,body,stage,target,owner,created) VALUES(?,?,?,?,?,?)',
-                                     (title, body, user['stage'], target, sid, int(time.time()))).lastrowid
+                                     (title, body, author_stage, target, sid, int(time.time()))).lastrowid
                     db.executemany(
                         'INSERT INTO question_targets(question_id,stage,position) VALUES(?,?,?)',
                         [(qid, stage_id, position) for position, stage_id in enumerate(targets)],

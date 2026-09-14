@@ -4,13 +4,15 @@
 
 ## 接口
 
-`POST /api/questions` 使用 `{"title":"工作以后如何交朋友？","body":"","targets":["working","retired"]}`。目标最少一个、最多六个，服务端按固定阶段顺序去重规范化。旧 `target` 单值仍支持；同时提供两个字段时以 `targets` 为准。
+`POST /api/questions` 使用 `{"title":"工作以后如何交朋友？","body":"","targets":["working","retired"]}`。目标可为空、最多六个，服务端按固定阶段顺序去重规范化。旧 `target` 单值仍支持；同时提供两个字段时以 `targets` 为准。
 
-`GET /api/feed` 和 `GET /api/questions/{id}` 同时返回 `targets` 和旧 `target`。旧字段代表规范化后的首个目标。目标表示希望谁回答，其他阶段仍可回答。
+`GET /api/feed` 和 `GET /api/questions/{id}` 同时返回 `targets` 和旧 `target`。旧字段代表规范化后的首个目标；无目标时为空字符串。目标表示希望谁回答，其他阶段仍可回答。
 
 六个阶段为 `primary / middle / secondary / college / working / retired`。已有题目在启动时回填到 `question_targets`，原始题目、回答和点赞不改写。执行新版本前使用 SQLite backup 保存数据库；不要用本地数据库覆盖线上数据库。
 
 ## 交互
+
+2026-09-14 轻量版：输入不再有聚焦亮边；目标标签为透明背景文字，顶部纸飞机发布，返回只留箭头。新提问默认不选阶段或目标。
 
 选择“# 想听谁说”在页面内展开候选，允许连续多选，选择“完成”收起。已选目标以小标签展示并可移除。首页固定标签列显示首项和额外数量，详情显示全部目标。
 
@@ -26,3 +28,9 @@ APP_PORT=5174 .venv-content/bin/python server.py
 ```
 
 本轮改版前源码、补丁、页面截图和数据库快照保存在集成人工作目录 `outputs/composer-polish/baseline-20260914T204416/`。浏览器发布验收使用独立 QA 数据库；具体检查结果记录在同级 `ACCEPTANCE.md`。本轮不会自动部署到公网。
+
+## 可选自我阶段与方向
+
+POST 可传 `stage: null` 或 `stage: ""` 表示本条问题不展示自我阶段；省略 stage 时兼容旧客户端，使用访客阶段。显式阶段仅写入本条问题，不更改访客设置。`targets: []` 表示不限定；尚无任何回答时可进入两个方向的待回答流，有回答后继续按回答者阶段筛选。
+
+发布页方向跟随当前浏览方向，可切换。填写我的阶段后，仅列出方向对应的前／后阶段；未填写时均可选择。方向只影响发布页候选过滤，不锁定问题的信息流归属。草稿保存stage、direction与targets，切换后剔除不兼容目标并提示。

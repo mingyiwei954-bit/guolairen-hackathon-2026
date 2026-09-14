@@ -90,7 +90,6 @@ class QuestionTargetsAPITests(unittest.TestCase):
         with server.connect() as db:
             before = db.execute("SELECT COUNT(*) FROM questions").fetchone()[0]
         invalid_values = (
-            [],
             "working",
             ["working", "unknown"],
             ["working", 1],
@@ -117,6 +116,35 @@ class QuestionTargetsAPITests(unittest.TestCase):
         self.assertEqual(["primary", "working"], item["targets"])
         self.assertIsNone(item["answer"])
         self.assertEqual(0, item["answer_count"])
+
+    def test_empty_stage_and_targets_are_unrestricted_until_answered(self):
+        status, created = self.create_question(stage=None, targets=[])
+        self.assertEqual(200, status)
+        _, detail = self.request('/api/questions/{}'.format(created['id']))
+        self.assertEqual('', detail['stage'])
+        self.assertEqual('', detail['target'])
+        self.assertEqual([], detail['targets'])
+        for mode in ('older', 'younger'):
+            _, feed = self.request('/api/feed?mode=' + mode)
+            self.assertIn(created['id'], [item['id'] for item in feed['items']])
+        self.request('/api/profile', {'stage': 'working'})
+        self.request('/api/answers', {'question_id': created['id'], 'body': '工作阶段的回答'})
+        self.request('/api/profile', {'stage': 'college'})
+        _, feed = self.request('/api/feed?mode=younger')
+        self.assertNotIn(created['id'], [item['id'] for item in feed['items']])
+        _, feed = self.request('/api/feed?mode=older')
+        self.assertIn(created['id'], [item['id'] for item in feed['items']])
+
+    def test_question_stage_does_not_change_profile(self):
+        self.request('/api/me')
+        status, created = self.create_question(stage='middle', targets=[])
+        self.assertEqual(200, status)
+        _, detail = self.request('/api/questions/{}'.format(created['id']))
+        _, profile = self.request('/api/me')
+        self.assertEqual('middle', detail['stage'])
+        self.assertEqual('college', profile['stage'])
+        status, _ = self.create_question(stage='unknown', targets=[])
+        self.assertEqual(400, status)
 
     def test_targets_do_not_restrict_who_can_answer(self):
         _, created = self.create_question(targets=["working", "retired"])
