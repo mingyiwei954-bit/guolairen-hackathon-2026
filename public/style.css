@@ -764,3 +764,13 @@ a { color: inherit; }
 .stage-picker-option:has(input:focus-visible){outline:2px solid #1772f6;outline-offset:2px;border-radius:3px}
 .stage-picker-option:has(input:disabled){cursor:wait;opacity:.65}
 .stage-picker-note{font-size:11px;line-height:1.9;color:#a5a9b0;margin:22px 0 0}.stage-picker-status{font-size:12px;line-height:1.7;color:#ad654b;margin:12px 0 0}
+
+/* A refresh sits in the content flow: dog first, then a quiet blue result line. */
+.channel-refresh-strip{display:flex;align-items:center;justify-content:center;min-width:0;height:56px;max-height:56px;overflow:hidden;box-sizing:border-box;padding:0 14px;background:#f5f5f9;color:#1680d8;font-size:13px;font-weight:500;line-height:1.6;text-align:center;pointer-events:none;flex-shrink:0;overflow-anchor:none}
+.channel-refresh-strip.success{height:48px;max-height:48px;background:#fff}.channel-refresh-strip.error{height:48px;max-height:48px;background:#fff;color:#9399a3;font-weight:400;font-size:12px}
+.channel-refresh-strip.is-closing{max-height:0;height:0;opacity:0;padding-top:0;padding-bottom:0;transition:max-height .2s ease,height .2s ease,opacity .15s ease}
+.refresh-dog{display:block;width:60px;height:44px;flex:none}.refresh-dog-body{transform-origin:58px 68px;animation:refresh-dog-rock .64s ease-in-out infinite}.refresh-dog-pen{transform-origin:50px 52px;animation:refresh-dog-write .24s ease-in-out infinite alternate}.refresh-dog-scribble{stroke-dasharray:28;animation:refresh-dog-ink .64s ease-in-out infinite}
+@keyframes refresh-dog-rock{0%,100%{transform:rotate(-2deg) translateY(1px)}50%{transform:rotate(2deg) translateY(-1px)}}
+@keyframes refresh-dog-write{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+@keyframes refresh-dog-ink{from{stroke-dashoffset:28;opacity:.3}to{stroke-dashoffset:0;opacity:1}}
+@media(prefers-reduced-motion:reduce){.refresh-dog-body,.refresh-dog-pen,.refresh-dog-scribble{animation:none}.channel-refresh-strip.is-closing{transition:none}}

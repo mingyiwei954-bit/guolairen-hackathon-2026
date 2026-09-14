@@ -76,8 +76,8 @@ const KANSHAN_SUGGESTIONS = [
 ];
 function notice(message) { const n = document.getElementById('notice'); n.textContent = message; n.classList.add('visible'); clearTimeout(noticeTimer); noticeTimer = setTimeout(() => n.classList.remove('visible'), 3200); }
 class APIError extends Error { constructor(message, status, payload) { super(message); this.status = status; this.payload = payload; } }
-async function api(path, data) {
- const response = await fetch('/api' + path, { method: data === undefined ? 'GET' : 'POST', headers: data === undefined ? {} : {'Content-Type':'application/json'}, body: data === undefined ? undefined : JSON.stringify(data) });
+async function api(path, data, options = {}) {
+ const response = await fetch('/api' + path, { signal: options.signal, method: data === undefined ? 'GET' : 'POST', headers: data === undefined ? {} : {'Content-Type':'application/json'}, body: data === undefined ? undefined : JSON.stringify(data) });
  let result = {};
  try { result = await response.json(); } catch (_) { /* The status still carries a useful failure. */ }
  if (!response.ok) throw new APIError(result.error || '暂时无法连接，请重试', response.status, result);
@@ -582,27 +582,70 @@ async function handleBack() {
 }
 let navTap={channel:null,time:0};
 let channelRefreshBusy=false, lastChannelRefresh=0;
+let refreshOperation=0, refreshController=null, refreshLiveBar=null;
+const REFRESH_MIN_MS=850;
+function refreshDogHTML() {
+ return `<svg class="refresh-dog" viewBox="0 0 116 78" fill="none" aria-hidden="true"><g class="refresh-dog-body" stroke="#383b3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M30 64V40q0-17 11-24l6-12 9 10h13l10-10 5 15q9 9 9 25v20" fill="#fff"/><path d="m40 17 9-3m25 0 10 5"/><ellipse cx="61" cy="33" rx="9" ry="10" fill="#272b2c" stroke="none"/><ellipse cx="47" cy="33" rx="2" ry="3.7" fill="#272b2c" stroke="none"/><ellipse cx="76" cy="33" rx="2" ry="3.7" fill="#272b2c" stroke="none"/><path d="M78 49q-11 13-23 12M33 57l14-7M81 49v16"/><g class="refresh-dog-pen"><path d="m49 43 7 24" stroke="#1289ff" stroke-width="5"/><path d="m56 67 2 4" stroke="#383b3d" stroke-width="2"/><path d="m44 51 10 3" stroke="#383b3d"/></g></g><path class="refresh-dog-scribble" d="m60 67 9-2 6 2 7-1" stroke="#1685f8" stroke-width="1.8" stroke-linecap="round"/><rect x="12" y="69" width="92" height="7" rx="3.5" fill="#e8e9ec" stroke="#45484a" stroke-width="2.4"/></svg>`;
+}
+function refreshViewport(channel) {return app.querySelector(channel==='guolairen'?'.feed-viewport':'.demo-feed');}
+function insertRefreshBar(channel,phase,text='') {
+ const viewport=refreshViewport(channel);if(!viewport)return null;
+ viewport.querySelector('.channel-refresh-strip')?.remove();
+ const strip=document.createElement('div');strip.className='channel-refresh-strip '+phase;
+ strip.setAttribute('role','status');strip.setAttribute('aria-live','polite');strip.setAttribute('aria-atomic','true');
+ strip.dataset.refreshState=phase;
+ strip.innerHTML=phase==='loading'?`${refreshDogHTML()}<span class="sr-only">正在刷新内容</span>`:`<span>${escape(text)}</span>`;
+ const spacer=viewport.querySelector('.filter-controls-spacer');
+ if(spacer)spacer.after(strip);else viewport.prepend(strip);
+ return strip;
+}
+function settleRefreshBar(strip) {
+ if(!strip)return;
+ setTimeout(()=>{if(!strip.isConnected)return;strip.classList.add('is-closing');setTimeout(()=>strip.remove(),220);},2400);
+}
+function refreshSuccessText(channel,count) {
+ if(channel==='guolairen')return count?`听见另一程的声音，${count} 条问答已更新`:'暂时没有这一程的问答，试试换个阶段';
+ if(channel==='kanshan')return `换个问题聊聊，${count} 个示例话题`;
+ return `探索未知的领域，${count} 条示例内容推荐`;
+}
 async function refreshCurrentChannel(channel) {
  const now=performance.now();
- if(channelRefreshBusy||now-lastChannelRefresh<700)return;
+ if((channelRefreshBusy&&refreshLiveBar?.isConnected)||now-lastChannelRefresh<700)return;
+ refreshController?.abort();
+ const operation=++refreshOperation;
+ const controller=new AbortController();refreshController=controller;
  channelRefreshBusy=true;lastChannelRefresh=now;
  const nav=app.querySelector('.channel-tabs,.shot-tabs');
- nav?.setAttribute('aria-busy','true');nav?.classList.add('channel-refreshing');
+ nav?.setAttribute('aria-busy','true');
+ const viewport=refreshViewport(channel);if(!viewport){channelRefreshBusy=false;nav?.removeAttribute('aria-busy');return;}
+ viewport.scrollTop=0;
+ if(channel==='guolairen')restoreFeedViewport({scrollTop:0,filterProgress:1});
+ const strip=insertRefreshBar(channel,'loading');refreshLiveBar=strip;
+ const minimum=new Promise(resolve=>setTimeout(resolve,matchMedia('(prefers-reduced-motion: reduce)').matches?150:REFRESH_MIN_MS));
+ const timeout=setTimeout(()=>controller.abort(),15000);
+ const ticket=channel==='guolairen'?++state.request:state.request;
+ const stillHere=()=>operation===refreshOperation&&strip?.isConnected&&state.request===ticket;
  try {
+  let count=0;
   if(channel==='guolairen') {
-   const ticket=state.request+1;
-   await loadFeed();
-   if(state.screen==='feed'&&state.request===ticket) {captureFeedView();notice('已刷新过来人');}
+   const [data]=await Promise.all([api(`/feed?mode=${state.mode}&stage=${state.stage}`,undefined,{signal:controller.signal}),minimum]);
+   if(!stillHere())return;
+   if(!Array.isArray(data.items)||!Array.isArray(data.allowed_stages))throw new Error('内容响应不完整');
+   state.feed=data.items;state.allowed=data.allowed_stages;count=data.items.length;
+   renderFeed();captureFeedView();
   } else {
-   nextMockBatch(channel);
-   saveDemoScroll();
-   const v=app.querySelector('.demo-feed');if(v)v.scrollTop=0;
-   state.demoScroll.set(channel,0);renderDemoChannel(channel);
-   notice('已换一批 · 本地示例内容');
+   await minimum;if(!stillHere())return;
+   if(channel==='kanshan') {KANSHAN_SUGGESTIONS.push(KANSHAN_SUGGESTIONS.shift());state.kanshanSuggestion=null;count=KANSHAN_SUGGESTIONS.length;renderKanshan();}
+   else {count=nextMockBatch(channel).length;saveDemoScroll();viewport.scrollTop=0;state.demoScroll.set(channel,0);renderDemoChannel(channel);}
   }
-  app.querySelector('.channel-tabs button.active,.shot-tabs button.active')?.focus({preventScroll:true});
- } catch(error) {notice('刷新失败，原内容已保留。'+error.message);}
- finally {channelRefreshBusy=false;nav?.removeAttribute('aria-busy');nav?.classList.remove('channel-refreshing');}
+  const done=insertRefreshBar(channel,'success',refreshSuccessText(channel,count));refreshLiveBar=done;settleRefreshBar(done);
+ } catch(error) {
+  await minimum;
+  if(stillHere()) {const failed=insertRefreshBar(channel,'error',error.name==='AbortError'?'刷新超时，原内容已保留':'刷新失败，原内容已保留');refreshLiveBar=failed;settleRefreshBar(failed);}
+ } finally {
+  clearTimeout(timeout);nav?.removeAttribute('aria-busy');
+  if(operation===refreshOperation){channelRefreshBusy=false;refreshController=null;}
+ }
 }
 phone.addEventListener('click', async event => {
  const b = event.target.closest('button[data-action]');
@@ -615,9 +658,9 @@ phone.addEventListener('click', async event => {
  if (b.disabled) return;
  try {
   const action = b.dataset.action;
-  if (b.closest('.channel-tabs, .shot-tabs')) {
-   const channel=action==='home'?'guolairen':b.dataset.channel;
-   const active=state.screen==='feed'?'guolairen':state.screen==='demo'?state.demoChannel:null;
+  if (b.closest('.channel-tabs, .shot-tabs') || (action==='kanshan'&&state.screen==='kanshan')) {
+   const channel=action==='home'?'guolairen':action==='kanshan'?'kanshan':b.dataset.channel;
+   const active=state.screen==='feed'?'guolairen':state.screen==='demo'?state.demoChannel:state.screen==='kanshan'?'kanshan':null;
    if(channel&&channel===active) {
     const now=performance.now();
     if(navTap.channel===channel&&now-navTap.time<420){navTap={channel:null,time:0};await refreshCurrentChannel(channel);}
