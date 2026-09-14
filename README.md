@@ -7,6 +7,8 @@
 ## 体验与项目说明
 
 - [线上体验](https://zhihu.yunzhicompany.com/)
+- [官方参赛作品（已发布）](https://www.zhihu.com/hackathon/project/83?activity_code=zhihu_hackathon_2026_p2)
+- [172 秒演示视频](https://zhihu.yunzhicompany.com/submission/demo.mp4)
 - [产品计划书](docs/PRODUCT_PLAN.md)
 - [演示脚本](docs/DEMO_SCRIPT.md)
 - [接口与协作契约](IMPLEMENTATION_CONTRACT.md)
