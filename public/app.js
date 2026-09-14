@@ -92,8 +92,8 @@ function questionTargets(question) {
  const available = new Set((state.user?.stages || []).map(stage => stage.id));
  return [...new Set(raw.map(String))].filter(id => available.has(id)).slice(0, 6);
 }
-function composerKey(origin) { return origin?.type === 'ai-turn' && origin.questionId ? `composer:ai:${origin.questionId}` : 'composer:feed'; }
-function composerSeed(prefill, origin) { return origin?.type === 'ai-turn' ? `ai:${origin.questionId}:${origin.turnIndex}:${prefill}` : 'feed'; }
+function composerKey(origin) { if (origin?.type === 'demo-item') return `composer:demo:${origin.channel}:${origin.index}`; return origin?.type === 'ai-turn' && origin.questionId ? `composer:ai:${origin.questionId}` : 'composer:feed'; }
+function composerSeed(prefill, origin) { if (origin?.type === 'demo-item') return `demo:${origin.channel}:${origin.index}:${prefill}`; return origin?.type === 'ai-turn' ? `ai:${origin.questionId}:${origin.turnIndex}:${prefill}` : 'feed'; }
 function normalizeTargets(values) {
  const available = new Set((state.user?.stages || []).map(stage => stage.id));
  return [...new Set((Array.isArray(values) ? values : [values]).filter(Boolean).map(String))].filter(id => available.has(id)).slice(0, 6);
@@ -273,14 +273,44 @@ function prepareDemoScreen() {
  else saveDemoScroll();
  ++state.request; cleanupAIPoll(); state.aiRequest++; controls(false);
 }
-function demoRowHTML(item, rank = null) {
- return `<article class="demo-row">${rank ? `<span class="demo-rank" aria-label="示例序号 ${rank}">${rank}</span>` : ''}<div class="demo-row-body"><h2 class="demo-title">${escape(item.title)}</h2><p class="demo-excerpt">${escape(item.excerpt)}</p><div class="demo-meta"><span>${escape(item.meta)}</span></div></div></article>`;
+const DEMO_AUTHORS = ['小满的日常', '路过的人', '慢慢来呀', '一页笔记', '林间有风'];
+const DEMO_STORY_TYPES = ['人间故事', '家庭', '生活', '成长', '亲情'];
+const DEMO_KNOWLEDGE_TYPES = ['心理学', '学习方法', '社会学', '认知科学', '经济学'];
+const demoMarks = new Set();
+function demoIcon(type) {
+ const paths = {vote:'<path d="m12 3 10 17H2Z"/>',comment:'<path d="M21 11.5a9 9 0 0 1-9 9H4l-2 2v-11a9.5 9.5 0 0 1 19 0Z"/>',save:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1Z"/>',share:'<path d="m14 3 7 7-7 7v-5c-5 0-8 2-11 7 0-7 3-11 11-12Z"/>',more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'};
+ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type] || paths.more}</svg>`;
+}
+function demoAuthorHTML(index, channel) {
+ return `<div class="demo-author"><span class="demo-avatar" aria-hidden="true">${DEMO_AUTHORS[index][0]}</span><span>${DEMO_AUTHORS[index]}</span><small>${channel==='story'?'故事创作者':'分享生活中的观察'}</small><span class="demo-author-menu" aria-hidden="true">···</span></div>`;
+}
+function demoActionsHTML(channel,index) {
+ const key = channel+':'+index;
+ return `<div class="demo-actions"><button data-action="demo-mark" data-key="vote:${key}" aria-pressed="${demoMarks.has('vote:'+key)}">${demoIcon('vote')}<span>${demoMarks.has('vote:'+key)?'已赞同':'赞同'}</span></button><button data-action="demo-mark" data-key="save:${key}" aria-pressed="${demoMarks.has('save:'+key)}">${demoIcon('save')}<span>${demoMarks.has('save:'+key)?'已收藏':'收藏'}</span></button><button data-action="demo-open" data-channel="${channel}" data-index="${index}">${demoIcon('comment')}<span>评论</span></button><button data-action="demo-open" data-channel="${channel}" data-index="${index}" aria-label="查看更多示例">${demoIcon('more')}</button></div>`;
+}
+function demoRowHTML(item, index, channel) {
+ const open=`data-action="demo-open" data-channel="${channel}" data-index="${index}"`;
+ if(channel==='hot')return `<article class="demo-row demo-hot-row"><span class="demo-rank ${index<3?'demo-rank-leading':''}">${index+1}</span><div class="demo-row-body"><button class="demo-title demo-title-button" ${open}>${escape(item.title)}</button><p class="demo-excerpt">${escape(item.excerpt)}</p><div class="demo-hot-meta"><span aria-label="示例热度">♨ ${[488,418,306,219,180][index]} 万热度</span><button data-action="demo-share">${demoIcon('share')}分享</button></div></div></article>`;
+ const story=channel==='story'; const knowledge=channel==='knowledge';
+ return `<article class="demo-row demo-${channel}-row">${demoAuthorHTML(index,channel)}${story?`<div class="demo-genre">${DEMO_STORY_TYPES[index]}<span>短篇 · 完结示例</span></div>`:''}${knowledge?`<div class="demo-knowledge-topic">${DEMO_KNOWLEDGE_TYPES[index]} · 每天读懂一个概念</div>`:''}<button class="demo-title demo-title-button" ${open}>${escape(item.title)}</button><p class="demo-excerpt">${escape(item.excerpt)}</p>${story?`<button class="demo-read-story" ${open}>继续阅读 <span>›</span></button>`:''}${demoActionsHTML(channel,index)}</article>`;
+}
+function demoSubnavHTML(id) {
+ if(id==='hot')return '<div class="demo-section-label"><strong>全站热榜</strong><span>榜单与热度均为演示</span></div>';
+ if(id==='story')return '<div class="demo-section-label demo-story-heading"><strong>盐选故事</strong><span>好故事，自有回响</span></div>';
+ if(id==='knowledge')return '<div class="demo-section-label"><strong>今日精选</strong><span>让好奇心多走一步</span></div>';
+ return '';
 }
 function renderDemoChannel(id) {
  const channel = DEMO_CHANNELS[id]; if (!channel) return;
  prepareDemoScreen(); state.screen = 'demo'; state.demoChannel = id; state.kanshanSuggestion = null;
- app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML(id)}<section class="demo-feed" aria-label="${escape(channel.label)}频道示例内容" tabindex="0"><p class="demo-caption">频道预览 · 示例内容</p>${channel.items.map((item, index) => demoRowHTML(item, id === 'hot' ? index + 1 : null)).join('')}</section>${bottomTabBarHTML('home')}</div>`;
- requestAnimationFrame(() => { const viewport = app.querySelector('.demo-feed'); if (viewport) viewport.scrollTop = state.demoScroll.get(id) || 0; });
+ app.innerHTML = `<div class="app-shell demo-shell">${topNavigationHTML(id)}<section class="demo-feed demo-feed-${id}" aria-label="${escape(channel.label)}频道示例内容" tabindex="0"><p class="demo-caption">频道预览 · 内容、昵称与互动数据均为示例</p>${demoSubnavHTML(id)}${channel.items.map((item,index)=>demoRowHTML(item,index,id)).join('')}</section>${bottomTabBarHTML('home')}</div>`;
+ requestAnimationFrame(() => { const viewport = app.querySelector('.demo-feed'); if (viewport && state.demoChannel===id) viewport.scrollTop = state.demoScroll.get(id) || 0; });
+}
+function showDemoArticle(channel,index) {
+ const item=DEMO_CHANNELS[channel]?.items[index]; if(!item)return;
+ saveDemoScroll(); controls(false); state.screen='demo-detail'; state.demoChannel=channel;
+ app.innerHTML=`${bar(channel==='story'?'故事':channel==='knowledge'?'知识':'这一条讨论')}<section class="demo-reader"><p class="demo-caption">示例内容 · 不对应真实知乎帖子</p>${demoAuthorHTML(index,channel)}<h1>${escape(item.title)}</h1><p>${escape(item.excerpt)}</p><div class="demo-reader-note">这一条是频道界面示例。想听真实的经历，可以把这个问题带到过来人。</div><button class="demo-discuss" data-action="demo-discuss" data-channel="${channel}" data-index="${index}">去过来人问问大家 ↗</button><div class="demo-comment-empty"><strong>评论</strong><p>还没有真实评论。留一个问题，让交流从这里开始。</p></div></section>`;
+ app.scrollTop=0;
 }
 function kanshanSuggestionHTML() {
  if (state.kanshanSuggestion === null) return '';
@@ -528,6 +558,17 @@ phone.addEventListener('click', async event => {
  if (b.disabled) return;
  try {
   const action = b.dataset.action;
+  if (action === 'demo-share') return notice('这是一条榜单示例，可进入过来人发起真实讨论');
+  if (action === 'demo-open') return showDemoArticle(b.dataset.channel,Number(b.dataset.index));
+  if (action === 'demo-mark') {
+   const key=b.dataset.key;if(demoMarks.has(key))demoMarks.delete(key);else demoMarks.add(key);
+   const marked=demoMarks.has(key);b.setAttribute('aria-pressed',String(marked));b.querySelector('span').textContent=key.startsWith('vote:')?(marked?'已赞同':'赞同'):(marked?'已收藏':'收藏');return;
+  }
+  if (action === 'demo-discuss') {
+   const item=DEMO_CHANNELS[b.dataset.channel]?.items[Number(b.dataset.index)];if(!item)return;
+   await showCachedFeed();return showAsk(item.title,{type:'demo-item',channel:b.dataset.channel,index:Number(b.dataset.index)});
+  }
+  if (action === 'back' && state.screen==='demo-detail') return renderDemoChannel(state.demoChannel);
   if (action === 'home') return state.screen === 'feed' ? await loadFeed() : (state.screen === 'demo' || state.screen === 'kanshan' ? await showCachedFeed() : await returnToFeed());
   if (action === 'channel') return renderDemoChannel(b.dataset.channel);
   if (action === 'kanshan') return renderKanshan();

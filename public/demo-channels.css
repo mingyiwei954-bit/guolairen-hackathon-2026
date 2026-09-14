@@ -210,3 +210,51 @@ button.demo-row { cursor: pointer; }
   .demo-caption { padding-right: 15px; padding-left: 15px; }
   .demo-kanshan-heading { padding-right: 15px; padding-left: 15px; }
 }
+
+/* Channel-specific editorial hierarchy, scoped away from Guolairen. */
+.demo-caption { padding: 8px 16px; font-size: 10px; color: #969ba4; background: #fafafa; border-bottom: 1px solid #f1f1f1; }
+.demo-row { padding: 15px 16px 4px; border-bottom: 7px solid #f6f6f6; }
+.demo-author { display: flex; align-items: center; gap: 7px; margin-bottom: 11px; color: #464a50; font-size: 12px; min-width: 0; }
+.demo-author small { color: #979ba3; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.demo-avatar { display: grid; place-items: center; flex: 0 0 22px; height: 22px; border-radius: 50%; color: #647565; background: #eef1ec; font-family: serif; font-size: 11px; }
+.demo-row:nth-of-type(2n) .demo-avatar { color: #797064; background: #f3efe9; }
+.demo-author-menu { margin-left: auto; color: #999; letter-spacing: 1px; }
+.demo-title-button { display: block; width: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: #17191c; text-align: left; font-size: 18px; line-height: 1.5; font-weight: 650; cursor: pointer; }
+.demo-excerpt { margin: 9px 0 3px; color: #555961; font-size: 15px; line-height: 1.65; -webkit-line-clamp: 3; }
+.demo-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; color: #7f838a; }
+.demo-actions button { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; min-height: 42px; padding: 0 2px; border: 0; border-radius: 0; background: transparent; color: inherit; font-size: 12px; white-space: nowrap; }
+.demo-actions button[aria-pressed="true"] { color: #1772f6; }
+.demo-actions svg { width: 20px; height: 20px; }
+.demo-actions button:last-child { margin-left: auto; justify-content: center; min-width: 32px; }
+.demo-section-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 15px 16px 11px; border-bottom: 1px solid #efefef; }
+.demo-section-label strong { font-size: 15px; color: #222; font-weight: 600; }
+.demo-section-label span { font-size: 11px; color: #999; }
+.demo-hot-row { padding: 17px 16px; border-bottom: 1px solid #eee; gap: 13px; }
+.demo-rank { flex-basis: 19px; width: 19px; font-size: 18px; color: #9b9da2; font-weight: 650; text-align: left; }
+.demo-rank-leading { color: #d9784b; }
+.demo-hot-row .demo-title-button { font-size: 17px; }
+.demo-hot-row .demo-excerpt { -webkit-line-clamp: 2; font-size: 13px; color: #85888e; margin-top: 5px; }
+.demo-hot-meta { display: flex; align-items: center; gap: 22px; margin-top: 9px; color: #969ba3; font-size: 11px; }
+.demo-hot-meta button { display: flex; align-items: center; gap: 4px; min-height: 28px; padding: 0; border: 0; background: none; color: inherit; font-size: inherit; }
+.demo-hot-meta svg { width: 14px; height: 14px; }
+.demo-genre { display: flex; align-items: center; justify-content: space-between; margin: 0 0 9px; color: #9b744e; font-size: 11px; }
+.demo-genre span { color: #9a9a9a; }
+.demo-story-row .demo-excerpt { -webkit-line-clamp: 4; line-height: 1.8; }
+.demo-read-story { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 36px; padding: 5px 0; border: 0; background: none; color: #97714a; font-size: 12px; }
+.demo-read-story span { font-size: 20px; }
+.demo-knowledge-topic { margin-bottom: 9px; color: #46769d; font-size: 11px; }
+.demo-reader { padding: 0 18px 24px; color: #333; }
+.demo-reader > .demo-caption { margin: 0 -18px 20px; }
+.demo-reader h1 { margin: 18px 0; color: #1c1d20; font-size: 25px; line-height: 1.5; font-weight: 650; }
+.demo-reader > p { font-size: 16px; line-height: 1.9; }
+.demo-reader-note { margin-top: 30px; font-size: 12px; color: #999; line-height: 1.8; }
+.demo-discuss { margin: 15px 0 24px; padding: 10px 0; border: 0; background: transparent; color: #1772f6; font-size: 14px; }
+.demo-comment-empty { padding-top: 22px; border-top: 1px solid #eee; }
+.demo-comment-empty strong { font-size: 15px; }
+.demo-comment-empty p { color: #999; font-size: 13px; line-height: 1.7; }
+.demo-reader button:focus-visible,.demo-title-button:focus-visible,.demo-actions button:focus-visible { outline: 2px solid #1772f6; outline-offset: 2px; }
+@media (max-width: 540px) { .demo-title-button { font-size: 18px; } .demo-hot-row .demo-title-button { font-size: 17px; } }
+.demo-story-heading strong { color: #92703f; border-left: 3px solid #c7a467; padding-left: 8px; }
+.demo-story-heading { padding-top: 18px; padding-bottom: 16px; }
+.demo-feed-story { background: #fdfcf9; }
+.demo-story-row { background: #fffefa; border-bottom-color: #f5f2eb; }
