@@ -33,4 +33,4 @@
 完整计划书：https://zhihu.yunzhicompany.com/submission/
 来源资料库：https://zhihu.yunzhicompany.com/library.html
 公开源码：https://github.com/mingyiwei954-bit/guolairen-hackathon-2026
-现有视频为上一版 172 秒字幕导览，保留作创作过程记录；最新交互请以在线 Demo 为准。
+最新视频为 70 秒横屏广告：合成男声与简体字幕，人物段采用 AI 画面运镜，产品段使用实际页面与操作采集；剧情及回复为演示。
