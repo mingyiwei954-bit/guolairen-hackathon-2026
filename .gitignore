@@ -16,3 +16,7 @@ outputs/
 dist/
 *.log
 .pytest_cache/
+
+/work/source-expansion/
+
+/work/

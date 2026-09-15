@@ -320,7 +320,7 @@ function channelTabsHTML(active = 'guolairen') {
  return `<nav class="channel-tabs" aria-label="内容频道">${demoTabs}<button data-action="home" class="${active === 'guolairen' ? 'active' : ''}" ${active === 'guolairen' ? 'aria-current="page"' : ''}>过来人</button><button data-action="channel" data-channel="follow">关注</button></nav>`;
 }
 function topNavigationHTML(active = 'guolairen') { return shotHeader(active); }
-function bottomTabBarHTML(active = 'home') { return `<nav class="bottom-tab-bar" aria-label="主导航"><button data-action="home" class="${active === 'home' ? 'current' : ''}" ${active === 'home' ? 'aria-current="page"' : ''} aria-label="首页"><svg class="tab-icon tab-icon-home" viewBox="2 3 20 19" aria-hidden="true" focusable="false"><path d="M3.2 10.1 11 4.25a1.65 1.65 0 0 1 2 0l7.8 5.85v9.05a1.75 1.75 0 0 1-1.75 1.75H4.95a1.75 1.75 0 0 1-1.75-1.75Z" fill="currentColor"/><path d="M12 14.5v4" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="1.8"/></svg><span>首页</span></button><button data-action="kanshan" class="${active === 'kanshan' ? 'current' : ''}" ${active === 'kanshan' ? 'aria-current="page"' : ''} aria-label="看山"><svg class="tab-icon tab-icon-mountain" viewBox="2.5 4.5 19 18.5" aria-hidden="true" focusable="false"><path d="M5.2 20.15c-1.3-1.12-1.6-3.15-1.27-5.25l1.16-7.72c.22-1.48 1.93-2.08 3-1.04l1.96 1.92A9.4 9.4 0 0 1 12 7.85c.67 0 1.32.07 1.95.21l1.96-1.92c1.07-1.04 2.78-.44 3 1.04l1.16 7.72c.33 2.1.03 4.13-1.27 5.25-1.32 1.14-3.65 1.35-6.8 1.35s-5.48-.21-6.8-1.35Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><circle cx="9.25" cy="14.25" r="1.05" fill="currentColor"/><circle cx="14.75" cy="14.25" r="1.05" fill="currentColor"/></svg><span>看山</span></button><button class="ask-entry" data-action="ask" aria-label="提出一个问题"><svg class="tab-create-icon" viewBox="0 0 42 32" aria-hidden="true" focusable="false"><rect width="42" height="32" rx="16" fill="currentColor"/><path d="M21 10v12M15 16h12" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2"/></svg></button><button data-action="unavailable" data-label="消息" aria-label="消息"><svg class="tab-icon tab-icon-message" viewBox="1.5 3 21 18" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="1.15" fill="currentColor"/><circle cx="15" cy="12" r="1.15" fill="currentColor"/></svg><span>消息</span></button><button data-action="profile" aria-label="未登录，设置我的阶段"><svg class="tab-icon tab-icon-profile" viewBox="2 2 20 20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 14.35c.78.82 1.78 1.23 3 1.23s2.22-.41 3-1.23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg><span>未登录</span></button></nav>`; }
+function bottomTabBarHTML(active = 'home') { return `<nav class="bottom-tab-bar" aria-label="主导航"><button data-action="home" class="${active === 'home' ? 'current' : ''}" ${active === 'home' ? 'aria-current="page"' : ''} aria-label="首页"><svg class="tab-icon tab-icon-home" viewBox="2 3 20 19" aria-hidden="true" focusable="false"><path d="M3.2 10.1 11 4.25a1.65 1.65 0 0 1 2 0l7.8 5.85v9.05a1.75 1.75 0 0 1-1.75 1.75H4.95a1.75 1.75 0 0 1-1.75-1.75Z" fill="currentColor"/><path d="M12 14.5v4" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="1.8"/></svg><span>首页</span></button><button data-action="kanshan" class="${active === 'kanshan' ? 'current' : ''}" ${active === 'kanshan' ? 'aria-current="page"' : ''} aria-label="看山"><svg class="tab-icon tab-icon-mountain" viewBox="2.5 4.5 19 18.5" aria-hidden="true" focusable="false"><path d="M5.2 20.15c-1.3-1.12-1.6-3.15-1.27-5.25l1.16-7.72c.22-1.48 1.93-2.08 3-1.04l1.96 1.92A9.4 9.4 0 0 1 12 7.85c.67 0 1.32.07 1.95.21l1.96-1.92c1.07-1.04 2.78-.44 3 1.04l1.16 7.72c.33 2.1.03 4.13-1.27 5.25-1.32 1.14-3.65 1.35-6.8 1.35s-5.48-.21-6.8-1.35Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><circle cx="9.25" cy="14.25" r="1.05" fill="currentColor"/><circle cx="14.75" cy="14.25" r="1.05" fill="currentColor"/></svg><span>看山</span></button><button class="ask-entry" data-action="ask" aria-label="提出一个问题"><svg class="tab-create-icon" viewBox="0 0 42 32" aria-hidden="true" focusable="false"><rect width="42" height="32" rx="16" fill="currentColor"/><path d="M21 10v12M15 16h12" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2"/></svg></button><button data-action="notifications" class="${active==='notifications'?'current':''}" aria-label="消息"><svg class="tab-icon tab-icon-message" viewBox="1.5 3 21 18" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="1.15" fill="currentColor"/><circle cx="15" cy="12" r="1.15" fill="currentColor"/></svg><span>消息</span><i class="notification-dot" ${demoInbox.unread?'':'hidden'}></i></button><button data-action="profile" aria-label="未登录，设置我的阶段"><svg class="tab-icon tab-icon-profile" viewBox="2 2 20 20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 14.35c.78.82 1.78 1.23 3 1.23s2.22-.41 3-1.23" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg><span>未登录</span></button></nav>`; }
 function saveDemoScroll() {
  if (state.screen !== 'demo' || !state.demoChannel) return;
  const viewport = app.querySelector('.demo-feed');
@@ -390,7 +390,10 @@ function showCachedFeed() {
  renderFeed(restore); return Promise.resolve();
 }
 function bar(title, trailing = '') { return `<div class="screen-bar"><button data-action="back">← 返回</button><span>${escape(title)}</span><span class="screen-bar-trailing">${trailing}</span></div>`; }
-function answerFooterHTML(a, qid, detail = false) { return `<footer class="answer-footer"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted ? 'voted' : ''}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>${detail ? '<span>来自这一程的声音</span>' : `<button data-action="detail" data-id="${qid}">听听其他回答 ↗</button>`}</footer>`; }
+function formatVoteCount(value){const n=Math.max(0,Number(value)||0);return n>=10000?(Math.floor(n/1000)/10)+'w':n>=1000?(Math.floor(n/100)/10)+'k':String(n);}
+function voteHeartHTML(voted) { return `<span class="vote-heart${voted ? ' is-filled' : ''}" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3A5.49 5.49 0 0 0 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5A5.49 5.49 0 0 0 16.5 3Z"/></svg></span>`; }
+function saveStarHTML() { return '<span class="save-star" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m12 2.8 2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93Z"/></svg></span>'; }
+function answerFooterHTML(a, qid, detail = false) { return `<footer class="answer-footer"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" class="${a.voted ? 'voted' : ''}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${voteHeartHTML(a.voted)} <span>${formatVoteCount(a.votes)}</span></button>${detail ? '<span>来自这一程的声音</span>' : `<button data-action="detail" data-id="${qid}">听听其他回答 ↗</button>`}</footer>`; }
 function answerHTML(a, qid, detail = false) { return `<article class="qa-card detail-answer-card" data-answer-id="${a.id}"><div class="answer-meta"><span class="answer-line"></span><span>${escape(stageName(a.stage))} · ${answerKind(a)}</span></div><p class="answer-text">${escape(a.body)}</p>${answerFooterHTML(a, qid, detail)}</article>`; }
 const ITEM_STAGE_NAMES = {primary:'小学',middle:'初中',secondary:'中学',college:'大学',working:'工作',retired:'退休'};
 const itemStageName = id => ITEM_STAGE_NAMES[id] || stageName(id);
@@ -398,12 +401,16 @@ function itemRouteHTML(q) {
  const targets = questionTargets(q);
  if (!q.stage && !targets.length) return '';
  const full = `${q.stage ? stageName(q.stage) : '阶段未填'} → ${targets.length ? targets.map(stageName).join('、') : '不限阶段'}`;
- const compact = `${q.stage ? itemStageName(q.stage) : '未填'} → ${targets.length ? itemStageName(targets[0]) : '不限'}${targets.length > 1 ? ` +${targets.length - 1}` : ''}`;
+ const compact = `${q.stage ? itemStageName(q.stage) : '未填'} → ${targets.length ? itemStageName(targets[0]) : '不限'}`;
  return `<span class="stage-tag item-route" title="${escape(full)}" aria-label="${escape(full)}">${escape(compact)}</span>`;
+}
+function authorBadgeHTML(author, className='public-author') {
+ const person=author||{name:'路过的朋友',avatar:'/assets/avatars/00.svg'};
+ return `<span class="${className}"><img src="${escape(person.avatar)}" alt="" width="28" height="28" loading="lazy"><span>${escape(person.name)}</span>${person.simulated?`<small class="ai-role" title="虚拟角色 · ${person.age}岁">AI 角色</small>`:''}</span>`;
 }
 function feedAnswerHTML(a, qid) {
  const label = a.stage ? `<span class="stage-tag" title="${escape(stageName(a.stage))} · ${answerKind(a)}">${escape(itemStageName(a.stage))}</span>` : '';
- const vote = `<button class="item-vote ${a.voted ? 'voted' : ''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${a.voted ? '♥' : '♡'} <span>${a.votes}</span></button>`;
+ const vote = `<button class="item-vote ${a.voted ? 'voted' : ''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-label="${a.voted ? '取消赞同' : '赞同回答'}" aria-pressed="${!!a.voted}">${voteHeartHTML(a.voted)} <span>${formatVoteCount(a.votes)}</span></button>`;
  return `<div class="answer-section"><div class="answer-tags" aria-label="回答标签 · ${answerKind(a)}">${label}${vote}</div><div class="answer-content"><p class="answer-text">${escape(a.body)}</p></div></div>`;
 }
 function cardHTML(q) {
@@ -500,7 +507,7 @@ async function saveStagePicker(form) {
   notice(saved?'阶段已保存，无需重复选择':error.message);
  } finally {if(submit.isConnected)submit.disabled=false;if(back.isConnected)back.disabled=false;}
 }
-function showProfile() { ++state.request; state.screen = 'profile'; controls(false); app.innerHTML = `${bar('我的阶段')}<section class="form-screen"><h2>你正走到哪一程？</h2><p class="helper">用阶段认识彼此，不用头衔定义彼此。<br>阶段由你自己选择，会随问题和回答一起显示。</p><form id="profile-form"><label for="profile-stage">我目前的阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><p class="helper">体验版按求学、工作、退休的顺序组织浏览方向，不代表经验或能力的高低。默认阶段为大学，可随时修改。</p><button class="primary-button" type="submit">保存我的阶段</button></form><p class="helper">当前使用本浏览器的访客身份保存操作，尚未接入知乎账号。</p></section>`; app.scrollTop = 0; }
+function showProfile() { ++state.request; state.screen = 'profile'; controls(false); app.innerHTML = `${bar('我的阶段')}<section class="form-screen">${authorBadgeHTML(state.user?.author)}<h2>你正走到哪一程？</h2><p class="helper">用阶段认识彼此，不用头衔定义彼此。<br>阶段由你自己选择，会随问题和回答一起显示。</p><form id="profile-form"><label for="profile-stage">我目前的阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><p class="helper">体验版按求学、工作、退休的顺序组织浏览方向，不代表经验或能力的高低。默认阶段为大学，可随时修改。</p><button class="primary-button" type="submit">保存我的阶段</button></form><p class="helper">当前使用本浏览器的访客身份保存操作，尚未接入知乎账号。</p></section>`; app.scrollTop = 0; }
 function showAsk(prefill = '', origin = null) {
  ++state.request; cleanupAIPoll(); state.screen = 'ask'; controls(false);
  origin = origin || {type:'feed'}; state.composerOrigin = origin;
@@ -523,7 +530,7 @@ function showAsk(prefill = '', origin = null) {
  const directions = [['older','听过来人说'],['younger','听没过来人说']].map(([id,label]) => `<label class="composer-text-option"><input type="radio" name="direction" value="${id}" ${draft.direction === id ? 'checked' : ''}><span>${label}</span></label>`).join('');
  const publish = '<button class="composer-publish" type="submit" form="ask-form"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7 18-4-7-7-4 18-7Zm0 0L10 14"/></svg><span>发布</span></button>';
  const composerBar = `<div class="screen-bar composer-bar"><button class="composer-back" data-action="back" aria-label="返回">←</button><span>向大家提问</span><span class="screen-bar-trailing">${publish}</span></div>`;
- app.innerHTML = `${composerBar}<section class="composer-screen"><p class="composer-channel-context"><span>过来人</span> · 向另一程的人提问</p>${fromAI ? '<p class="composer-context-note">已带入刚才的追问，可继续修改后发布。</p>' : ''}<form id="ask-form" class="composer-form" data-draft-key="${escape(draftKey)}" data-source-seed="${escape(sourceSeed)}"><div class="composer-field composer-question-field"><label for="question-title">问题</label><textarea id="question-title" name="title" required maxlength="100" aria-describedby="question-title-status" placeholder="写下你真正想问的问题">${escape(draft.title)}</textarea><p id="question-title-status" class="field-status" aria-live="polite"></p></div><div class="composer-field composer-background-field"><label for="question-body">补充背景 <span>选填</span></label><textarea id="question-body" name="body" maxlength="1000" aria-describedby="question-body-status" placeholder="补充经历或困惑，让回答更贴近你"></textarea><p id="question-body-status" class="field-status" aria-live="polite"></p></div><fieldset class="composer-personal"><legend>我的阶段 <small>选填，仅用于这条问题</small></legend><div class="composer-personal-options">${stageChoices}</div></fieldset><fieldset class="composer-direction"><legend>提问方向</legend><div class="composer-personal-options">${directions}</div></fieldset><section class="composer-target-section" aria-labelledby="composer-target-heading"><div class="composer-target-heading"><div><strong id="composer-target-heading">想听谁说</strong><small>只是表达期待，不限制其他阶段回答</small></div><span id="question-target-status" class="field-status" aria-live="polite"></span></div><div class="composer-target-summary"><div class="composer-selected-targets" aria-label="已选择阶段"></div><button type="button" class="composer-target-add" data-action="toggle-targets" aria-expanded="false" aria-controls="composer-target-picker"># 想听谁说</button></div><div id="composer-target-picker" class="composer-target-picker" hidden><fieldset><legend class="sr-only">选择希望回答的阶段，可不选，最多六个</legend><div class="composer-target-options">${targetChoices}</div><p id="composer-target-empty" class="helper" hidden>这个方向没有可选阶段，可以切换提问方向。</p></fieldset><div class="composer-target-picker-footer"><span>可不选，也可以多选</span><button type="button" data-action="finish-targets">完成</button></div></div></section></form></section>`;
+ app.innerHTML = `${composerBar}<section class="composer-screen"><div class="composer-channel-context composer-public-author">${authorBadgeHTML(state.user?.author)}<span>公开提问</span></div>${fromAI ? '<p class="composer-context-note">已带入刚才的追问，可继续修改后发布。</p>' : ''}<form id="ask-form" class="composer-form" data-draft-key="${escape(draftKey)}" data-source-seed="${escape(sourceSeed)}"><div class="composer-field composer-question-field"><label for="question-title">问题</label><textarea id="question-title" name="title" required maxlength="100" aria-describedby="question-title-status" placeholder="写下你真正想问的问题">${escape(draft.title)}</textarea><p id="question-title-status" class="field-status" aria-live="polite"></p></div><div class="composer-field composer-background-field"><label for="question-body">补充背景 <span>选填</span></label><textarea id="question-body" name="body" maxlength="1000" aria-describedby="question-body-status" placeholder="补充经历或困惑，让回答更贴近你"></textarea><p id="question-body-status" class="field-status" aria-live="polite"></p></div><fieldset class="composer-personal"><legend>我的阶段 <small>选填，仅用于这条问题</small></legend><div class="composer-personal-options">${stageChoices}</div></fieldset><fieldset class="composer-direction"><legend>提问方向</legend><div class="composer-personal-options">${directions}</div></fieldset><section class="composer-target-section" aria-labelledby="composer-target-heading"><div class="composer-target-heading"><div><strong id="composer-target-heading">想听谁说</strong><small>只是表达期待，不限制其他阶段回答</small></div><span id="question-target-status" class="field-status" aria-live="polite"></span></div><div class="composer-target-summary"><div class="composer-selected-targets" aria-label="已选择阶段"></div><button type="button" class="composer-target-add" data-action="toggle-targets" aria-expanded="false" aria-controls="composer-target-picker"># 想听谁说</button></div><div id="composer-target-picker" class="composer-target-picker" hidden><fieldset><legend class="sr-only">选择希望回答的阶段，可不选，最多六个</legend><div class="composer-target-options">${targetChoices}</div><p id="composer-target-empty" class="helper" hidden>这个方向没有可选阶段，可以切换提问方向。</p></fieldset><div class="composer-target-picker-footer"><span>可不选，也可以多选</span><button type="button" data-action="finish-targets">完成</button></div></div></section></form></section>`;
  app.querySelector('#question-body').value = draft.body;
  app.scrollTop = 0; updateComposerChoices();
  let lastComposerWidth=0;
@@ -569,31 +576,75 @@ function answerActionIcon(type) {
  const paths = {up:'<path d="m12 3 10 17H2Z"/>',down:'<path d="m12 21 10-17H2Z"/>',save:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1Z"/>',comment:'<path d="M21 11.5a9 9 0 0 1-9 9H4l-2 2v-11a9.5 9.5 0 0 1 19 0Z"/>',more:'<circle cx="12" cy="4" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="20" r="1"/>'};
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[type]}</svg>`;
 }
-function kanshanPageContent(view) {
- const snapshot=view.kanshanSnapshot, busy=view.kanshanBusy||snapshot?.status==='running';
+function kanshanRevealHTML(text) {
+ const chunks=Array.from(text).join('').match(/[\s\S]{1,14}/gu)||[];
+ return chunks.map((chunk,i)=>`<span class="kanshan-ink" style="--ink-delay:${Math.min(i*32,1600)}ms">${escape(chunk)}</span>`).join('');
+}
+function kanshanSectionHTML(view,{reveal=false}={}) {
+ if(!view.kanshanOpened)return `<button class="kanshan-invite" data-action="kanshan-start" aria-label="问问看山"><span class="kanshan-invite-avatar" aria-hidden="true">${refreshDogHTML()}</span><span><strong>问问看山</strong><small>再听一个新的角度</small></span><span class="kanshan-invite-arrow" aria-hidden="true">↗</span></button>`;
+ const busy=view.kanshanBusy||(view.kanshanSnapshot?.status==='running'&&!view.kanshanError);
+ return `${busy?'':`<div class="answer-person kanshan-person">${kanshanHeader(view)}</div>`}<div class="kanshan-content">${kanshanPageContent(view,{reveal})}</div>${busy?'':`<details class="kanshan-about"><summary>关于这份 AI 回答</summary><p>由 DeepSeek 结合来源资料生成，并非知乎官方看山服务。</p><a href="/library.html" target="_blank" rel="noopener">查看来源资料库 ↗</a></details>`}`;
+}
+function kanshanPageContent(view,{reveal=false}={}) {
+ const snapshot=view.kanshanSnapshot, busy=view.kanshanBusy||(snapshot?.status==='running'&&!view.kanshanError);
  const retrieval=snapshot?.retrieval||{};
- const searchLabels={insufficient_evidence:'已检索，但资料不足以支持本题',completed:'已检索联网资料',empty:'暂未找到合适的联网资料',not_configured:'联网检索暂未配置',authentication_error:'联网检索暂不可用',rate_limited:'联网检索额度暂不可用',timeout:'联网检索超时',upstream_error:'联网检索暂不可用'};
+ const searchLabels={local_library:'已查阅本地来源资料',insufficient_evidence:'已检索，但资料不足以支持本题',completed:'已检索联网资料',empty:'暂未找到合适的联网资料',not_configured:'联网检索暂未配置',authentication_error:'联网检索暂不可用',rate_limited:'联网检索额度暂不可用',timeout:'联网检索超时',upstream_error:'联网检索暂不可用'};
  const status=busy?`<div class="kanshan-state" role="status"><span class="kanshan-thinking" aria-hidden="true">${refreshDogHTML()}</span><strong>${snapshot?.phase==='generating'?'看山正在整理回答…':'正在查找相关资料…'}</strong><p>可以先回看大家的回答，结果会保存在这里。</p></div>`:'';
+ if(busy)return status;
  const error=view.kanshanError||snapshot?.error;
- const errorHTML=error?`<div class="kanshan-state" role="status">${escape(error)}${view.kanshanError?'<button data-action="kanshan-check">查看生成结果</button>':''}</div>`:'';
+ const errorHTML=error?`<div class="kanshan-state" role="status">${escape(error)}<button data-action="kanshan-check">查看生成结果</button><button data-action="kanshan-refresh">再试一次</button></div>`:'';
  const sources=snapshot?.sources||[];
- const answer=snapshot?.answer?`<p class="answer-full-text">${escape(snapshot.answer)}</p><div class="kanshan-sources">${sources.map(source=>`<details><summary>[${escape(source.id)}] ${escape(source.title)}</summary><blockquote>${escape(source.quote)}</blockquote><a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">查看原文 ↗</a><small>搜索摘要 · ${new Date(source.retrieved_at*1000).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})} 检索</small></details>`).join('')}</div><p class="kanshan-footnote">${escape(searchLabels[retrieval.status]||'此条为此前保存的回答，尚无联网资料')}。${sources.length?'依据搜索摘要提供思路，重要事实请结合原文判断。':'以下仅为一般思路，不代表事实已核验。'}</p>`:'';
+ const sourceHTML=source=>{const quote=Array.from(source.quote||'');return `<details class="kanshan-source"><summary>[${escape(source.id)}] ${escape(source.title)}</summary><blockquote>${escape(quote.slice(0,80).join(''))}${quote.length>80?'…':''}</blockquote><a href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">查看原文 ↗</a></details>`;};
+ const sourceList=sources.slice(0,2).map(sourceHTML).join('')+(sources.length>2?`<details class="kanshan-more-sources"><summary>其余 ${sources.length-2} 条参考资料</summary><div>${sources.slice(2).map(sourceHTML).join('')}</div></details>`:'');
+ const answer=snapshot?.answer?`<p class="answer-full-text">${reveal?kanshanRevealHTML(snapshot.answer):escape(snapshot.answer)}</p><div class="kanshan-sources">${sourceList}</div><p class="kanshan-footnote">${sources.length?'依据来源摘要整理，可查看原文。':escape(searchLabels[retrieval.status]||'此前保存的回答')+'；仅供一般思路参考。'}</p>`:'';
  if(busy||error||answer)return status+errorHTML+answer;
  return '<div class="kanshan-state"><p>看看资料，再听一个新的角度。</p><button data-action="kanshan-start">请看山想一想</button></div>';
 }
 function kanshanHeader(view) {
- const busy=view.kanshanBusy||view.kanshanSnapshot?.status==='running';
+ const busy=view.kanshanBusy||(view.kanshanSnapshot?.status==='running'&&!view.kanshanError);
  return `<span class="kanshan-avatar" role="img" aria-label="看山">${refreshDogHTML()}</span><span class="kanshan-ai-mark">AI</span><button class="kanshan-refresh" data-action="kanshan-refresh" aria-label="重新生成 AI 回答" title="重新生成" ${busy?'disabled':''}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a7.5 7.5 0 0 1 12.3-1L20 9M4 15l2.2 3A7.5 7.5 0 0 0 18.5 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
 function kanshanAnswerPage(view,index,active) {
  return `<article class="answer-page kanshan-answer-page" data-answer-id="kanshan" aria-label="看山 AI 的回答" aria-hidden="${!active}" ${active?'':'inert'}><div class="answer-reader"><div class="answer-person kanshan-person">${kanshanHeader(view)}</div><div class="kanshan-content">${kanshanPageContent(view)}</div><div class="answer-swipe-hint">下滑回看大家的回答</div></div></article>`;
 }
+let kanshanFocusCleanup=null;
+function focusKanshanThinking(){
+ const stream=app.querySelector('.answer-stream'),thinking=app.querySelector('.kanshan-answer-page .kanshan-state');
+ if(!stream?.getBoundingClientRect||!thinking?.getBoundingClientRect)return;
+ kanshanFocusCleanup?.();
+ const from=stream.scrollTop;
+ const target=Math.max(from,Math.min(stream.scrollHeight-stream.clientHeight,from+thinking.getBoundingClientRect().bottom-stream.getBoundingClientRect().bottom+16));
+ if(target-from<1)return;
+ let frame=0,started=null;
+ const cancel=()=>{cancelAnimationFrame(frame);['wheel','touchstart','pointerdown','keydown'].forEach(type=>stream.removeEventListener(type,cancel));if(kanshanFocusCleanup===cancel)kanshanFocusCleanup=null;};
+ kanshanFocusCleanup=cancel;
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches){stream.scrollTop=target;cancel();return;}
+ ['wheel','touchstart','pointerdown','keydown'].forEach(type=>stream.addEventListener(type,cancel,{passive:true}));
+ const step=now=>{
+  if(!stream.isConnected){cancel();return;}
+  if(started===null)started=now;
+  const progress=Math.min(1,(now-started)/640),eased=1-Math.pow(1-progress,3);
+  stream.scrollTop=from+(target-from)*eased;
+  if(progress<1)frame=requestAnimationFrame(step);else cancel();
+ };
+ frame=requestAnimationFrame(step);
+}
 async function loadKanshanPage(questionId,{start=false,refresh=false}={}) {
  const view=detailView(questionId);if(view.kanshanBusy)return;
- const visible=()=>state.screen==='detail'&&state.detail?.id===questionId&&view.answerId==='kanshan'&&!view.aiOpen;
+ const openedAt=Date.now();
+ const request= (view.kanshanRequest||0)+1;view.kanshanRequest=request;
+ const current=()=>view.kanshanRequest===request;
+ const visible=()=>current()&&state.screen==='detail'&&state.detail?.id===questionId&&!view.aiOpen&&view.kanshanOpened;
  const paint=()=>{if(visible()){
-  const content=app.querySelector('.kanshan-content');if(content)content.innerHTML=kanshanPageContent(view);
-  const header=app.querySelector('.kanshan-person');if(header)header.innerHTML=kanshanHeader(view);
+  const section=app.querySelector('.kanshan-answer-page');if(!section)return;
+  const ready=!view.kanshanBusy&&view.kanshanSnapshot?.status!=='running';
+  const key=ready&&view.kanshanSnapshot?.answer;
+  const reveal=!!key&&view.kanshanRevealed!==key;
+  const stream=app.querySelector('.answer-stream'),scrollTop=stream?.scrollTop;
+  section.innerHTML=kanshanSectionHTML(view,{reveal});
+  if(section.style)section.style.minHeight='205px';
+  if(ready&&stream&&Number.isFinite(scrollTop))stream.scrollTop=scrollTop;
+  if(reveal)view.kanshanRevealed=key;
  }};
  clearTimeout(kanshanPollTimer);view.kanshanBusy=true;view.kanshanError='';
  // Preserve the displayed generation for cross-tab optimistic concurrency.
@@ -601,52 +652,103 @@ async function loadKanshanPage(questionId,{start=false,refresh=false}={}) {
  const requestId=refresh?newClientTurnId():null;
  if(refresh){view.kanshanPollStart=0;const reader=app.querySelector('.kanshan-answer-page .answer-reader');if(reader)reader.scrollTop=0;}
  paint();
+ if(start||refresh)focusKanshanThinking();
  try {
   let snapshot=await api(`/questions/${questionId}/kanshan`);
   if(refresh&&visible()&&snapshot.status!=='running')snapshot=await api(`/questions/${questionId}/kanshan`,{refresh:true,client_turn_id:requestId,expected_generation:expected??snapshot.generation});
   else if(snapshot.status==='not_started'&&start&&visible())snapshot=await api(`/questions/${questionId}/kanshan`,{});
+  if(start||refresh)await new Promise(resolve=>setTimeout(resolve,Math.max(0,720-(Date.now()-openedAt))));
+  if(!current())return;
   view.kanshanSnapshot=snapshot;
   if(snapshot.status==='running'&&!view.kanshanPollStart)view.kanshanPollStart=Date.now();
   if(snapshot.status==='running'&&visible()) {
    if(Date.now()-view.kanshanPollStart<120000)kanshanPollTimer=setTimeout(()=>loadKanshanPage(questionId),1500);
    else view.kanshanError='整理时间较长，可以稍后查看结果。';
   }else view.kanshanPollStart=0;
- }catch(error){view.kanshanError='暂时无法确认生成结果，请先查看已有记录。';}
- finally{view.kanshanBusy=false;paint();}
+ }catch(error){if(current())view.kanshanError='暂时无法确认生成结果，请先查看已有记录。';}
+ finally{if(current()){view.kanshanBusy=false;paint();}}
 }
 function answerFlowFooter(q,view,answers,index) {
- if(answers[index]?.ai_page)return '<details class="kanshan-about"><summary>AI 回答说明</summary><p>本项目使用 DeepSeek 生成回答，知乎开放平台提供联网检索；并非知乎官方看山服务。</p></details>'+ (q.answers.length?'<button class="kanshan-return" data-action="answer-page" data-step="-1">返回大家的回答</button>':'<button class="kanshan-return" data-action="answer">我来回答</button>');
+ if(answers[index]?.ai_page)return '<details class="kanshan-about"><summary>AI 回答说明</summary><p>本项目使用 DeepSeek 生成回答，知乎开放平台提供来源资料和联网检索；并非知乎官方看山服务。</p><a href="/library.html" target="_blank" rel="noopener">查看来源资料库 ↗</a></details>'+ (q.answers.length?'<button class="kanshan-return" data-action="answer-page" data-step="-1">返回大家的回答</button>':'<button class="kanshan-return" data-action="answer">我来回答</button>');
  const a=answers[index], saved=a&&stored('saved-answer:'+a.id,false), unhelpful=a&&stored('unhelpful-answer:'+a.id,false);
- return `<button class="answer-anonymous" data-action="answer"><span>匿名</span><strong>写回答</strong></button>${a?`<button class="answer-icon-button ${a.voted?'voted':''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${answerActionIcon('up')}<span class="answer-action-count">${a.votes}</span></button><button class="answer-icon-button ${unhelpful?'voted':''}" data-action="answer-unhelpful" data-id="${a.id}" aria-pressed="${!!unhelpful}" aria-label="这条回答暂时没帮到我">${answerActionIcon('down')}</button><button class="answer-icon-button ${saved?'voted':''}" data-action="answer-save" data-id="${a.id}" aria-pressed="${!!saved}" aria-label="${saved?'取消收藏':'收藏回答'}">${answerActionIcon('save')}</button><button class="answer-icon-button" data-action="${view.aiOpen?'toggle-ai':'answer-followup'}" data-id="${a.id}" aria-label="${view.aiOpen?'返回回答':'追问这条回答（资料三问）'}">${answerActionIcon('comment')}</button>`:''}<details class="answer-more"><summary aria-label="更多回答操作">${answerActionIcon('more')}</summary><div><button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button>${a?`<small>${answerKind(a)==='示例'?'本条为体验示例':'阶段由回答者自述'}</small>`:''}</div></details>`;
+ return `<button class="answer-anonymous" data-action="answer"><span>${escape(state.user?.author?.name||'我')}</span><strong>写回答</strong></button>${a?`<button class="answer-icon-button ${a.voted?'voted':''}" data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}">${answerActionIcon('up')}<span class="answer-action-count">${formatVoteCount(a.votes)}</span></button><button class="answer-icon-button ${unhelpful?'voted':''}" data-action="answer-unhelpful" data-id="${a.id}" aria-pressed="${!!unhelpful}" aria-label="这条回答暂时没帮到我">${answerActionIcon('down')}</button><button class="answer-icon-button ${saved?'voted':''}" data-action="answer-save" data-id="${a.id}" aria-pressed="${!!saved}" aria-label="${saved?'取消收藏':'收藏回答'}">${saveStarHTML()}</button><button class="answer-icon-button" data-action="${view.aiOpen?'toggle-ai':'answer-followup'}" data-id="${a.id}" aria-label="${view.aiOpen?'返回回答':'追问这条回答（资料三问）'}">${answerActionIcon('comment')}</button>`:''}<details class="answer-more"><summary aria-label="更多回答操作">${answerActionIcon('more')}</summary><div><button data-action="answer">写回答</button><button data-action="toggle-ai">${view.aiOpen?'返回回答':'资料三问'}</button>${a?`<small>${answerKind(a)==='示例'?'本条为体验示例':'阶段由回答者自述'}</small>`:''}</div></details>`;
 }
+function replyThreadHTML(a) {
+ const replies=a.replies||[];
+ return `<section class="reply-thread" id="reply-thread-${a.id}" aria-label="回答追评" hidden><div class="reply-list">${replies.map(replyRowHTML).join('')}</div><form class="reply-form" data-answer-id="${a.id}"><img src="${escape(state.user.author.avatar)}" alt="" width="28" height="28"><div><label class="sr-only" for="reply-body-${a.id}">写一条追评</label><textarea id="reply-body-${a.id}" name="body" maxlength="600" rows="2" required placeholder="接着聊聊你的看法…"></textarea><div class="reply-form-bottom"><span>回复 ${escape(a.author.name)}</span><button type="submit">发送</button></div><p class="reply-status" role="status"></p></div></form></section>`;
+}
+function replyRowHTML(reply) {
+ return `<article class="reply-row"><img src="${escape(reply.author.avatar)}" alt="" width="28" height="28"><div><div class="reply-person"><strong>${escape(reply.author.name)}</strong>${reply.author.simulated?`<small class="ai-role" title="虚拟角色 · ${reply.author.age}岁">AI 角色</small>`:''}<span>${escape(stageName(reply.stage))}</span></div><p>${escape(reply.body)}</p></div></article>`;
+}
+async function submitReply(form) {
+ const button=form.querySelector('button[type="submit"]'),field=form.elements.body;
+ if(button.disabled||!field.value.trim())return;
+ const body=field.value.trim(),aid=Number(form.dataset.answerId),question=state.detail;
+ if(form.dataset.sentBody!==body){form.dataset.clientId=newClientTurnId();form.dataset.sentBody=body;}
+ button.disabled=true;form.querySelector('.reply-status').textContent='';
+ try {
+  const reply=await api('/replies',{answer_id:aid,body,client_id:form.dataset.clientId});
+  const answer=question.answers.find(a=>a.id===aid);answer.replies=answer.replies||[];
+  if(!answer.replies.some(r=>r.id===reply.id))answer.replies.push(reply);
+  if(!form.isConnected)return;
+  form.previousElementSibling.innerHTML=answer.replies.map(replyRowHTML).join('');
+  const trigger=app.querySelector(`[data-action="toggle-replies"][data-id="${aid}"]`);
+  trigger.querySelector('.reply-count').textContent=answer.replies.length;
+  field.value='';delete form.dataset.clientId;delete form.dataset.sentBody;
+  form.querySelector('.reply-status').textContent='已发送';
+ }catch(error){if(form.isConnected)form.querySelector('.reply-status').textContent=error.message||'发送失败，文字已保留，请重试';}
+ finally{button.disabled=false;}
+}
+function answerAttachmentsHTML(answer){
+ const topics=Array.isArray(answer.topics)?answer.topics:[],tags=Array.isArray(answer.tags)?answer.tags:[],images=Array.isArray(answer.images)?answer.images:[];
+ const chips=topics.map(topic=>`<span class="answer-topic"># ${escape(topic)}</span>`).join('')+tags.map(tag=>`<span class="answer-label">${escape(tag)}</span>`).join('');
+ return `${images.length?`<div class="answer-images ${images.length===1?'single-image':''}">${images.map((url,i)=>`<button type="button" data-action="view-answer-image" data-src="${escape(url)}" aria-label="查看回答配图 ${i+1}"><img src="${escape(url)}" alt="回答配图 ${i+1}" loading="lazy"></button>`).join('')}</div>`:''}${chips?`<div class="answer-topics" aria-label="话题与标签">${chips}</div>`:''}`;
+}
+function openAnswerImage(src){
+ if(!/^\/uploads\/[a-f0-9]+\.(?:jpg|jpeg|png|webp)$/.test(src))return;
+ const dialog=document.createElement('dialog');dialog.className='answer-image-viewer';dialog.setAttribute('aria-label','查看回答配图');
+ dialog.innerHTML=`<button type="button" aria-label="关闭图片">×</button><img src="${escape(src)}" alt="回答配图大图">`;
+ dialog.querySelector('button').addEventListener('click',()=>dialog.close());
+ dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});phone.append(dialog);dialog.showModal();
+}
+function readingAnswerHTML(a,i) { return `<article class="reading-answer" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}"><div class="answer-person">${authorBadgeHTML(a.author)}<span>${escape(stageName(a.stage))}</span></div>${a.body?`<p class="answer-full-text">${escape(a.body)}</p>`:''}${answerAttachmentsHTML(a)}<div class="reading-actions"><button data-action="vote" data-id="${a.id}" data-voted="${!!a.voted}" aria-pressed="${!!a.voted}" aria-label="${a.voted?'取消赞同':'赞同回答'}" class="${a.voted?'voted':''}">${voteHeartHTML(a.voted)} <span>${formatVoteCount(a.votes)}</span></button><button data-action="answer-save" data-id="${a.id}" aria-pressed="${!!stored('saved-answer:'+a.id,false)}" aria-label="${stored('saved-answer:'+a.id,false)?'取消收藏':'收藏回答'}" class="${stored('saved-answer:'+a.id,false)?'voted':''}">${saveStarHTML()}</button><button data-action="toggle-replies" data-id="${a.id}" aria-label="查看追评" aria-expanded="false" aria-controls="reply-thread-${a.id}"><svg class="reply-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8.5 8.5 0 0 1-8.5 8.5H4l1.3-4.1A8.5 8.5 0 1 1 20.5 11.5Z"/></svg><span class="reply-count">${a.replies?.length||''}</span></button></div>${replyThreadHTML(a)}</article>`; }
 function renderDetail({focusAnswerId = null} = {}) {
  const q=state.detail;if(!q)return;
- const view=detailView(q.id);
- const previousAI=app.querySelector('.answer-ai-view');if(previousAI)view.aiScroll=previousAI.scrollTop;
- view.answerStage='all';
- const answers=detailAnswers(q,view);
+ const view=detailView(q.id),oldStream=app.querySelector('.answer-stream'),oldAI=app.querySelector('.answer-ai-view');
+ if(oldStream)view.streamScroll=oldStream.scrollTop;
+ if(oldAI)view.aiScroll=oldAI.scrollTop;
  if(focusAnswerId){view.answerId=focusAnswerId;view.aiOpen=false;}
- let index=Math.max(0,answers.findIndex(a=>a.id===view.answerId));
- if(answers[index])view.answerId=answers[index].id;
  controls(false);app.classList.add('answer-flow-mode');state.screen='detail';
- const head=`<header class="answer-flow-header"><div class="answer-flow-toolbar"><button data-action="back" aria-label="返回">‹</button><span>过来人 · 同题不同声音</span><div class="answer-flow-pager"><button data-action="answer-page" data-step="-1" aria-label="上一条回答" ${index===0||view.aiOpen?'disabled':''}>↑</button><span class="answer-flow-count">${answers.length?index+1:0} / ${answers.length}</span><button data-action="answer-page" data-step="1" aria-label="下一条回答" ${index>=answers.length-1||view.aiOpen?'disabled':''}>↓</button></div></div><h1>${escape(q.title)}</h1>${q.body?`<p class="answer-flow-background">${escape(q.body)}</p>`:''}<div class="answer-flow-meta">${q.answers.length} 个回答 · 匿名交流</div></header>`;
- const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。记录与次数按这道问题共用。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-deck" aria-label="同一问题的回答，上下滑动切换" tabindex="0">${answers.length?answers.map((a,i)=>a.ai_page?kanshanAnswerPage(view,i,i===index):`<article class="answer-page" data-answer-id="${a.id}" aria-label="第 ${i+1} 条回答，${escape(stageName(a.stage))}" aria-hidden="${i!==index}" ${i!==index?'inert':''}><div class="answer-reader"><div class="answer-person"><strong>匿名回答</strong><span>${escape(stageName(a.stage))}</span></div><p class="answer-full-text">${escape(a.body)}</p><div class="answer-person-followup"><button data-action="answer-followup" data-id="${a.id}">查资料，追问这条回答 <span aria-hidden="true">›</span></button><small>AI 结合资料回答，不会代替本人回复。</small></div><div class="answer-swipe-hint">${i<q.answers.length-1?'向上滑，听下一位说':'再上滑，听看山 AI 说'}</div></div></article>`).join(''):'<div class="answer-flow-empty">这一题还没有回答。<button data-action="answer">留下第一条回答</button></div>'}</section>`;
- app.innerHTML=`<div class="answer-flow-shell">${head}${body}<footer class="answer-flow-bottom">${answerFlowFooter(q,view,answers,index)}</footer></div>`;
+ const questionBody=(q.body||'').trim()==='本题及初始回答为体验示例，可继续分享你自己的经历。'?'':q.body;
+ const title=`<header class="reading-question"><h1>${escape(q.title)}</h1><div class="question-public-author">${authorBadgeHTML(q.author)}<span>提问</span></div>${questionBody?`<p class="reading-background">${escape(questionBody)}</p>`:''}</header>`;
+ const rows=q.answers.map(readingAnswerHTML).join('<div class="reading-divider" aria-hidden="true"><span>✦</span></div>');
+ const ai=`<article class="reading-answer kanshan-answer-page" data-answer-id="kanshan" aria-label="看山 AI 的回答">${kanshanSectionHTML(view)}</article>`;
+ const body=view.aiOpen?`<section class="answer-ai-view"><p class="answer-ai-context">资料三问 · AI 根据来源继续讨论，不代表回答者本人。</p><div id="detail-ai-panel" class="detail-ai-panel">${aiPanelHTML(q,view)}</div></section>`:`<section class="answer-stream" aria-label="问题与全部回答，连续滚动阅读" tabindex="0">${title}${rows||'<p class="reading-empty">还没有回答，愿意分享你的经历吗？</p>'}<div class="reading-divider" aria-hidden="true"><span>✦</span></div>${ai}<div class="reading-end" aria-hidden="true">·</div></section>`;
+ app.innerHTML=`<div class="answer-flow-shell reading-shell"><button class="reading-back" data-action="${view.aiOpen?'toggle-ai':'back'}" aria-label="${view.aiOpen?'返回回答':'返回'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>${body}<footer class="reading-bottom"><button data-action="answer">写回答 <span>↗</span></button>${view.aiOpen?'<button data-action="toggle-ai">返回回答</button>':''}</footer></div>`;
  app.scrollTop=0;saveDetailView(q.id);
- requestAnimationFrame(()=>{if(state.screen!=='detail'||state.detail?.id!==q.id)return;if(view.aiOpen){const ai=app.querySelector('.answer-ai-view');if(ai)ai.scrollTop=view.aiScroll||0;}else bindAnswerDeck(q,view,answers,index);});
+ requestAnimationFrame(()=>{if(state.screen!=='detail'||state.detail?.id!==q.id)return;
+  if(view.aiOpen){const el=app.querySelector('.answer-ai-view');if(el)el.scrollTop=view.aiScroll||0;}
+  else {const stream=app.querySelector('.answer-stream');if(!stream)return;stream.scrollTop=view.streamScroll||0;stream.addEventListener('scroll',()=>{view.streamScroll=stream.scrollTop;},{passive:true});if(focusAnswerId)[...stream.querySelectorAll('[data-answer-id]')].find(el=>el.dataset.answerId===String(focusAnswerId))?.scrollIntoView({block:'start'});if(view.kanshanOpened)loadKanshanPage(q.id);}
+ });
 }
 function bindAnswerDeck(q,view,answers,start) {
- const deck=app.querySelector('.answer-deck');if(!deck||!answers.length)return;
- let index=start,lockedUntil=0,lastWheel=0,wheelDirection=0,wheelConsumed=false,drag=null,suppressClickUntil=0;
+ const deck=app.querySelector('.answer-deck'),surface=app.querySelector('.answer-flow-shell');
+ if(!deck||!surface||!answers.length)return;
+ const pages=[...deck.querySelectorAll('.answer-page')];
+ let index=start,drag=null,suppressClickUntil=0;
+ let lastWheel=-Infinity,wheelConsumed=false,wheelDistance=0,wheelMode=null,wheelReader=null,wheelDirection=0;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function paint(offset=0,animate=true) {
+  pages.forEach((p,i)=>{
+   p.style.transition=animate&&!reduced?'transform 260ms cubic-bezier(.2,.75,.25,1)':'none';
+   p.style.transform=offset?`translate3d(0,calc(${(i-index)*100}% + ${offset}px),0)`:`translate3d(0,${(i-index)*100}%,0)`;
+  });
+ }
  function go(next,animate=true) {
   index=clamp(next,0,answers.length-1);view.answerId=answers[index].id;saveDetailView(q.id);
-  // Every page, including AI, moves in the same fixed viewport. Percentage transforms
-  // survive footer/content changes without ResizeObserver cancelling the transition.
-  deck.querySelectorAll('.answer-page').forEach((p,i)=>{
-   p.inert=i!==index;p.setAttribute('aria-hidden',String(i!==index));
-   p.style.transition=animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?'transform 340ms cubic-bezier(.22,.68,.25,1)':'none';
-   p.style.transform=`translate3d(0,${(i-index)*100}%,0)`;
-  });
+  pages.forEach((p,i)=>{p.inert=i!==index;p.setAttribute('aria-hidden',String(i!==index));});
+  paint(0,animate);
   app.querySelector('.answer-flow-count').textContent=`${index+1} / ${answers.length}`;
   app.querySelector('[data-action="answer-page"][data-step="-1"]').disabled=index===0;
   app.querySelector('[data-action="answer-page"][data-step="1"]').disabled=index===answers.length-1;
@@ -654,57 +756,83 @@ function bindAnswerDeck(q,view,answers,start) {
   if(answers[index]?.ai_page)loadKanshanPage(q.id,{start:animate});
   else {clearTimeout(kanshanPollTimer);kanshanPollTimer=0;}
  }
- function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+48||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
- function move(step,discrete=false){if(!discrete&&performance.now()<lockedUntil)return false;const next=clamp(index+step,0,answers.length-1);if(next===index)return false;lockedUntil=performance.now()+420;go(next);return true;}
- deck.answerMove=step=>move(step,true);go(index,false);
- // No scroll-position reset on resize: pages share the deck's exact fractional height.
+ function canFlip(reader,dir){return !reader||reader.scrollHeight<=reader.clientHeight+2||(dir>0?reader.scrollTop+reader.clientHeight>=reader.scrollHeight-2:reader.scrollTop<=2);}
+ function move(step){const next=clamp(index+step,0,answers.length-1);if(next===index){paint();return false;}go(next);return true;}
+ function readerAt(target){return pages[index].querySelector?.('.answer-reader')||target.closest('.answer-reader,.answer-flow-background,.answer-flow-header');}
+ function hasPage(dir){return index+dir>=0&&index+dir<answers.length;}
+ deck.answerMove=step=>move(step);go(index,false);
  answerDeckResize=null;
- deck.addEventListener('wheel',e=>{
-  if(e.ctrlKey||Math.abs(e.deltaY)<Math.abs(e.deltaX)||Math.abs(e.deltaY)<2)return;
-  const now=performance.now(),dir=e.deltaY>0?1:-1;
-  const newGesture=now-lastWheel>180||dir!==wheelDirection;
-  if(newGesture)wheelConsumed=false;
-  lastWheel=now;wheelDirection=dir;
-  const reader=e.target.closest('.answer-reader');if(!canFlip(reader,dir))return;
-  e.preventDefault();if(!wheelConsumed)wheelConsumed=move(dir,newGesture);
+ // A wheel burst owns one reading/paging decision. Speed changes and reversals
+ // cannot rearm it; wait for a quiet interval before accepting a new burst.
+ surface.addEventListener('wheel',e=>{
+  if(e.ctrlKey||drag||e.target.closest('input,textarea,select')||Math.abs(e.deltaY)<Math.abs(e.deltaX)||!e.deltaY)return;
+  const now=performance.now(),dir=Math.sign(e.deltaY);
+  const amount=Math.abs(e.deltaY)*(e.deltaMode===1?16:e.deltaMode===2?deck.clientHeight:1);
+  if(now-lastWheel>240){
+   wheelConsumed=false;wheelDistance=0;wheelDirection=dir;wheelReader=readerAt(e.target);
+   wheelMode=canFlip(wheelReader,dir)?'page':'read';
+  }
+  lastWheel=now;e.preventDefault();
+  if(wheelConsumed)return;
+  if(wheelMode==='read'){
+   wheelReader.scrollTop=clamp(wheelReader.scrollTop+dir*amount,0,wheelReader.scrollHeight-wheelReader.clientHeight);
+   return; // Reaching an edge never upgrades this same gesture to paging.
+  }
+  if(dir!==wheelDirection){wheelConsumed=true;return;}
+  wheelDistance+=amount;
+  if(wheelDistance>=18){wheelConsumed=true;move(dir);}
  },{passive:false});
- // Pointer events handle phone swipes and desktop dragging through one path.
- // Vertical native panning is disabled on this deck, preventing touchcancel from
- // swallowing the release. Long text is scrolled first, then the edge can flip.
- deck.addEventListener('pointerdown',e=>{
-  if(e.isPrimary===false||e.button!==0||e.target.closest('input,textarea,select'))return;
-  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastY:e.clientY,edge:0,moved:false,reader:e.target.closest('.answer-reader')};
+ // Capture on the whole detail shell, including title, controls and whitespace.
+ // A new pointerdown is an independent gesture, even during the previous transition.
+ surface.addEventListener('pointerdown',e=>{
+  if(e.isPrimary===false){cancelDrag();return;}
+  if(e.button!==0||e.target.closest('input,textarea,select'))return;
+  suppressClickUntil=0;
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastY:e.clientY,edge:0,moved:false,mode:null,direction:0,reader:readerAt(e.target),canUp:canFlip(readerAt(e.target),1),canDown:canFlip(readerAt(e.target),-1),originOffset:pages[index].getBoundingClientRect().top-deck.getBoundingClientRect().top};
  });
- deck.addEventListener('pointermove',e=>{
+ surface.addEventListener('pointermove',e=>{
   if(!drag||drag.id!==e.pointerId)return;
   const dy=drag.y-e.clientY,dx=drag.x-e.clientX;
   if(!drag.moved){
-   if(Math.abs(dy)<8)return;
-   if(Math.abs(dx)>Math.abs(dy)){drag=null;return;}
-   drag.moved=true;deck.setPointerCapture?.(e.pointerId);
+   if(Math.max(Math.abs(dy),Math.abs(dx))<8)return;
+   if(Math.abs(dx)>Math.abs(dy)){cancelDrag();return;}
+   drag.moved=true;surface.setPointerCapture?.(e.pointerId);
   }
   e.preventDefault();
+  if(!drag.mode){
+   drag.direction=Math.sign(dy);
+   drag.mode=(drag.direction>0?drag.canUp:drag.canDown)?'page':'read';
+  }
   let remaining=drag.lastY-e.clientY;drag.lastY=e.clientY;
   const r=drag.reader;
-  if(r&&r.scrollHeight>r.clientHeight+48){
-   const before=r.scrollTop;r.scrollTop=clamp(before+remaining,0,r.scrollHeight-r.clientHeight);
-   remaining-=r.scrollTop-before;
+  if(drag.mode==='read'){
+   if(r)r.scrollTop=clamp(r.scrollTop+remaining,0,r.scrollHeight-r.clientHeight);
+   return; // Lift and start again at the boundary to turn a page.
   }
   if(remaining){
    if(Math.sign(remaining)!==Math.sign(drag.edge))drag.edge=0;
    drag.edge+=remaining;
   }else drag.edge=0;
+  const atEnd=(index===0&&drag.edge<0)||(index===answers.length-1&&drag.edge>0);
+  paint((drag.mode==='page'?drag.originOffset:0)-clamp(drag.edge,-deck.clientHeight*.65,deck.clientHeight*.65)*(atEnd ? .2 : 1),false);
  },{passive:false});
- deck.addEventListener('pointerup',e=>{
+ surface.addEventListener('pointerup',e=>{
   if(!drag||drag.id!==e.pointerId)return;
   const ended=drag;drag=null;
-  if(deck.hasPointerCapture?.(e.pointerId))deck.releasePointerCapture(e.pointerId);
-  if(ended.moved){suppressClickUntil=performance.now()+400;if(Math.abs(ended.edge)>=18)move(ended.edge>0?1:-1,true);}
+  if(surface.hasPointerCapture?.(e.pointerId))surface.releasePointerCapture(e.pointerId);
+  if(ended.moved){
+   suppressClickUntil=performance.now()+400;
+   if(ended.mode==='page'&&Math.abs(ended.edge)>=18&&Math.sign(ended.edge)===ended.direction)move(ended.direction);else paint();
+  }
  });
- const cancelDrag=()=>{drag=null;};
- deck.addEventListener('pointercancel',cancelDrag);deck.addEventListener('lostpointercapture',cancelDrag);
- deck.addEventListener('click',e=>{if(performance.now()<suppressClickUntil){e.preventDefault();e.stopPropagation();}},true);
- deck.addEventListener('keydown',e=>{if(e.target.closest('button,input,textarea,a'))return;if(['ArrowDown','PageDown','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();move(['ArrowDown','PageDown'].includes(e.key)?1:-1);}});
+ function cancelDrag(){
+  const ended=drag;drag=null;
+  if(ended?.moved){suppressClickUntil=performance.now()+400;paint();}
+  if(ended&&surface.hasPointerCapture?.(ended.id))surface.releasePointerCapture(ended.id);
+ }
+ surface.addEventListener('pointercancel',cancelDrag);surface.addEventListener('lostpointercapture',cancelDrag);
+ surface.addEventListener('click',e=>{if(performance.now()<suppressClickUntil){e.preventDefault();e.stopPropagation();}},true);
+ surface.addEventListener('keydown',e=>{if(e.target.closest('button,input,textarea,a,summary,select'))return;if(['ArrowDown','PageDown','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();move(['ArrowDown','PageDown'].includes(e.key)?1:-1);}});
 }
 function applyAISnapshot(id, snapshot, error = '') {
  const view = detailView(id); view.aiSnapshot = snapshot; view.aiLoading = false; view.aiSubmitting = false; view.aiUncertain = false; view.aiError = error;
@@ -758,11 +886,87 @@ async function showDetail(id, {captureFeed = true, focusAnswerId = null} = {}) {
  if (state.screen === 'detail' && state.detail) { const current = detailView(state.detail.id); current.scrollTop = app.scrollTop; saveDetailView(state.detail.id); }
  cleanupAIPoll(); state.aiRequest++;
  const ticket = ++state.request; const q = await api('/questions/' + id); if (ticket !== state.request) return;
- if(enteringFromFeed)detailView(q.id).aiOpen=false;
+ const entryView=detailView(q.id);entryView.kanshanOpened=false;entryView.kanshanBusy=false;entryView.kanshanRevealed=null;entryView.kanshanError='';entryView.kanshanRequest=(entryView.kanshanRequest||0)+1;
+ if(enteringFromFeed)entryView.aiOpen=false;
  state.detail = q; state.screen = 'detail'; renderDetail({focusAnswerId});
  const view = detailView(id); if (view.aiOpen) loadAIState(id);
 }
-function showAnswer() { ++state.request; cleanupAIPoll(); const q = state.detail; state.screen = 'answer'; controls(false); app.innerHTML = `${bar('说说我的看法')}<section class="form-screen"><h2>${escape(q.title)}</h2><p class="helper">你的回答将带上「${escape(stageName(state.user.stage))} · 自述」标签。分享亲身感受就好。</p><form id="answer-form"><label for="answer-body">从你所在的这一程看呢？</label><textarea id="answer-body" name="body" required maxlength="1200" placeholder="不用标准答案，说说你自己的经历。"></textarea><button class="primary-button" type="submit">留下我的回答</button></form></section>`; app.scrollTop = 0; }
+const answerEditor={questionId:null,body:'',tags:[],topics:[],images:[],uploading:false};
+function answerEditorIcon(kind){
+ const paths={image:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 6"/>',tag:'<path d="M3 4h8l10 10-7 7L3 10Z"/><circle cx="7.5" cy="8" r="1"/>',close:'<path d="m5 5 14 14M19 5 5 19"/>',plus:'<path d="M12 5v14M5 12h14"/>',draft:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'};
+ return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[kind]||paths.tag}</svg>`;
+}
+function saveAnswerEditorDraft(){
+ if(!answerEditor.questionId)return;
+ const field=app.querySelector('#answer-body');if(field)answerEditor.body=field.value;
+ store('answer-draft:'+answerEditor.questionId,{body:answerEditor.body,tags:answerEditor.tags,topics:answerEditor.topics,images:answerEditor.images});
+}
+function updateAnswerEditor(){
+ const form=app.querySelector('#answer-form');if(!form||Number(form.dataset.questionId)!==answerEditor.questionId)return;
+ const chips=app.querySelector('#answer-editor-chips');
+ chips.innerHTML=['topics','tags'].map(kind=>answerEditor[kind].map((label,index)=>`<button type="button" class="answer-editor-chip ${kind}" data-editor-action="remove-chip" data-kind="${kind}" data-index="${index}">${kind==='topics'?'# ':''}${escape(label)}<span aria-hidden="true">×</span></button>`).join('')).join('');
+ app.querySelector('#answer-editor-images').innerHTML=answerEditor.images.map((url,index)=>`<div class="answer-editor-photo"><button type="button" data-editor-action="preview-image" data-index="${index}" aria-label="预览第 ${index+1} 张图片"><img src="${escape(url)}" alt="待发布图片 ${index+1}"></button><button type="button" class="answer-editor-photo-remove" data-editor-action="remove-image" data-index="${index}" aria-label="移除第 ${index+1} 张图片">×</button></div>`).join('')+(answerEditor.images.length<4?`<button type="button" class="answer-editor-add-photo" data-editor-action="image" ${answerEditor.uploading?'disabled':''}>${answerEditorIcon('plus')}<span>${answerEditor.uploading?'正在添加…':'添加图片'}</span></button>`:'');
+ const count=app.querySelector('#answer-editor-count');count.textContent=`${answerEditor.body.length}/1200`;
+ const submit=app.querySelector('[form="answer-form"][type="submit"]');submit.disabled=answerEditor.uploading||(!answerEditor.body.trim()&&!answerEditor.images.length)||form.dataset.submitting==='true';
+ const body=app.querySelector('#answer-body');body.required=!answerEditor.images.length;body.style.height='auto';body.style.height=Math.max(220,body.scrollHeight)+'px';
+ saveAnswerEditorDraft();
+}
+function showAnswer(){
+ ++state.request;cleanupAIPoll();const q=state.detail;state.screen='answer';controls(false);
+ const saved=stored('answer-draft:'+q.id,{});
+ Object.assign(answerEditor,{questionId:q.id,body:typeof saved.body==='string'?saved.body:'',tags:Array.isArray(saved.tags)?saved.tags.slice(0,5):[],topics:Array.isArray(saved.topics)?saved.topics.slice(0,3):[],images:Array.isArray(saved.images)?saved.images.filter(url=>typeof url==='string'&&url.startsWith('/uploads/')).slice(0,4):[],uploading:false});
+ app.innerHTML=`<section class="answer-editor-screen"><header class="answer-editor-header"><button type="button" class="answer-editor-close" data-action="back" aria-label="关闭写回答">${answerEditorIcon('close')}</button><div><button type="button" class="answer-editor-draft" data-editor-action="save-draft">${answerEditorIcon('draft')}<span>存草稿</span></button><button type="submit" form="answer-form" class="answer-editor-publish">发布</button></div></header><form id="answer-form" data-question-id="${q.id}" class="answer-editor-form"><div class="answer-editor-context">${authorBadgeHTML(state.user?.author)}<span>${escape(stageName(state.user.stage))}</span></div><h2>${escape(q.title)}</h2><label class="sr-only" for="answer-body">写下你的回答</label><textarea id="answer-body" name="body" required maxlength="1200" placeholder="从你所在的这一程，说说自己的经历…"></textarea><div id="answer-editor-chips" class="answer-editor-chips"></div><div id="answer-editor-picker" class="answer-editor-picker" hidden><div class="answer-editor-picker-row"><label id="answer-editor-picker-label" for="answer-topic-search">添加话题</label><button type="button" data-editor-action="close-picker" aria-label="收起">×</button></div><div class="answer-editor-picker-entry"><input id="answer-topic-search" autocomplete="off" maxlength="40" placeholder="输入话题，按回车添加"><button type="button" data-editor-action="add-chip">添加</button><button type="button" id="answer-topic-lookup" data-action="search-zhihu-topics">搜知乎</button></div><div id="answer-topic-results" class="answer-topic-results"></div><p id="answer-editor-picker-hint">最多添加 3 个话题</p></div><div id="answer-editor-images" class="answer-editor-images"></div><input type="file" id="answer-image-input" accept="image/jpeg,image/png,image/webp" multiple hidden></form><footer class="answer-editor-toolbar"><div><button type="button" data-editor-action="image" aria-label="添加图片">${answerEditorIcon('image')}</button><button type="button" data-editor-action="topics" aria-label="添加话题"><span class="answer-editor-hash">#</span></button><button type="button" data-editor-action="tags" aria-label="添加标签">${answerEditorIcon('tag')}</button></div><span id="answer-editor-count">0/1200</span></footer></section>`;
+ app.querySelector('#answer-body').value=answerEditor.body;updateAnswerEditor();app.scrollTop=0;
+}
+function addAnswerEditorChip(){
+ const panel=app.querySelector('#answer-editor-picker'),input=app.querySelector('#answer-topic-search');if(!panel||!input)return;
+ const kind=panel.dataset.kind||'topics',limit=kind==='topics'?3:5,max=kind==='topics'?40:20;
+ const text=input.value.trim().replace(/^#+/,'').trim();if(!text)return;
+ if(text.length>max)return notice(`请控制在 ${max} 字以内`);
+ if(answerEditor[kind].includes(text))return notice('已经添加过了');
+ if(answerEditor[kind].length>=limit)return notice(`最多添加 ${limit} 个${kind==='topics'?'话题':'标签'}`);
+ answerEditor[kind].push(text);input.value='';updateAnswerEditor();input.focus();
+}
+async function answerImageDataURL(file){
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('请选择 JPG、PNG 或 WebP 图片');
+ if(file.size>15*1024*1024)throw new Error('单张图片请小于 15 MB');
+ const source=URL.createObjectURL(file);
+ try{
+  const image=new Image();image.src=source;await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error('这张图片无法读取，请换一张'));});
+  const scale=Math.min(1,1600/Math.max(image.width,image.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  let quality=.86,result=canvas.toDataURL('image/jpeg',quality);while(result.length>2600000&&quality>.4){quality-=.15;result=canvas.toDataURL('image/jpeg',quality);}if(result.length>2800000)throw new Error('图片内容过大，请选择较小的图片');return result;
+ }finally{URL.revokeObjectURL(source);}
+}
+async function uploadAnswerEditorImages(files){
+ if(answerEditor.uploading)return;const questionId=answerEditor.questionId,room=4-answerEditor.images.length;
+ if(!room)return notice('最多添加 4 张图片');
+ const selected=Array.from(files).slice(0,room);if(files.length>room)notice('最多添加 4 张图片');
+ answerEditor.uploading=true;updateAnswerEditor();
+ try{for(const file of selected){const data_url=await answerImageDataURL(file),result=await api('/uploads',{data_url});if(answerEditor.questionId!==questionId)return;answerEditor.images.push(result.url);saveAnswerEditorDraft();updateAnswerEditor();}}
+ catch(error){notice(error.message);}finally{if(answerEditor.questionId===questionId){answerEditor.uploading=false;updateAnswerEditor();}}
+}
+app.addEventListener('click',event=>{
+ const button=event.target.closest('[data-editor-action]');if(!button)return;
+ const action=button.dataset.editorAction;
+ if(action==='preview-close'){app.querySelector('.answer-editor-preview')?.remove();return;}
+ if(state.screen!=='answer')return;
+ if(action==='image')return app.querySelector('#answer-image-input')?.click();
+ if(action==='save-draft'){saveAnswerEditorDraft();notice('草稿已保存，再次打开可继续写');return;}
+ if(action==='topics'||action==='tags'){
+  const panel=app.querySelector('#answer-editor-picker'),input=app.querySelector('#answer-topic-search'),name=action==='topics'?'话题':'标签';panel.hidden=false;panel.dataset.kind=action;app.querySelector('#answer-topic-lookup').hidden=action!=='topics';input.maxLength=action==='topics'?40:20;input.placeholder=`输入${name}，按回车添加`;app.querySelector('#answer-editor-picker-label').textContent='添加'+name;app.querySelector('#answer-editor-picker-hint').textContent=`最多添加 ${action==='topics'?3:5} 个${name}`;app.querySelector('#answer-topic-results').innerHTML='';input.focus();panel.scrollIntoView({block:'nearest',behavior:'smooth'});return;
+ }
+ if(action==='close-picker'){app.querySelector('#answer-editor-picker').hidden=true;return;}
+ if(action==='add-chip')return addAnswerEditorChip();
+ if(action==='remove-chip'){answerEditor[button.dataset.kind].splice(Number(button.dataset.index),1);return updateAnswerEditor();}
+ if(action==='remove-image'){answerEditor.images.splice(Number(button.dataset.index),1);return updateAnswerEditor();}
+ if(action==='preview-image'){const url=answerEditor.images[Number(button.dataset.index)];app.insertAdjacentHTML('beforeend',`<div class="answer-editor-preview" role="dialog" aria-modal="true" aria-label="图片预览"><button type="button" data-editor-action="preview-close" aria-label="关闭图片预览">×</button><img src="${escape(url)}" alt="待发布图片预览"></div>`);app.querySelector('.answer-editor-preview button')?.focus();}
+});
+app.addEventListener('input',event=>{if(event.target.id==='answer-body'){answerEditor.body=event.target.value;updateAnswerEditor();}});
+app.addEventListener('keydown',event=>{if(event.target.id==='answer-topic-search'&&event.key==='Enter'){event.preventDefault();addAnswerEditorChip();}if(event.key==='Escape')app.querySelector('.answer-editor-preview')?.remove();});
+app.addEventListener('change',event=>{if(event.target.id==='answer-image-input'){uploadAnswerEditorImages(event.target.files);event.target.value='';}});
+window.addEventListener('pagehide',()=>{if(state.screen==='answer')saveAnswerEditorDraft();});
+
 function showSavedRecovery(questionId, kind) {
  state.screen = 'saved'; controls(false);
  app.innerHTML = `${bar('已经保存')}<section class="saved-state"><strong>${kind === 'answer' ? '回答已经留下' : '问题已经送出'}</strong><p>内容已经成功保存，只是详情暂时没有刷新出来。请不要重复发布。</p><button class="primary-button" data-action="reopen-detail" data-id="${questionId}">重新查看详情</button></section>`;
@@ -773,8 +977,14 @@ function updateVoteState(answerId, result) {
  state.feed.forEach(question => apply(question.answer));
  state.detail?.answers?.forEach(apply);
 }
+function playVoteHeart(button) {
+ if (!button.querySelector('.vote-heart')) return;
+ button.classList.remove('is-heart-popping');
+ void button.offsetWidth;
+ button.classList.add('is-heart-popping');
+}
 async function handleBack() {
- if (state.screen === 'answer') return showDetail(state.detail.id, {captureFeed:false});
+ if (state.screen === 'answer') { saveAnswerEditorDraft(); return showDetail(state.detail.id, {captureFeed:false}); }
  if (state.screen === 'ask') {
   saveCurrentComposerDraft(); removeStored('composer:active');
   if (state.composerOrigin?.type === 'ai-turn') return showDetail(state.composerOrigin.questionId, {captureFeed:false});
@@ -899,6 +1109,9 @@ phone.addEventListener('click', async event => {
    requestAnimationFrame(() => app.querySelector('.demo-row[aria-live]')?.scrollIntoView({block:'nearest'}));
    return;
   }
+  if(action==='view-answer-image')return openAnswerImage(b.dataset.src);
+  if(action==='notifications')return showNotifications();
+  if(action==='notification-open'){await showDetail(Number(b.dataset.question),{captureFeed:false,focusAnswerId:Number(b.dataset.answer)||null});return;}
   if (action === 'search') return notice('搜索尚未接入体验版，先从过来人问答逛起吧');
   if (action === 'unavailable') return notice(`${b.dataset.label || '这个入口'}尚未接入体验版`);
   if (action === 'stage-settings') return showStagePicker();
@@ -909,14 +1122,25 @@ phone.addEventListener('click', async event => {
   if (action === 'back') return await handleBack();
   if (action === 'mode') { state.mode = b.dataset.value; state.stage = 'all'; return await loadFeed(); }
   if (action === 'filter') { state.stage = b.dataset.value; return await loadFeed(); }
-  if (['kanshan-start','kanshan-check','kanshan-refresh'].includes(action)) {detailView(state.detail.id).kanshanPollStart=0;return loadKanshanPage(state.detail.id,{start:action==='kanshan-start',refresh:action==='kanshan-refresh'});}
+  if (['kanshan-start','kanshan-check','kanshan-refresh'].includes(action)) {const view=detailView(state.detail.id);view.kanshanOpened=true;view.kanshanPollStart=0;if(action==='kanshan-refresh')view.kanshanRevealed=null;return loadKanshanPage(state.detail.id,{start:action==='kanshan-start',refresh:action==='kanshan-refresh'});}
   if (action === 'answer-page') return app.querySelector('.answer-deck')?.answerMove?.(Number(b.dataset.step));
   if (action === 'answer-followup') {const view=detailView(state.detail.id);const a=state.detail.answers.find(a=>a.id===Number(b.dataset.id));if(!a)return;view.answerId=a.id;if(view.aiAnswerId!==a.id){view.aiDrafts=view.aiDrafts||{};view.aiDrafts[view.aiAnswerId||'question']=view.aiDraft;view.aiDraft=view.aiDrafts[a.id]||`关于这条回答「${a.body.slice(0,200)}」，资料中有什么可以补充或需要注意的地方？`;view.aiAnswerId=a.id;}view.aiOpen=true;saveDetailView(state.detail.id);renderDetail();loadAIState(state.detail.id);return;}
 
+  if(action==='toggle-replies'){
+   const panel=document.getElementById(b.getAttribute('aria-controls')),opening=panel.hidden;
+   panel.hidden=!opening;b.setAttribute('aria-expanded',String(opening));
+   b.closest('.reading-answer').classList.toggle('thread-open',opening);
+   if(opening&&!matchMedia('(prefers-reduced-motion: reduce)').matches)panel.animate([{opacity:0,transform:'translateY(-4px)'},{opacity:1,transform:'translateY(0)'}],{duration:240,easing:'ease-out'});
+   return;
+  }
   if (action === 'answer-save' || action === 'answer-unhelpful') {
    const saving=action==='answer-save', key=(saving?'saved-answer:':'unhelpful-answer:')+b.dataset.id;
    const active=!stored(key,false);store(key,active);b.classList.toggle('voted',active);b.setAttribute('aria-pressed',String(active));
-   if(saving)b.setAttribute('aria-label',active?'取消收藏':'收藏回答');
+   if(saving){
+    b.setAttribute('aria-label',active?'取消收藏':'收藏回答');
+    b.classList.remove('is-save-popping');
+    if(active){void b.offsetWidth;b.classList.add('is-save-popping');}
+   }
    return notice(saving?(active?'已收藏在当前浏览器':'已取消收藏'):(active?'已记录在当前浏览器':'已取消反馈'));
   }
   if (action === 'detail') return await showDetail(Number(b.dataset.id));
@@ -954,7 +1178,7 @@ phone.addEventListener('click', async event => {
    if (input) input.checked = false; syncComposerUI(); return;
   }
   if (action === 'retry') return await boot();
-  if (action === 'vote') { const answerId = Number(b.dataset.id); b.disabled = true; const result = await api('/vote', {answer_id:answerId, active:b.dataset.voted !== 'true'}); updateVoteState(answerId, result); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = b.classList.contains('answer-icon-button') ? `${answerActionIcon('up')}<span class="answer-action-count">${result.votes}</span>` : `${result.voted ? '♥' : '♡'} <span>${result.votes}</span>`; }
+  if (action === 'vote') { const answerId = Number(b.dataset.id); b.disabled = true; const result = await api('/vote', {answer_id:answerId, active:b.dataset.voted !== 'true'}); updateVoteState(answerId, result); b.dataset.voted = String(result.voted); b.classList.toggle('voted', result.voted); b.setAttribute('aria-pressed', String(result.voted)); b.setAttribute('aria-label', result.voted ? '取消赞同' : '赞同回答'); b.innerHTML = b.classList.contains('answer-icon-button') ? `${answerActionIcon('up')}<span class="answer-action-count">${formatVoteCount(result.votes)}</span>` : `${voteHeartHTML(result.voted)} <span>${formatVoteCount(result.votes)}</span>`; playVoteHeart(b); }
  } catch (e) { notice(e.message); } finally { b.disabled = false; }
 });
 phone.addEventListener('keydown', event => {
@@ -978,6 +1202,7 @@ app.addEventListener('change', event => {
 });
 app.addEventListener('submit', async event => {
  event.preventDefault(); const form = event.target;
+ if (form.matches('.reply-form')) return submitReply(form);
  if (form.id === 'ai-question-form') return submitAIQuestion(form);
  if (form.id === 'stage-switch-form') return saveStagePicker(form);
  const submit = form.querySelector('[type=submit]') || app.querySelector(`[type="submit"][form="${form.id}"]`); if (!submit || submit.disabled) return;
@@ -998,7 +1223,11 @@ app.addEventListener('submit', async event => {
    catch (_) { showSavedRecovery(q.id, 'question'); notice('问题已保存，请勿重复发布'); }
   }
   if (form.id === 'answer-form') {
-   const questionId = state.detail.id; const result = await api('/answers', {body:data.body, question_id:questionId}); writeSucceeded = true;
+   const questionId = Number(form.dataset.questionId) || state.detail.id;
+   if(answerEditor.uploading)throw new Error('图片正在添加，请稍等');
+   form.dataset.submitting='true';saveAnswerEditorDraft();
+   const result = await api('/answers', {body:String(data.body||'').trim(), question_id:questionId, tags:[...answerEditor.tags],topics:[...answerEditor.topics],images:[...answerEditor.images]}); writeSucceeded = true;
+   removeStored('answer-draft:'+questionId);
    detailView(questionId).answerStage = state.user.stage;
    try { await showDetail(questionId, {captureFeed:false, focusAnswerId:result.id}); notice('回答已保存'); }
    catch (_) { showSavedRecovery(questionId, 'answer'); notice('回答已保存，请勿重复发布'); }
@@ -1007,6 +1236,7 @@ app.addEventListener('submit', async event => {
   notice(form.id === 'ask-form' && e instanceof TypeError ? '网络连接失败，草稿已保留，请稍后重试' : e.message);
  } finally {
   if (!writeSucceeded && form.id === 'ask-form' && form.isConnected) { form.dataset.submitting = 'false'; syncComposerUI(); }
+  else if (!writeSucceeded && form.id==='answer-form' && form.isConnected){form.dataset.submitting='false';updateAnswerEditor();}
   else if (!writeSucceeded && submit.isConnected) submit.disabled = false;
  }
 });
@@ -1014,6 +1244,7 @@ async function boot() {
  try {
   state.user = await api('/me'); const restore = feedEntryView(stored('feed', null)); state.feedReturn = restore;
   try { await loadFeed({restore}); } catch (error) { if (!restore) throw error; state.mode = 'older'; state.stage = 'all'; state.feedReturn = null; await loadFeed(); }
+  startDemoNotifications();
   const activeComposer = stored('composer:active', null);
   if (activeComposer?.origin && typeof activeComposer.prefill === 'string') showAsk(activeComposer.prefill, activeComposer.origin);
  } catch (e) { controls(false); app.innerHTML = `<div class="empty-state"><p>${escape(e.message)}</p><button class="secondary-button" data-action="retry">重新连接</button></div>`; }
@@ -1031,5 +1262,126 @@ if (modelContext?.registerTool) {
  }
  window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
 }
+const demoInbox={items:[],unread:0,seen:Number(stored('notifications:seen',0)),timer:0,started:false,latest:0,initialized:false};
+function notificationRowsHTML(){
+ return demoInbox.items.map(item=>`<button class="notification-row" data-action="notification-open" data-question="${item.question_id}" data-answer="${item.answer_id||''}"><img src="${escape(item.author.avatar)}" alt="" width="34" height="34"><span><strong>${escape(item.author.name)} <small>${item.kind==='like'?'赞了你':item.target_kind==='question'?'回答了你的问题':'追评了你的回答'}</small></strong><p>${escape(item.body)}</p><time>${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit'}).format(new Date(item.created*1000))} · 演示互动</time></span></button>`).join('')||'<p class="empty-state">发布一个问题或回答，等另一程的人来回应。</p>';
+}
+function showNotifications(){
+ if(state.screen==='feed')captureFeedView();
+ cleanupAIPoll();++state.request;controls(false);state.screen='notifications';
+ demoInbox.seen=demoInbox.latest;demoInbox.unread=0;store('notifications:seen',demoInbox.seen);
+ app.innerHTML=`<div class="app-shell notifications-shell">${bar('消息')}<section class="notifications-list">${notificationRowsHTML()}</section>${bottomTabBarHTML('notifications')}</div>`;
+}
+async function syncDemoQuestion(qid){
+ const fresh=await api('/questions/'+qid);
+ if(state.screen!=='detail'||state.detail?.id!==qid)return;
+ Object.assign(state.detail,fresh);
+ fresh.answers.forEach((answer,i)=>{
+  const row=app.querySelector(`.reading-answer[data-answer-id="${answer.id}"]`);
+  if(!row){
+   const anchor=app.querySelector('.kanshan-answer-page')?.previousElementSibling;
+   if(anchor){app.querySelector('.reading-empty')?.remove();anchor.insertAdjacentHTML('afterend',readingAnswerHTML(answer,i)+'<div class="reading-divider" aria-hidden="true"><span>✦</span></div>');}
+   return;
+  }
+  const vote=row.querySelector('[data-action="vote"]');
+  if(vote&&!vote.disabled){vote.querySelector('span:last-child').textContent=formatVoteCount(answer.votes);}
+  const count=row.querySelector('.reply-count');if(count)count.textContent=answer.replies?.length||'';
+  const list=row.querySelector('.reply-list');if(list)list.innerHTML=(answer.replies||[]).map(replyRowHTML).join('');
+ });
+}
+function startDemoNotifications(){
+ if(demoInbox.started||!state.user?.demo_interactions)return;
+ demoInbox.started=true;
+ const poll=async()=>{
+  try{
+   const result=await api('/notifications'),items=result.items||[];
+   const fresh=items.filter(item=>item.id>demoInbox.latest);
+   demoInbox.items=items;demoInbox.latest=Math.max(demoInbox.latest,...items.map(item=>item.id),0);
+   if(state.screen==='notifications'){
+    demoInbox.seen=demoInbox.latest;store('notifications:seen',demoInbox.seen);
+    const list=app.querySelector('.notifications-list');if(list&&fresh.length)list.innerHTML=notificationRowsHTML();
+   }
+   demoInbox.unread=items.filter(item=>item.id>demoInbox.seen).length;
+   app.querySelectorAll('.notification-dot').forEach(dot=>dot.hidden=!demoInbox.unread);
+   if(demoInbox.initialized&&fresh.length){
+    const latest=fresh[0];notice(`${latest.author.name} ${latest.kind==='like'?latest.body:latest.target_kind==='question'?'回答了你的问题':'追评了你的回答'} · 演示互动`);
+    const qid=state.detail?.id;if(state.screen==='detail'&&fresh.some(item=>item.question_id===qid))await syncDemoQuestion(qid);
+   }
+   demoInbox.initialized=true;
+  }catch(_){/* Reconnect on the next tick without interrupting writing. */}
+  finally{demoInbox.timer=setTimeout(poll,1200);}
+ };
+ poll();
+ window.addEventListener('pagehide',()=>clearTimeout(demoInbox.timer),{once:true});
+}
+// Navigation motion stays separate from native reading and inline updates.
+function pageMotionKey() {
+ const detail=state.screen==='detail'?`${state.detail?.id}:${!!state.detailViews.get(state.detail?.id)?.aiOpen}`:'';
+ const feed=state.screen==='feed'?`${state.mode}:${state.stage}`:'';
+ const article=state.screen==='demo-detail'?app.querySelector('h1')?.textContent:'';
+ return [state.screen,state.screen==='demo'||state.screen==='demo-detail'?state.demoChannel:'',detail,feed,article].join('|');
+}
+function installPageMotion() {
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ let previous=null,pending=null,overlay=null,animations=[],expiry=0;
+ const cancel=()=>{animations.forEach(animation=>animation.cancel());animations=[];overlay?.remove();overlay=null;};
+ const clearPending=()=>{clearTimeout(expiry);pending=null;};
+ function capture(direction=1,scoped=false) {
+  cancel();clearPending();if(reduced.matches)return;
+  const rect=app.getBoundingClientRect(),host=app.parentElement.getBoundingClientRect();
+  const copy=app.cloneNode(true);
+  const originals=[app,...app.querySelectorAll('*')],copies=[copy,...copy.querySelectorAll('*')];
+  const scrolls=originals.map((node,i)=>[copies[i],node.scrollTop,node.scrollLeft]).filter(([,top,left])=>top||left);
+  copy.removeAttribute('id');copy.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  copy.classList.add('page-motion-snapshot');copy.setAttribute('aria-hidden','true');copy.inert=true;
+  Object.assign(copy.style,{top:`${rect.top-host.top}px`,left:`${rect.left-host.left}px`,width:`${rect.width}px`,height:`${rect.height}px`});
+  const region=scoped?app.querySelector('.feed-layer,.demo-feed'):null;
+  if(region){const bounds=region.getBoundingClientRect();copy.style.clipPath=`inset(${Math.max(0,bounds.top-rect.top)}px 0 ${Math.max(0,rect.bottom-bounds.bottom)}px 0)`;}
+  pending={copy,scrolls,direction,scoped:!!region};
+  expiry=setTimeout(clearPending,5000);
+ }
+ phone.addEventListener('click',event=>{
+  const button=event.target.closest('button,a,[data-question-id]');if(!button||button.disabled)return;
+  const action=button.dataset.action;
+  const nav=button.closest('.shot-tabs,.channel-tabs,.bottom-tab-bar,.direction-switch,.stage-filter .chips');
+  const navigation=['back','stage-picker-back','home','channel','kanshan','stage-settings','profile','notifications','notification-open','ask','answer','demo-open','demo-discuss','reopen-detail','toggle-ai','answer-followup'];
+  if(!nav&&!navigation.includes(action)&&!button.matches('[data-question-id]'))return;
+  let direction=action==='back'||action==='stage-picker-back'||(action==='toggle-ai'&&state.detailViews.get(state.detail?.id)?.aiOpen)?-1:1;
+  if(nav){
+   const buttons=[...nav.querySelectorAll('button')];
+   const selected=buttons.findIndex(item=>item.matches('.active,.current,.selected,[aria-pressed="true"],[aria-current="page"]'));
+   if(selected>=0)direction=buttons.indexOf(button)<selected?-1:1;
+  }
+  capture(direction,!!nav&&!nav.matches('.bottom-tab-bar'));
+ },true);
+ phone.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.qa-feed-card[data-question-id]'))capture(1);},true);
+ phone.addEventListener('submit',event=>{if(event.target.matches('#ask-form,#answer-form,#stage-switch-form,#profile-form'))capture(-1);},true);
+ const observer=new MutationObserver(()=>{
+  const next=pageMotionKey();if(next===previous)return;
+  const first=previous===null;previous=next;cancel();
+  if(first||reduced.matches){clearPending();return;}
+  const entry=pending;clearPending();
+  const direction=entry?.direction||1;
+  const content=entry?.scoped?app.querySelector('.feed-layer,.demo-feed')||app:app;
+  if(!content.animate)return;
+  if(entry){
+   overlay=entry.copy;app.parentElement.append(overlay);
+   entry.scrolls.forEach(([node,top,left])=>{node.scrollTop=top;node.scrollLeft=left;});
+  }
+  const options={duration:420,easing:'cubic-bezier(.22,.7,.2,1)',fill:'both'};
+  const translate=x=>`translate3d(${x}%,0,0)`;
+  // Both surfaces travel together; the shared status bar stays stationary.
+  animations.push(content.animate([{transform:translate(direction*100)},{transform:translate(0)}],options));
+  if(overlay)animations.push(overlay.animate([{transform:translate(0)},{transform:translate(-direction*100)}],options));
+  const running=animations;
+  Promise.all(running.map(animation=>animation.finished)).then(()=>{if(animations===running)cancel();},()=>{});
+ });
+ // Ignore in-place likes, streamed text and native answer scrolling.
+ observer.observe(app,{childList:true});
+ reduced.addEventListener?.('change',()=>{if(reduced.matches){cancel();clearPending();}});
+ window.addEventListener('pagehide',()=>{cancel();clearPending();observer.disconnect();},{once:true});
+}
+
 installSharedShell();
+installPageMotion();
 boot();

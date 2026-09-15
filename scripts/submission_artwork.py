@@ -23,7 +23,7 @@ d.text((82,213),'同一个问题',font=font(76,True),fill=ink)
 d.text((82,321),'听见另一程',font=font(76,True),fill=blue)
 d.text((84,459),'跨阶段视角 · 有来源的资料三问',font=font(28),fill=grey)
 d.text((84,507),'再把新问题，交给真实的人。',font=font(28),fill=grey)
-for y,label,color in [(630,'轻匿名',blue),(682,'有限深入',ink),(734,'双向理解',ink)]:
+for y,label,color in [(630,'轻身份',blue),(682,'有限深入',ink),(734,'双向理解',ink)]:
     d.ellipse((85,y+10,96,y+21),fill=color)
     d.text((112,y),label,font=font(26),fill=color)
 d.rounded_rectangle((760,207,1512,765),radius=32,fill='white',outline='#E3E9F2',width=2)

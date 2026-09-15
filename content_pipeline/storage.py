@@ -333,7 +333,13 @@ def _escape_like(value: str) -> str:
 
 
 def _source_dict(row: sqlite3.Row) -> dict[str, Any]:
+    try:
+        metadata=json.loads(row["raw_content"] or '{}') if "raw_content" in row.keys() else {}
+    except (ValueError,TypeError):
+        metadata={}
+    role=metadata.get('content_role','unknown') if isinstance(metadata,dict) else 'unknown'
     return {
+        "content_role":role if role in ('fiction','knowledge','community') else 'unknown',
         "id": row["source_id"],
         "type": row["source_type"],
         "kind": row["content_kind"],
@@ -392,7 +398,7 @@ def list_library_items(
     query = """
       SELECT d.id,d.body_text,d.body_hash,d.quality_status,d.topic_method,d.created_at,
              s.id AS source_id,s.source_type,s.content_kind,s.original_url,s.canonical_url,
-             s.title,s.author_name,s.author_age,s.author_stage,s.content_scope,s.collected_at
+             s.title,s.author_name,s.author_age,s.author_stage,s.content_scope,s.collected_at,s.raw_content
       {base}
       ORDER BY d.id DESC
       LIMIT ? OFFSET ?
@@ -435,7 +441,7 @@ def get_library_item(db: sqlite3.Connection, item_id: int) -> dict[str, Any] | N
         return None
     source_rows = db.execute(
         """SELECT s.id AS source_id,s.source_type,s.content_kind,s.original_url,s.canonical_url,
-                  s.title,s.author_name,s.author_age,s.author_stage,s.content_scope,s.collected_at,
+                  s.title,s.author_name,s.author_age,s.author_stage,s.content_scope,s.collected_at,s.raw_content,
                   sd.duplicate_body,sd.quality_status AS source_quality_status,
                   sd.quality_reasons_json AS source_quality_reasons_json
            FROM content_source_documents sd JOIN content_sources s ON s.id=sd.source_id

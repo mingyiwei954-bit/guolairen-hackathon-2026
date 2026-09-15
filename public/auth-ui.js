@@ -15,7 +15,7 @@
   if(state.screen==='feed')captureFeedView();
   ++state.request;cleanupAIPoll();controls(false);state.screen='profile';
   const user=auth.user;
-  main.innerHTML=`${bar('我的')}<section class="form-screen"><div class="oauth-person">${user.avatar?`<img src="${escape(user.avatar)}" alt="" referrerpolicy="no-referrer">`:''}<h2>${escape(user.name)}</h2><p class="helper">已通过知乎登录 · 问答仍以阶段自述展示</p></div><form id="profile-form"><label for="profile-stage">我的浏览阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><button class="primary-button" type="submit">保存我的阶段</button></form><button class="secondary-button" type="button" data-oauth="logout">退出登录</button></section>`;
+  main.innerHTML=`${bar('我的')}<section class="form-screen"><div class="oauth-person">${authorBadgeHTML(state.user?.author)}<p class="helper">已连接知乎账号 · 问答以此昵称和阶段公开展示</p></div><form id="profile-form"><label for="profile-stage">我的浏览阶段</label><select id="profile-stage" name="stage">${options(state.user.stage)}</select><button class="primary-button" type="submit">保存我的阶段</button></form><button class="secondary-button" type="button" data-oauth="logout">退出登录</button></section>`;
   main.scrollTop=0;
  }
  root.addEventListener('click',async event=>{

@@ -35,7 +35,9 @@ class DemoContentTests(unittest.TestCase):
                         self.assertEqual([],first['items']);continue
                     ids=lambda page:[q['id'] for q in page['items']]
                     self.assertEqual(12,len(first['items']));self.assertNotEqual(ids(first),ids(second))
-                    self.assertFalse(set(ids(first))&set(ids(second)),'successive batches should not overlap')
+                    self.assertEqual(first['items'][0]['id'],second['items'][0]['id'],'hottest stays first')
+                    self.assertFalse(set(ids(first)[1:])&set(ids(second)[1:]),'remaining batches should rotate')
+                    self.assertEqual(max(q['answer']['votes'] for q in first['items']),first['items'][0]['answer']['votes'])
                     for q in second['items']:
                         self.assertEqual(1,q['sample']);self.assertEqual(1,q['answer']['sample'])
                         self.assertIn(q['answer']['stage'],allowed if chosen=='all' else [chosen])

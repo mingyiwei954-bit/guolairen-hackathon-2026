@@ -15,6 +15,10 @@ from urllib.parse import urlsplit, parse_qs
 
 from oauth_login import OAuthMixin, SCHEMA as OAUTH_SCHEMA
 from demo_content import initialize_demo_content, rotate_demo_feed
+from public_identity import public_identity, with_author
+import demo_reactions
+import mock_popularity
+import answer_media
 from kanshan_ai import KanshanService, migrate_kanshan
 
 from content_pipeline.ai_processor import AIInputError, AIProcessor
@@ -65,12 +69,19 @@ def initialize():
           base_votes INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);
         CREATE TABLE IF NOT EXISTS votes(session_id TEXT NOT NULL REFERENCES sessions(id),
           answer_id INTEGER NOT NULL REFERENCES answers(id), PRIMARY KEY(session_id,answer_id));
+        CREATE TABLE IF NOT EXISTS answer_replies(id INTEGER PRIMARY KEY,
+          answer_id INTEGER NOT NULL REFERENCES answers(id), owner TEXT NOT NULL REFERENCES sessions(id),
+          body TEXT NOT NULL, stage TEXT NOT NULL, created INTEGER NOT NULL, client_id TEXT NOT NULL,
+          UNIQUE(owner,client_id));
+        CREATE INDEX IF NOT EXISTS replies_answer ON answer_replies(answer_id,id);
         CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY, value TEXT);
         CREATE INDEX IF NOT EXISTS answers_question ON answers(question_id);
         CREATE INDEX IF NOT EXISTS votes_answer ON votes(answer_id);
         CREATE INDEX IF NOT EXISTS questions_recent ON questions(created DESC);
         CREATE INDEX IF NOT EXISTS question_targets_stage ON question_targets(stage,question_id);
         ''')
+        answer_media.migrate(db)
+        db.executescript(demo_reactions.SCHEMA)
         migrate_kanshan(db)
         db.executescript(OAUTH_SCHEMA)
         migrate_content_schema(db)
@@ -110,6 +121,7 @@ def initialize():
         )
 
         initialize_demo_content(db)
+        mock_popularity.seed(db)
 
 class RequestError(Exception):
     def __init__(self, message, status=400, code=None):
@@ -145,10 +157,10 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
             return {'id': sid, 'stage': 'college'}
         return dict(row)
 
-    def payload(self):
+    def payload(self, max_bytes=16000):
         try:
             size = int(self.headers.get('Content-Length', '0'))
-            if size < 0 or size > 16000:
+            if size < 0 or size > max_bytes:
                 raise RequestError('内容太长了', 413)
             value = json.loads(self.rfile.read(size).decode('utf-8'))
             if not isinstance(value, dict):
@@ -195,7 +207,7 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
 
     def answer_rows(self, db, qid, sid, stages=None):
         args = [sid, qid]
-        sql = '''SELECT a.id,a.question_id,a.body,a.stage,a.sample,a.created,
+        sql = '''SELECT a.id,a.question_id,a.body,a.stage,a.sample,a.created,a.owner,a.tags,a.topics,a.images,
                  a.base_votes+(SELECT COUNT(*) FROM votes v WHERE v.answer_id=a.id) AS votes,
                  EXISTS(SELECT 1 FROM votes v WHERE v.answer_id=a.id AND v.session_id=?) AS voted
                  FROM answers a WHERE a.question_id=?'''
@@ -203,7 +215,7 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
             sql += ' AND a.stage IN ({})'.format(','.join('?' for _ in stages))
             args.extend(stages)
         sql += ' ORDER BY votes DESC,a.created ASC,a.id ASC'
-        return [dict(row) for row in db.execute(sql, args)]
+        return [answer_media.serialize(with_author(dict(row))) for row in db.execute(sql, args)]
 
     def do_GET(self):
         self.new_session = None
@@ -216,6 +228,12 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
         if not path.path.startswith('/api/'):
             return self.static(path.path)
         try:
+            if path.path == '/api/zhihu/topics':
+                query = parse_qs(path.query).get('q', [''])[0].strip()
+                if not 2 <= len(query) <= 40:
+                    raise RequestError('请输入 2 到 40 字的关键词')
+                from zhihu_topics import search_topics
+                return self.send_json(search_topics(query))
             if path.path == '/api/ai/status':
                 return self.send_json(ai_service().public_status())
             question_ai_parts = [part for part in path.path.split('/') if part]
@@ -286,7 +304,9 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                 user = self.session(db)
                 sid = user['id']
                 if path.path == '/api/me':
-                    result = {'stage': user['stage'], 'stages': STAGES}
+                    result = {'stage': user['stage'], 'stages': STAGES, 'author':public_identity(sid), 'demo_interactions':demo_reactions.enabled()}
+                elif path.path == '/api/notifications':
+                    result = demo_reactions.notifications(db,sid)
                 elif path.path == '/api/feed':
                     params = parse_qs(path.query)
                     mode = params.get('mode', ['older'])[0]
@@ -299,8 +319,8 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                         raise RequestError('这个阶段不在当前浏览方向内')
                     answer_stages = [chosen] if chosen != 'all' else allowed
                     items = []
-                    for row in db.execute('SELECT id,title,body,stage,target,sample,created FROM questions ORDER BY created DESC,id DESC LIMIT 200'):
-                        q = dict(row)
+                    for row in db.execute('SELECT id,title,body,stage,target,sample,created,owner FROM questions ORDER BY created DESC,id DESC LIMIT 200'):
+                        q = with_author(dict(row),'question')
                         q['targets'] = self.target_rows(db, q['id'], q['target'])
                         eligible = self.answer_rows(db, q['id'], sid, answer_stages) if answer_stages else []
                         if not eligible and not set(q['targets']).intersection(answer_stages):
@@ -317,12 +337,16 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                         qid = int(path.path.rsplit('/', 1)[1])
                     except ValueError:
                         raise RequestError('问题不存在', 404)
-                    row = db.execute('SELECT id,title,body,stage,target,sample,created FROM questions WHERE id=?', (qid,)).fetchone()
+                    row = db.execute('SELECT id,title,body,stage,target,sample,created,owner FROM questions WHERE id=?', (qid,)).fetchone()
                     if not row:
                         raise RequestError('问题不存在', 404)
-                    result = dict(row)
+                    result = with_author(dict(row),'question')
                     result['targets'] = self.target_rows(db, qid, result['target'])
                     result['answers'] = self.answer_rows(db, qid, sid)
+                    for answer in result['answers']:
+                        answer['replies'] = [with_author(dict(reply)) for reply in db.execute(
+                            "SELECT id,answer_id,owner,body,stage,created,client_id LIKE 'mock-heat-v1:%' AS sample FROM answer_replies WHERE answer_id=? ORDER BY id", (answer['id'],))]
+
                 else:
                     raise RequestError('页面不存在', 404)
             self.send_json(result)
@@ -336,12 +360,13 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.new_session = None
+        demo_job = None
         try:
             origin = self.headers.get('Origin')
             if origin and urlsplit(origin).netloc != self.headers.get('Host'):
                 raise RequestError('请求来源不匹配', 403)
-            data = self.payload()
             path = urlsplit(self.path).path
+            data = self.payload(answer_media.MAX_UPLOAD_BODY if path == '/api/uploads' else 16000)
             if self.oauth_post(path, connect):
                 return
             question_ai_parts = [part for part in path.split('/') if part]
@@ -394,7 +419,9 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
             with connect() as db:
                 user = self.session(db)
                 sid = user['id']
-                if path == '/api/profile':
+                if path == '/api/uploads':
+                    result = answer_media.save_upload(db, DB_PATH, sid, data.get('data_url'))
+                elif path == '/api/profile':
                     stage = self.stage(data.get('stage'))
                     db.execute('UPDATE sessions SET stage=? WHERE id=?', (stage, sid))
                     result = {'stage': stage}
@@ -415,17 +442,42 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                         [(qid, stage_id, position) for position, stage_id in enumerate(targets)],
                     )
                     result = {'id': qid}
+                    demo_job = demo_reactions.queue_job(db,sid,'question',qid,qid,title+'\n'+body)
                 elif path == '/api/answers':
-                    body = self.field(data, 'body', 1200)
+                    body = self.field(data, 'body', 1200, False)
+                    media = answer_media.metadata(db, sid, data)
+                    if not body and not media['images']:
+                        raise RequestError('写下你的回答，或者添加一张图片')
                     qid = data.get('question_id')
                     if not isinstance(qid, int) or not db.execute('SELECT 1 FROM questions WHERE id=?', (qid,)).fetchone():
                         raise RequestError('问题不存在', 404)
                     recent = db.execute('SELECT COUNT(*) FROM answers WHERE owner=? AND created>?', (sid, int(time.time())-60)).fetchone()[0]
                     if recent >= 10:
                         raise RequestError('稍等一下再回答吧', 429)
-                    aid = db.execute('INSERT INTO answers(question_id,body,stage,owner,created) VALUES(?,?,?,?,?)',
-                                     (qid, body, user['stage'], sid, int(time.time()))).lastrowid
+                    aid = db.execute('INSERT INTO answers(question_id,body,stage,owner,created,tags,topics,images) VALUES(?,?,?,?,?,?,?,?)',
+                                     (qid, body, user['stage'], sid, int(time.time()),
+                                      json.dumps(media['tags'],ensure_ascii=False),json.dumps(media['topics'],ensure_ascii=False),json.dumps(media['images']))).lastrowid
                     result = {'id': aid}
+                    question_title = db.execute('SELECT title FROM questions WHERE id=?',(qid,)).fetchone()[0]
+                    demo_job = demo_reactions.queue_job(db,sid,'answer',aid,qid,question_title+'\n'+body)
+                elif path == '/api/replies':
+                    body = self.field(data, 'body', 600)
+                    client_id = self.field(data, 'client_id', 100)
+                    aid = data.get('answer_id')
+                    if type(aid) is not int or not db.execute('SELECT 1 FROM answers WHERE id=?', (aid,)).fetchone():
+                        raise RequestError('回答不存在', 404)
+                    existing = db.execute('SELECT * FROM answer_replies WHERE owner=? AND client_id=?', (sid, client_id)).fetchone()
+                    if existing:
+                        if existing['answer_id'] != aid or existing['body'] != body:
+                            raise RequestError('这条追评的发送编号已使用', 409)
+                        rid = existing['id']
+                    else:
+                        recent = db.execute('SELECT COUNT(*) FROM answer_replies WHERE owner=? AND created>?', (sid, int(time.time())-60)).fetchone()[0]
+                        if recent >= 10:
+                            raise RequestError('稍等一下再追评吧', 429)
+                        rid = db.execute('INSERT INTO answer_replies(answer_id,owner,body,stage,created,client_id) VALUES(?,?,?,?,?,?)',
+                            (aid, sid, body, user['stage'], int(time.time()), client_id)).lastrowid
+                    result = with_author(dict(db.execute('SELECT id,answer_id,owner,body,stage,created FROM answer_replies WHERE id=?', (rid,)).fetchone()))
                 elif path == '/api/vote':
                     aid, active = data.get('answer_id'), data.get('active')
                     if not isinstance(aid, int) or not isinstance(active, bool):
@@ -440,23 +492,47 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
                     result = {'votes': count, 'voted': active}
                 else:
                     raise RequestError('接口不存在', 404)
+            demo_reactions.launch(DB_PATH,demo_job)
             self.send_json(result)
         except RequestError as e:
             payload = {'error': e.message}
             if e.code:
                 payload['error_code'] = e.code
             self.send_json(payload, e.status)
-        except sqlite3.Error:
+        except answer_media.MediaError as e:
+            self.send_json({'error': str(e)}, e.status)
+        except (sqlite3.Error, OSError):
             self.send_json({'error': '保存失败，请稍后再试'}, 503)
 
     def static(self, path):
-        files = {'/mock-library.js': ('mock-library.js', 'text/javascript; charset=utf-8'), '/screen-replicas.js': ('screen-replicas.js', 'text/javascript; charset=utf-8'), '/screen-replicas.css': ('screen-replicas.css', 'text/css; charset=utf-8'), '/': ('index.html', 'text/html; charset=utf-8'), '/index.html': ('index.html', 'text/html; charset=utf-8'),
+        upload_match = answer_media.UPLOAD_PATH.fullmatch(path)
+        if upload_match:
+            filename = upload_match.group(1)+'.'+upload_match.group(2)
+            local = answer_media.upload_directory(DB_PATH) / filename
+            if not local.is_file():
+                self.send_error(404)
+                return
+            raw = local.read_bytes()
+            mime = {'jpg':'image/jpeg','png':'image/png','webp':'image/webp'}[upload_match.group(2)]
+            self.send_response(200)
+            self.send_header('Content-Type', mime)
+            self.send_header('Content-Length', str(len(raw)))
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
+            self.end_headers()
+            self.wfile.write(raw)
+            return
+        files = {'/library.html': ('library.html', 'text/html; charset=utf-8'), '/library.js': ('library.js', 'text/javascript; charset=utf-8'), '/library.css': ('library.css', 'text/css; charset=utf-8'), '/mock-library.js': ('mock-library.js', 'text/javascript; charset=utf-8'), '/screen-replicas.js': ('screen-replicas.js', 'text/javascript; charset=utf-8'), '/screen-replicas.css': ('screen-replicas.css', 'text/css; charset=utf-8'), '/': ('index.html', 'text/html; charset=utf-8'), '/index.html': ('index.html', 'text/html; charset=utf-8'),
                  '/style.css': ('style.css', 'text/css; charset=utf-8'), '/splash.css': ('splash.css', 'text/css; charset=utf-8'),
                  '/auth-ui.js': ('auth-ui.js', 'text/javascript; charset=utf-8'),
                  '/demo-channels.css': ('demo-channels.css', 'text/css; charset=utf-8'),
                  '/auth-ui.css': ('auth-ui.css', 'text/css; charset=utf-8'),
                  '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/splash.js': ('splash.js', 'text/javascript; charset=utf-8'),
                  '/assets/welcome-page.jpg': ('assets/welcome-page.jpg', 'image/jpeg')}
+        files['/answer-editor.css'] = ('answer-editor.css', 'text/css; charset=utf-8')
+        files['/topic-tools.js'] = ('topic-tools.js', 'text/javascript; charset=utf-8')
+        for avatar in range(24):
+            files['/assets/avatars/{:02d}.svg'.format(avatar)]=('assets/avatars/{:02d}.svg'.format(avatar),'image/svg+xml')
         if path not in files:
             self.send_error(404)
             return
@@ -467,7 +543,7 @@ class Handler(OAuthMixin, BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(raw)))
         self.send_header('Cache-Control', 'no-cache')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.zhimg.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://*.zhimg.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'")
         self.end_headers()
         self.wfile.write(raw)
 
@@ -476,4 +552,5 @@ class Server(ThreadingMixIn, HTTPServer):
 
 if __name__ == '__main__':
     initialize()
+    demo_reactions.resume(DB_PATH)
     Server((os.environ.get('APP_HOST', '127.0.0.1'), int(os.environ.get('APP_PORT', '5173'))), Handler).serve_forever()

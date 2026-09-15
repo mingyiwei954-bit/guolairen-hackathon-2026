@@ -98,12 +98,17 @@ cat > /etc/systemd/system/zhihu-demo.service.d/runtime.conf <<'UNIT'
 ExecStart=
 ExecStart=/srv/zhihu-hackathon/product/runtime-venv/bin/python /srv/zhihu-hackathon/product/current/server.py
 EnvironmentFile=/etc/zhihu-hackathon/deepseek.env
+Environment=DEMO_INTERACTIONS=1
 UNIT
 "$python" - <<'PY'
 from pathlib import Path
 import re
 p=Path('/etc/nginx/conf.d/zhihu.yunzhicompany.com.conf')
 t=p.read_text(); t=re.sub(r'proxy_read_timeout\s+\d+s;', 'proxy_read_timeout 150s;',t)
+if 'client_max_body_size' in t:
+    t=re.sub(r'client_max_body_size\s+[^;]+;', 'client_max_body_size 8m;', t)
+else:
+    t=t.replace('    server_name zhihu.yunzhicompany.com;', '    server_name zhihu.yunzhicompany.com;\n    client_max_body_size 8m;')
 if 'location ^~ /submission/' not in t:
     needle='    location / {\n        proxy_pass'
     if needle not in t: raise SystemExit('Unknown nginx shape')
@@ -118,8 +123,15 @@ nginx -t
 systemctl stop zhihu-demo.service
 cd "$release_dir"
 APP_DB="$base/shared/app.sqlite3" "$python" -c 'import server; server.initialize()'
-"$python" -m content_pipeline --db "$base/shared/app.sqlite3" import-json "$stage/sources.json"
-"$python" -m content_pipeline --db "$base/shared/app.sqlite3" run-once --limit 5
+"$python" - "$stage/sources.json" "$base/shared/app.sqlite3" "$stage" <<'PYIMPORT'
+import json,sys
+from pathlib import Path
+from scripts.collect_zhihu_library import import_records
+records=json.loads(Path(sys.argv[1]).read_text())
+print(import_records(records,sys.argv[2],Path(sys.argv[3])))
+PYIMPORT
+mkdir -p "$base/shared/uploads"
+chown zhihu-demo:zhihu-demo "$base/shared/uploads"
 chown zhihu-demo:zhihu-demo "$base/shared/app.sqlite3"*
 ln -s "$release_dir" "$base/product/current.next"
 mv -Tf "$base/product/current.next" "$base/product/current"

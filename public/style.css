@@ -777,6 +777,7 @@ a { color: inherit; }
 
 /* Answer reader: one response per viewport, no cards or discovery modules. */
 #app.answer-flow-mode{overflow:hidden;padding:0}
+.answer-flow-shell.answer-deck-mode{touch-action:pan-x pinch-zoom}
 .answer-flow-shell{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%;min-height:0;background:#fff}
 .answer-flow-header{padding:0 16px 8px;border-bottom:1px solid #f0f0f0;min-height:0;max-height:38vh;overflow:auto;scrollbar-width:none}
 .answer-flow-toolbar{height:43px;display:flex;align-items:center;gap:12px;color:#959ba4;font-size:11px}.answer-flow-toolbar>button{font-size:34px;font-weight:300;line-height:1;width:28px;padding:0;text-align:left;color:#262b30}.answer-flow-toolbar>span{flex:1}.answer-flow-pager{display:flex;align-items:center;gap:5px;white-space:nowrap}.answer-flow-pager button{font-size:15px;width:26px;min-height:34px;color:#7e8793}.answer-flow-pager button:disabled{opacity:.3;cursor:default}
@@ -832,3 +833,234 @@ a { color: inherit; }
 .kanshan-sources summary{cursor:pointer;color:#567da8;overflow-wrap:anywhere}.kanshan-sources blockquote{margin:8px 0;padding-left:10px;border-left:2px solid #e5eaf0}.kanshan-sources a{color:#1772f6}.kanshan-sources small{display:block;margin-top:5px;color:#a0a7af}
 .kanshan-about{position:relative;font-size:11px;color:#969ea8}.kanshan-about summary{cursor:pointer;list-style:none;padding:12px 0}.kanshan-about p{position:absolute;bottom:38px;left:0;width:min(240px,65vw);background:#fff;box-shadow:0 3px 18px #00000010;border:1px solid #eee;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;z-index:3}
 .kanshan-return{font-size:12px;color:#1772f6;padding:10px 0;background:none}
+
+/* Subtle navigation feedback; no layout/scroll-position changes. */
+@media(prefers-reduced-motion:no-preference){
+ .shot-tabs button,.channel-tabs button,.bottom-tab-bar button,.direction-switch button,.stage-filter .chips button,.shot-follow-filters button{transition:color 260ms ease,background-color 260ms ease,opacity 260ms ease}
+}
+
+/* Continuous reading: one native scroll surface, quiet editorial spacing. */
+.reading-shell{grid-template-rows:46px minmax(0,1fr) auto;touch-action:pan-y pinch-zoom;background:#fff}
+.reading-toolbar{display:flex;align-items:center;gap:12px;padding:0 21px;border-bottom:1px solid #f3f3f1;font-size:13px;color:#535955}
+.reading-toolbar>button{font-size:32px;font-weight:300;width:25px;text-align:left;line-height:1}
+.reading-toolbar-note{margin-left:auto;font-size:10px;letter-spacing:2px;color:#a9ada8}
+.answer-stream{overflow-y:auto;min-height:0;padding:25px 24px 12px;overscroll-behavior-y:contain;touch-action:pan-y pinch-zoom;scrollbar-width:thin;scrollbar-color:#e6e8e5 transparent;outline:none}
+.reading-eyebrow{font-size:10px;color:#9a9e97;letter-spacing:2px;margin:0 0 12px}
+.reading-question h1{font-size:24px;font-weight:650;line-height:1.55;letter-spacing:-.5px;margin:0 0 14px;color:#262c29}
+.reading-background{font-size:14px;line-height:1.85;color:#858b85;white-space:pre-wrap}
+.reading-meta{font-size:11px;color:#a0a59e;margin:0 0 30px}.reading-meta span{padding:0 7px}
+.reading-answer{position:static;height:auto;background:none;scroll-margin-top:18px}
+.reading-answer .answer-person{align-items:center;gap:9px;margin-bottom:16px}.reading-answer .answer-person strong{font-size:13px;font-weight:550}.reading-answer .answer-person>span:last-child{margin-left:auto;font-size:10px}
+.reading-answer .reading-avatar{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:#f1f3ed;color:#92998c;font-size:11px}
+.reading-answer .answer-full-text{font-size:16px;line-height:1.95;letter-spacing:.15px;margin:0 0 17px;color:#3b413d;user-select:text}
+.reading-actions{display:flex;align-items:center;gap:19px;color:#a0a69f;font-size:11px}.reading-actions button{min-height:34px;padding:2px 0}.reading-actions button:last-child{margin-left:auto;color:#7c8b7e}.reading-actions .voted{color:#1772f6}
+.reading-divider{display:flex;align-items:center;justify-content:center;gap:14px;margin:23px 0 28px;color:#c9cec5;font-size:9px}.reading-divider:before,.reading-divider:after{content:'';width:35px;height:1px;background:#eff0ec}
+.reading-answer .kanshan-person{margin-bottom:14px}.reading-answer .kanshan-about{font-size:10px;color:#a2a79f;line-height:1.8;margin-top:18px}
+.reading-end{text-align:center;font-size:10px;letter-spacing:1px;color:#b4b9b0;margin:34px 0 22px}.reading-empty{font-size:14px;color:#959c92;line-height:1.8}
+.reading-bottom{display:flex;align-items:center;gap:20px;padding:11px 22px calc(11px + env(safe-area-inset-bottom));border-top:1px solid #f0f1ed;background:#fffffff5;font-size:11px;color:#a4aaa0}.reading-bottom>button:first-child{display:flex;align-items:center;justify-content:space-between;flex:1;min-height:35px;background:#f4f6f1;border-radius:20px;padding:8px 15px;font-size:12px;color:#63775c}.reading-bottom>span{font-size:10px;white-space:nowrap}
+@container(max-width:350px){.answer-stream{padding-left:18px;padding-right:18px}.reading-question h1{font-size:22px}}
+
+/* Ask Kanshan: invitation, centered thinking, soft progressive text reveal. */
+.kanshan-invite{display:flex;align-items:center;gap:18px;width:100%;min-height:104px;padding:20px 22px;text-align:left;border:1px solid #e9eee7;border-radius:17px;background:linear-gradient(115deg,#f4f7f0,#fafbf8);color:#53664e;transition:background-color .16s ease,transform .16s ease}
+.kanshan-invite:active{transform:scale(.99)}.kanshan-invite strong{display:block;font-size:21px;letter-spacing:1px;font-weight:550}.kanshan-invite small{display:block;margin-top:7px;font-size:11px;color:#9aa591;letter-spacing:.5px}.kanshan-invite-arrow{margin-left:auto;color:#a6b39d;font-size:25px;font-weight:300}
+.kanshan-invite-avatar .refresh-dog{width:64px;height:48px}.kanshan-invite-avatar *{animation:none!important}
+.reading-answer .kanshan-state:has(.kanshan-thinking){display:flex;min-height:205px;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px 10px 30px}.reading-answer .kanshan-thinking{width:105px;height:75px;margin:0 auto 16px}.reading-answer .kanshan-thinking .refresh-dog{width:105px;height:75px}.reading-answer .kanshan-state strong{font-size:13px;font-weight:400;color:#85907e}.reading-answer .kanshan-state p{font-size:10px;color:#abb1a6;margin-top:9px}
+.kanshan-ink{animation:kanshan-ink-in 420ms ease-out both;animation-delay:var(--ink-delay)}
+@keyframes kanshan-ink-in{from{opacity:0;filter:blur(1.4px)}to{opacity:1;filter:blur(0)}}
+@media(prefers-reduced-motion:reduce){.kanshan-ink{animation:none}.kanshan-invite{transition:none}}
+
+/* Detail uses the same neutral typography and blue accents as the community shell. */
+.reading-shell{position:relative;grid-template-rows:minmax(0,1fr) auto;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#121212}
+.reading-back{position:absolute;top:8px;left:14px;z-index:5;display:grid;place-items:center;width:44px;height:44px;padding:8px;border-radius:50%;background:rgba(255,255,255,.96);border:1px solid #ebebeb;box-shadow:0 2px 7px #00000006;color:#444}
+.reading-back svg{width:28px;height:28px}
+.reading-shell .answer-stream{padding:60px 20px 12px;scrollbar-color:#e5e5e5 transparent}
+.reading-shell .answer-ai-view{padding:60px 20px 24px}
+.reading-question h1{font-size:22px;line-height:1.5;font-weight:600;letter-spacing:0;color:#121212;margin-bottom:14px}
+.reading-background{font-size:15px;line-height:1.7;color:#646464}
+.reading-meta{font-size:12px;color:#8590a6;margin-bottom:25px;padding-bottom:18px;border-bottom:1px solid #f1f1f1}
+.reading-answer .answer-person strong{font-size:15px;font-weight:600;color:#121212}
+.reading-answer .answer-person>span:last-child{font-size:14px;font-weight:400;line-height:1.4;color:#a5acb8}
+.reading-answer .reading-avatar{width:30px;height:30px;background:#f6f6f6;color:#8590a6;font-size:12px}
+.reading-answer .answer-full-text{font-size:17px;line-height:1.8;font-weight:400;letter-spacing:0;color:#121212}
+.reading-actions{font-size:12px;color:#8590a6}.reading-actions button:last-child{color:#8590a6}.reading-actions .voted{color:#1772f6}
+.reading-divider{color:#c4c8cf;margin:22px 0 26px}.reading-divider:before,.reading-divider:after{background:#ebebeb}
+.reading-end{color:#bfbfbf;letter-spacing:0}
+.reading-bottom{background:#fff;border-top-color:#ebebeb;color:#8590a6}
+.reading-bottom>button:first-child{background:#eef6ff;color:#1772f6;font-size:14px;font-weight:500;border-radius:18px}
+.reading-shell .kanshan-invite{background:#f5f9ff;border-color:#e7eff9;color:#1772f6;border-radius:12px}
+.reading-shell .kanshan-invite strong{font-size:20px;font-weight:600;letter-spacing:0}
+.reading-shell .kanshan-invite small{color:#8590a6;letter-spacing:0}.reading-shell .kanshan-invite-arrow{color:#1772f6}
+.reading-answer .kanshan-state strong{color:#646464}.reading-answer .kanshan-state p,.reading-answer .kanshan-about{color:#8590a6}
+
+.reading-question{margin-bottom:28px}.reading-actions button:last-child{margin-left:0}
+
+/* More legible, shorter source previews; full citations remain available. */
+.reading-shell .kanshan-sources{font-size:13px;line-height:1.75;gap:12px}
+.reading-shell .kanshan-sources summary{padding:4px 0;color:#617b9e}
+.reading-shell .kanshan-sources blockquote{font-size:14px;line-height:1.8;margin:9px 0;padding-left:11px;color:#8590a6}
+.reading-shell .kanshan-sources a{display:inline-block;font-size:13px;margin:2px 0 8px}
+.reading-shell .kanshan-more-sources>summary{color:#8590a6;font-size:12px}
+.kanshan-more-sources>div{display:grid;gap:12px;margin-top:8px}
+.reading-shell .kanshan-footnote,.reading-answer .kanshan-about{font-size:12px;line-height:1.75}
+
+/* Public display identities, shared across cards, questions and answers. */
+.public-author{display:inline-flex;align-items:center;gap:8px;min-width:0;color:#444;font-size:13px;font-weight:500;line-height:1.4}
+.public-author img{display:block;flex:none;width:28px;height:28px;border-radius:50%;object-fit:cover;background:#f4f6f8}
+.public-author>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.answer-content>.public-author{display:flex;margin:1px 0 8px;font-size:12px;color:#646464}.answer-content>.public-author img{width:21px;height:21px}
+.reading-answer .answer-person>.public-author{margin-left:0;gap:9px;color:#121212;font-size:15px;font-weight:600;flex:1;min-width:0}
+.reading-answer .answer-person>.public-author img{width:32px;height:32px}
+.reading-answer .answer-person>span:last-child:not(.public-author){flex:none}
+.question-public-author{display:flex;align-items:center;gap:9px;margin:16px 0 4px;font-size:12px;color:#8590a6}.question-public-author .public-author{font-size:12px;color:#646464}.question-public-author img{width:22px;height:22px}
+.composer-public-author{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:#8590a6;margin-bottom:20px}
+.oauth-person>.public-author{font-size:18px}.oauth-person>.public-author img{width:48px;height:48px}
+
+/* A larger, unmistakable heart for every Guolairen vote surface. */
+button[data-action="vote"] .vote-heart,
+.answer-footer .vote-heart{
+  position:relative;
+  z-index:0;
+  display:inline-grid;
+  place-items:center;
+  flex:none;
+  width:1em;
+  height:1em;
+  color:currentColor;
+  font-size:24px;
+  line-height:1;
+  transform-origin:center;
+  overflow:visible;
+  backface-visibility:hidden;
+  will-change:transform;
+  transform:translateZ(0);
+  transition:transform 90ms ease-out;
+}
+.vote-heart svg{display:block;width:100%;height:100%;overflow:visible}
+.vote-heart path{fill:transparent;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;transition:fill 120ms ease-out}
+.vote-heart.is-filled path,
+button[data-action="vote"].voted .vote-heart path{fill:currentColor}
+button[data-action="vote"]:active .vote-heart{transform:translateZ(0) scale(.9)}
+.guolairen-shell .qa-feed-card .item-vote{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:44px;
+  min-height:44px;
+  padding:5px 0;
+  line-height:1;
+}
+.guolairen-shell .qa-feed-card .item-vote .vote-heart{font-size:24px}
+.reading-actions button[data-action="vote"]{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-width:52px;
+  min-height:44px;
+  padding:5px 2px;
+}
+.reading-actions button[data-action="vote"] .vote-heart{font-size:29px}
+.answer-footer button[data-action="vote"]{display:inline-flex;align-items:center;gap:5px;min-height:44px}
+button[data-action="vote"].is-heart-popping .vote-heart{animation:guolairen-heart-pop 500ms cubic-bezier(.2,.8,.25,1) both}
+button[data-action="vote"].is-heart-popping .vote-heart::before,
+button[data-action="vote"].is-heart-popping .vote-heart::after{
+  position:absolute;
+  top:50%;
+  left:50%;
+  z-index:-1;
+  pointer-events:none;
+  content:"";
+}
+button[data-action="vote"].is-heart-popping .vote-heart::before{
+  width:32px;
+  height:32px;
+  border:2px solid currentColor;
+  border-radius:50%;
+  animation:guolairen-heart-ring 580ms ease-out both;
+}
+button[data-action="vote"].is-heart-popping .vote-heart::after{
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 -20px currentColor,15px -13px currentColor,20px 2px currentColor,13px 16px currentColor,-13px 16px currentColor,-20px 2px currentColor,-15px -13px currentColor;
+  animation:guolairen-heart-sparks 540ms ease-out both;
+}
+@keyframes guolairen-heart-pop{
+  0%{transform:translateZ(0) scale(1)}
+  24%{transform:translateZ(0) scale(.86)}
+  56%{transform:translateZ(0) scale(1.26)}
+  100%{transform:translateZ(0) scale(1)}
+}
+@keyframes guolairen-heart-ring{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}
+  24%{opacity:.42}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.45)}
+}
+@keyframes guolairen-heart-sparks{
+  0%,28%{opacity:0;transform:translate(-50%,-50%) scale(.15)}
+  48%{opacity:.75}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.08)}
+}
+@media(prefers-reduced-motion:reduce){
+  button[data-action="vote"].is-heart-popping .vote-heart,
+  button[data-action="vote"].is-heart-popping .vote-heart::before,
+  button[data-action="vote"].is-heart-popping .vote-heart::after{animation:none}
+  button[data-action="vote"] .vote-heart{transition:none}
+  button[data-action="vote"].is-heart-popping .vote-heart::before,
+  button[data-action="vote"].is-heart-popping .vote-heart::after{display:none}
+}
+
+/* Two clipped page surfaces slide inside the device, below the time bar. */
+.phone-content{position:relative;overflow:hidden}
+.page-motion-snapshot{position:absolute;z-index:80;pointer-events:none!important;background:#fff;min-width:0;margin:0;contain:paint}
+.page-motion-snapshot.answer-flow-mode{overflow:hidden;padding:0}
+.page-motion-snapshot *{pointer-events:none!important;animation:none!important;transition:none!important}
+
+/* Detail bookmarks: a quiet outline, warm yellow when saved. */
+.reading-actions button[data-action="answer-save"]{display:inline-flex;align-items:center;justify-content:center;width:44px;min-height:44px;padding:5px 2px;color:#8590a6}
+button[data-action="answer-save"] .save-star{display:inline-flex;position:relative;align-items:center;justify-content:center;width:27px;height:27px;flex:none;transform-origin:center}
+.save-star svg{display:block;width:100%;height:100%;overflow:visible}
+.save-star path{fill:transparent;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:fill 160ms ease,stroke 160ms ease}
+button[data-action="answer-save"][aria-pressed="true"]{color:#e6af28}
+button[data-action="answer-save"][aria-pressed="true"] .save-star path{fill:#f6c64b;stroke:#e6af28}
+button[data-action="answer-save"].is-save-popping .save-star{animation:guolairen-save-pop 440ms cubic-bezier(.2,.8,.25,1)}
+button[data-action="answer-save"].is-save-popping .save-star::after{content:"";position:absolute;inset:1px;border:1.5px solid #f2c34e;border-radius:50%;pointer-events:none;animation:guolairen-save-ring 480ms ease-out both}
+@keyframes guolairen-save-pop{0%{transform:scale(1)}25%{transform:scale(.8)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes guolairen-save-ring{0%{transform:scale(.65);opacity:.65}100%{transform:scale(1.8);opacity:0}}
+@media(prefers-reduced-motion:reduce){button[data-action="answer-save"].is-save-popping .save-star,button[data-action="answer-save"].is-save-popping .save-star::after{animation:none}.save-star path{transition:none}}
+
+/* Conversation threads: avatar rail inspired by X, native continuous reading. */
+.reading-actions button[data-action="toggle-replies"]{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:44px;min-height:44px;color:#8590a6}
+.reply-icon{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.reading-actions button[aria-expanded="true"]{color:#1772f6}
+.reading-answer.thread-open{position:relative}
+.thread-open>.answer-full-text,.thread-open>.reading-actions{margin-left:40px}
+.thread-open::before{content:"";position:absolute;left:15px;top:42px;bottom:50px;width:1.5px;background:#e1e5eb;pointer-events:none}
+.reply-thread{margin-top:10px;position:relative}.reply-thread[hidden]{display:none}
+.reply-row,.reply-form{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr);gap:8px;margin:0;padding:12px 0}
+.reply-row>img,.reply-form>img{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px #fff;margin:0 2px}
+.reply-person{display:flex;align-items:center;gap:10px;min-height:28px;flex-wrap:wrap}.reply-person strong{font-size:14px;font-weight:600;color:#222}.reply-person span{font-size:12px;color:#a5acb8}
+.reply-row p{font-size:15px;line-height:1.8;color:#414750;margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.reply-form textarea{display:block;width:100%;min-height:66px;resize:vertical;border:0;border-radius:0;background:transparent;padding:3px 0;color:#333;font:inherit;font-size:15px;line-height:1.7;box-shadow:none}
+.reply-form textarea:focus{outline:none}.reply-form textarea:focus-visible{box-shadow:0 1px #b4cff6}
+.reply-form-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}.reply-form-bottom>span{font-size:12px;color:#97a0ad}
+.reply-form button{border:0;background:#1772f6;color:#fff;font-size:13px;font-weight:500;border-radius:20px;padding:7px 18px;min-height:34px}.reply-form button:disabled{opacity:.5}
+.reply-status{font-size:12px;color:#8590a6;line-height:1.6;margin:5px 0 0}.reply-status:empty{display:none}
+
+.reply-form::before{content:"";position:absolute;left:14px;top:42px;bottom:0;width:4px;background:#fff;pointer-events:none}
+
+/* Demo activity is visibly attributed and updates without replacing the reading surface. */
+.ai-role{display:inline-block;flex:none;font-size:10px;font-weight:400;color:#8d98a8;white-space:nowrap}
+.bottom-tab-bar [data-action="notifications"]{position:relative}.notification-dot{position:absolute;top:6px;left:calc(50% + 10px);width:6px;height:6px;border-radius:50%;background:#f05a5a}.notification-dot[hidden]{display:none}
+.notifications-list{overflow-y:auto;min-height:0;padding:4px 20px 24px}.notification-row{display:flex;width:100%;gap:12px;text-align:left;padding:20px 0;border-bottom:1px solid #f0f1f3;background:none}.notification-row>img{width:34px;height:34px;border-radius:50%;flex:none}.notification-row>span{min-width:0}.notification-row strong{font-size:14px;font-weight:600;color:#333}.notification-row strong small{font-size:12px;font-weight:400;color:#8893a3}.notification-row p{font-size:14px;line-height:1.7;color:#555;margin:7px 0;overflow-wrap:anywhere}.notification-row time{font-size:11px;color:#a0a8b3}
+
+/* Keep the reading position fixed when the thinking placeholder becomes an answer. */
+.reading-shell .answer-stream{overflow-anchor:none}
+
+/* Images and lightweight topics live with each answer. */
+.answer-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:14px 0 16px}.answer-images.single-image{grid-template-columns:minmax(0,1fr)}
+.answer-images>button{padding:0;border:0;border-radius:10px;overflow:hidden;background:#f5f6f8;min-width:0;display:block;cursor:zoom-in}.answer-images img{display:block;width:100%;height:170px;object-fit:cover}.answer-images.single-image img{height:auto;max-height:360px;object-fit:cover}
+.answer-topics{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 14px;font-size:12px;line-height:1.5}.answer-topic{color:#4879b6;background:#f1f6fc;border-radius:12px;padding:3px 9px}.answer-label{color:#87909a;padding:3px 6px}.thread-open>.answer-images,.thread-open>.answer-topics{margin-left:40px}
+.answer-image-viewer{position:fixed;inset:0;width:min(94vw,900px);max-width:94vw;max-height:90dvh;margin:auto;padding:0;border:0;border-radius:12px;overflow:visible;background:transparent}.answer-image-viewer::backdrop{background:rgba(15,18,23,.82)}.answer-image-viewer>img{display:block;max-width:100%;max-height:86dvh;width:auto;height:auto;margin:auto;object-fit:contain;border-radius:8px}.answer-image-viewer>button{position:absolute;right:8px;top:8px;z-index:1;width:40px;height:40px;border-radius:50%;background:#fff;color:#555;font-size:28px;box-shadow:0 1px 8px #0002}
+
+.topic-search-label{font-size:12px;line-height:1.6;color:#9aa1ab;margin:10px 0}.topic-search-result{display:block;padding:9px 0;color:#507cab;font-size:13px;line-height:1.6;text-decoration:none;border-top:1px solid #f1f3f5}.topic-search-result span{color:#9ba9ba}

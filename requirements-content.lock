@@ -21,3 +21,4 @@ trafilatura==2.2.0
 typing_extensions==4.16.0
 tzlocal==5.4.4
 urllib3==2.7.0
+Pillow==12.3.0

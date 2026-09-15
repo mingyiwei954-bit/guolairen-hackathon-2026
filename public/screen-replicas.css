@@ -66,12 +66,14 @@
 .guolairen-shell .stage-filter .my-stage-entry{min-height:24px;padding:0 0 0 9px;font-size:10.5px;line-height:1.2}
 .guolairen-shell .my-stage-entry>span:last-child{font-size:14px;line-height:12px}
 /* Voting sits beneath the stage label, leaving the full answer column for text. */
-.guolairen-shell .qa-feed-card{padding-top:10px;padding-bottom:10px}
-.guolairen-shell .qa-feed-card .answer-section{margin-top:9px}
+.guolairen-shell .qa-feed-card{padding-top:8px;padding-bottom:8px}
+.guolairen-shell .qa-feed-card .answer-section{margin-top:7px}
 .guolairen-shell .qa-feed-card .answer-content{display:block}
 .guolairen-shell .qa-feed-card .answer-content .answer-text{-webkit-line-clamp:3}
 .guolairen-shell .qa-feed-card .answer-tags{gap:2px}
-.guolairen-shell .qa-feed-card .stage-tag{font-size:10px;line-height:1.4;padding:2px 4px}
+.guolairen-shell .qa-feed-card .stage-tag{border:0;border-radius:999px;font-size:10px;line-height:1.4;padding:2px 4px}
+.guolairen-shell .qa-feed-card .question-tags .stage-tag{background:rgb(54 123 207 / 8%);box-shadow:0 2px 10px rgb(54 123 207 / 10%),0 0 7px rgb(54 123 207 / 7%);color:#6483aa}
+.guolairen-shell .qa-feed-card .answer-tags .stage-tag{background:rgb(58 151 138 / 8%);box-shadow:0 2px 10px rgb(58 151 138 / 9%),0 0 7px rgb(58 151 138 / 6%);color:#668b84}
 .guolairen-shell .qa-feed-card .item-route{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;letter-spacing:-.2px}
 .guolairen-shell .item-vote{min-width:28px;min-height:24px;padding:2px 0;font-size:11px;line-height:20px;white-space:nowrap;color:#929ba6;background:transparent;align-self:start}
 .guolairen-shell .item-vote.voted{color:var(--blue)}
@@ -79,3 +81,25 @@
 .composer-channel-context span{color:#1772f6}
 #app .composer-bar{padding-top:10px;padding-bottom:10px;min-height:55px}
 #app .composer-screen{padding-top:14px}
+
+/* Compact desktop presentation; phones use their own system status bar. */
+#shared-status .shot-status{height:30px;padding:3px 26px 1px;font-size:14px}
+#shared-status .shot-status>span svg{width:11px;height:13px}
+#shared-status .shot-status>div>svg{width:17px;height:13px}
+#shared-status .shot-signal{height:11px}
+#shared-status .shot-battery{font-size:10px}
+@media (max-width:540px), (max-width:1024px) and (hover:none) and (pointer:coarse){
+ #shared-status{display:none}
+ #phone-content{grid-template-rows:minmax(0,1fr);padding-top:env(safe-area-inset-top)}
+ #phone-content .top-navigation-group{padding-top:0}
+ body{padding:0;background:#fff}
+ .desktop-note,.desktop-footer{display:none}
+ .phone{width:100%;height:100dvh;border:0;border-radius:0;box-shadow:none}
+}
+
+/* Shorter path pills and a narrower answer rail give the text more room. */
+.guolairen-shell .qa-feed-card .question-section{grid-template-columns:minmax(0,1fr) 66px}
+.guolairen-shell .qa-feed-card .question-tags{width:66px}
+.guolairen-shell .qa-feed-card .answer-section{grid-template-columns:56px minmax(0,1fr);column-gap:8px}
+.guolairen-shell .qa-feed-card .answer-tags{width:56px}
+.guolairen-shell .qa-feed-card .item-vote{gap:4px;font-size:11px;letter-spacing:-.3px}

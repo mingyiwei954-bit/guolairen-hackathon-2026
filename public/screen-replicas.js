@@ -29,7 +29,17 @@ function shotSvg(name) {
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.dog}</svg>`;
 }
 let sharedNavScroll=0;
-function shotStatusHTML() {return `<div class="shot-status" aria-label="手机展示状态栏"><span>22:30 ${shotSvg('person')}</span><div><i class="shot-signal"><b></b><b></b><b></b><b></b></i>${shotSvg('wifi')}<strong class="shot-battery">100</strong></div></div>`;}
+const beijingClockFormat=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function beijingTime(now=new Date()){return beijingClockFormat.format(now);}
+let sharedClockInstalled=false,sharedClockTimer=null;
+function syncBeijingClock(){
+ clearTimeout(sharedClockTimer);
+ const clock=document.getElementById('beijing-clock');
+ if(clock)clock.textContent=beijingTime();
+ if(!document.hidden)sharedClockTimer=setTimeout(syncBeijingClock,60000-Date.now()%60000+30);
+}
+
+function shotStatusHTML() {return `<div class="shot-status" aria-label="手机展示状态栏"><span><time id="beijing-clock" aria-label="北京时间">${beijingTime()}</time> ${shotSvg('person')}</span><div><i class="shot-signal"><b></b><b></b><b></b><b></b></i>${shotSvg('wifi')}<strong class="shot-battery">100</strong></div></div>`;}
 function syncSharedHeader() {
  const nav=document.querySelector('#app .shot-tabs');if(!nav)return;
  nav.scrollLeft=sharedNavScroll;
@@ -38,8 +48,15 @@ function syncSharedHeader() {
  sharedNavScroll=nav.scrollLeft;
 }
 function installSharedShell() {
+ if(!sharedClockInstalled){
+  sharedClockInstalled=true;
+  document.addEventListener('visibilitychange',syncBeijingClock);
+  window.addEventListener('pageshow',syncBeijingClock);
+  window.addEventListener('pagehide',()=>clearTimeout(sharedClockTimer));
+ }
  const host=document.getElementById('phone-content');
  if(!document.getElementById('shared-status'))host.insertAdjacentHTML('afterbegin',`<div id="shared-status">${shotStatusHTML()}</div>`);
+ syncBeijingClock();
 }
 function shotHeader(id) {
  const previous=document.querySelector('#app .shot-tabs');if(previous)sharedNavScroll=previous.scrollLeft;

@@ -54,20 +54,18 @@ def expand_demo_answers(db):
 
 
 def rotate_demo_feed(db, items, sid, user_stage, mode, stage, rotate=False):
-    """Only synthetic conversations rotate; real questions/responses stay available."""
-    active = {row[0] for row in db.execute('SELECT DISTINCT question_id FROM answers WHERE sample=0')}
-    pack = {row[0] for row in db.execute('SELECT question_id FROM demo_content_keys')}
-    real = [q for q in items if not q['sample'] or q['id'] in active]
-    examples = [q for q in items if q['sample'] and q['id'] not in active]
-    seed = '|'.join((sid,user_stage,mode,stage))
-    # Keep the original demo scenarios in the initial batch, then mix the new pack.
-    examples.sort(key=lambda q:(q['id'] in pack,hashlib.sha256((seed+':'+str(q['id'])).encode()).hexdigest()))
-    key = (sid,user_stage,mode,stage)
+    """Pin the hottest eligible conversation; rotate the remaining mock rows."""
+    if not items:return [],0
+    heat=lambda q:int((q.get('answer') or {}).get('votes',0))
+    hottest=max(items,key=lambda q:(heat(q),-q['id']))
+    active={row[0] for row in db.execute('SELECT DISTINCT question_id FROM answers WHERE sample=0')}
+    real=[q for q in items if (not q['sample'] or q['id'] in active) and q['id']!=hottest['id']]
+    examples=[q for q in items if q['sample'] and q['id'] not in active and q['id']!=hottest['id']]
+    examples.sort(key=lambda q:(-heat(q),q['id']))
+    key=(sid,user_stage,mode,stage)
     db.execute('INSERT OR IGNORE INTO demo_feed_cursors(session_id,user_stage,mode,stage) VALUES(?,?,?,?)',key)
-    if rotate:
-        step = BATCH_SIZE if len(examples)>BATCH_SIZE else 1
-        db.execute('UPDATE demo_feed_cursors SET offset=offset+? WHERE session_id=? AND user_stage=? AND mode=? AND stage=?',(step,)+key)
-    offset = db.execute('SELECT offset FROM demo_feed_cursors WHERE session_id=? AND user_stage=? AND mode=? AND stage=?',key).fetchone()[0]
-    size = min(BATCH_SIZE,len(examples))
-    batch = [examples[(offset+i)%len(examples)] for i in range(size)]
-    return real+batch, len(examples)
+    count=BATCH_SIZE-1
+    if rotate:db.execute('UPDATE demo_feed_cursors SET offset=offset+? WHERE session_id=? AND user_stage=? AND mode=? AND stage=?',(count,)+key)
+    offset=db.execute('SELECT offset FROM demo_feed_cursors WHERE session_id=? AND user_stage=? AND mode=? AND stage=?',key).fetchone()[0]
+    batch=[examples[(offset+i)%len(examples)] for i in range(min(count,len(examples)))]
+    return [hottest]+sorted(real+batch,key=lambda q:(-heat(q),q['id'])),len(examples)+int(hottest['sample'] and hottest['id'] not in active)
